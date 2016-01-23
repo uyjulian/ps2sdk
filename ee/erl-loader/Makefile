@@ -33,11 +33,11 @@ LOADER_BIN = $(EE_BIN_DIR)erl-loader.elf
 all: $(EE_OBJS_DIR) $(EE_BIN_DIR) $(LOADER_BIN)
 
 $(LOADER_BIN) : $(EE_OBJS) $(PS2SDKSRC)/ee/startup/obj/crt0.o
-	$(EE_CC) -mno-crt0 -T$(PS2SDKSRC)/ee/startup/src/linkfile $(EE_CFLAGS) \
+	$(EE_CC) -nostartfiles -T$(PS2SDKSRC)/ee/startup/src/linkfile $(EE_CFLAGS) \
 	-o bin/tmp.elf $(PS2SDKSRC)/ee/startup/obj/crt0.o $(EE_OBJS) $(EE_LDFLAGS) $(EE_LIBS) $(EE_SRC_DIR)dummy-exports.c
 	$(EE_SRC_DIR)build-exports.sh
 	rm $(EE_BIN_DIR)tmp.elf
-	$(EE_CC) -mno-crt0 -T$(PS2SDKSRC)/ee/startup/src/linkfile $(EE_CFLAGS) \
+	$(EE_CC) -nostartfiles -T$(PS2SDKSRC)/ee/startup/src/linkfile $(EE_CFLAGS) \
 	-o $(LOADER_BIN) $(PS2SDKSRC)/ee/startup/obj/crt0.o $(EE_OBJS) $(EE_LDFLAGS) $(EE_LIBS) $(EE_SRC_DIR)exports.c
 #	rm $(EE_SRC_DIR)exports.c
 

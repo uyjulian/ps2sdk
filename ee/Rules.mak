@@ -31,7 +31,7 @@ SYSLIBDIR :=
 
 ASFLAGS  := -c -xassembler-with-cpp $(ASFLAGS)
 SYSLIBS  := c kernel
-LDFLAGS  := -mno-crt0 $(addprefix -L,$(LIBDIR)) $(LDFLAGS) $(addprefix -l,$(LIBS)) $(addprefix -l,$(SYSLIBS))
+LDFLAGS  := -nostartfiles -$(addprefix -L,$(LIBDIR)) $(LDFLAGS) $(addprefix -l,$(LIBS)) $(addprefix -l,$(SYSLIBS))
 
 # We need to build the libraries with -G0 to disable GP-relative addressing
 #

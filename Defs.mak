@@ -37,7 +37,7 @@ ifeq ($(CPU),ee)
 
   CC      = $(EE_TOOL_PREFIX)gcc
   CXX     = $(EE_TOOL_PREFIX)g++
-  AS      = $(EE_TOOL_PREFIX)gcc
+  AS      = $(EE_TOOL_PREFIX)gcc -c
   DVPAS   = $(EE_TOOL_PREFIX)dvp-as
   LD      = $(EE_TOOL_PREFIX)gcc
   AR      = $(EE_TOOL_PREFIX)ar

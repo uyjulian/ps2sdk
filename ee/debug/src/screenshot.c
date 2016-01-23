@@ -26,12 +26,12 @@
 #define PS2SS_GIF_AD    0x0e
 
 #define PS2SS_GIFTAG(NLOOP,EOP,PRE,PRIM,FLG,NREG) \
-    ((unsigned long)(NLOOP) << 0)   | \
-    ((unsigned long)(EOP)   << 15)  | \
-    ((unsigned long)(PRE)   << 46)  | \
-    ((unsigned long)(PRIM)  << 47)  | \
-    ((unsigned long)(FLG)   << 58)  | \
-    ((unsigned long)(NREG)  << 60)
+    ((u64)(NLOOP) << 0)   | \
+    ((u64)(EOP)   << 15)  | \
+    ((u64)(PRE)   << 46)  | \
+    ((u64)(PRIM)  << 47)  | \
+    ((u64)(FLG)   << 58)  | \
+    ((u64)(NREG)  << 60)
 
 #define PS2SS_GSBITBLTBUF_SET(sbp, sbw, spsm, dbp, dbw, dpsm) \
   ((u64)(sbp)         | ((u64)(sbw) << 16) | \

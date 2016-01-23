@@ -17,7 +17,7 @@ static const struct SyscallPatchData SyscallPatchData[]={
 	{ 0xFFFFC402, &ExecPS2Patch},
 };
 
-unsigned char SystemConfiguration[40]={0x40};	/* 0x80074700 */
+u8 SystemConfiguration[40]={0x40};	/* 0x80074700 */
 
 int _start(int syscall){
 	unsigned int i;

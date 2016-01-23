@@ -440,17 +440,16 @@ static void do_select( void * rpcBuffer, int size )
 	}
 }
 
-// cmd should be 64 bits wide; I think.
 static void do_ioctlsocket( void *rpcBuffer, int size )
 {
 	int *ptr = rpcBuffer, ret;
 	int s;
-	unsigned int cmd;
+	long int cmd;
 	unsigned int argpv;
 	void *argp;
 
-	s = ((int*)_rpc_buffer)[0];
-	cmd = ((unsigned int*)_rpc_buffer)[1];
+	s = (int)((s32*)_rpc_buffer)[0];
+	cmd = (long int)((s32*)_rpc_buffer)[1];
 	argp = (void*)(((int*)_rpc_buffer)[2]);
 	if( argp )
 	{

@@ -6,9 +6,10 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 
+#include <as_reg_compat.h>
+
 .set noreorder
 .set nomacro
-.set noat
 
 .globl _MPEG_Initialize
 .globl _MPEG_Destroy

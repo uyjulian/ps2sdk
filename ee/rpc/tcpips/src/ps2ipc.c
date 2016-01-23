@@ -305,8 +305,8 @@ int select(int maxfdp1, struct fd_set *readset, struct fd_set *writeset, struct 
 	_rpc_buffer[4] = (int)timeout;
 	if( timeout )
 	{
-		((long*)_rpc_buffer)[3] = timeout->tv_sec;
-		((long*)_rpc_buffer)[4] = timeout->tv_usec;
+		((s64*)_rpc_buffer)[3] = timeout->tv_sec;
+		((s64*)_rpc_buffer)[4] = timeout->tv_usec;
 	}
 	if( readset )
 	{
@@ -328,8 +328,8 @@ int select(int maxfdp1, struct fd_set *readset, struct fd_set *writeset, struct 
 
 	if( timeout )
 	{
-		timeout->tv_sec = ((long*)uncached_buf)[3];
-		timeout->tv_usec = ((long*)uncached_buf)[4];
+		timeout->tv_sec = ((s64*)uncached_buf)[3];
+		timeout->tv_usec = ((s64*)uncached_buf)[4];
 	}
 	if( readset )
 	{
@@ -354,11 +354,11 @@ int select(int maxfdp1, struct fd_set *readset, struct fd_set *writeset, struct 
 
 int ioctlsocket(int s, long cmd, void *argp)
 {
-	((int*)_rpc_buffer)[0] = s;
-	((int*)_rpc_buffer)[1] = (int)cmd;
-	((int*)_rpc_buffer)[2] = (int)argp;
+	((s32*)_rpc_buffer)[0] = s;
+	((s32*)_rpc_buffer)[1] = (s32)cmd;
+	((s32*)_rpc_buffer)[2] = (s32)argp;
 	if( argp )
-		((int*)_rpc_buffer)[3] = *(int*)argp;
+		((s32*)_rpc_buffer)[3] = *(s32*)argp;
 
 	SifCallRpc(&_ps2ip, PS2IPS_ID_IOCTL, 0, (void*)_rpc_buffer, 16, (void*)_rpc_buffer, 4, NULL, NULL);
 

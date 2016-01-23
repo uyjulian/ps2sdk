@@ -16,6 +16,7 @@
 */
 
 #include <ee_cop0_defs.h>
+#include <as_reg_compat.h>
 #include "eedebug_defs.h"
 
 .text

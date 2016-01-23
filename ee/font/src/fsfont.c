@@ -91,8 +91,8 @@ int fontstudio_parse_ini(fsfont_t *font, char *ini, float tex_width, float tex_h
 
 	int i;
 
-	unsigned char *temp0;
-	unsigned char *temp1;
+	char *temp0;
+	char *temp1;
 
 	temp0 = ini;
 
