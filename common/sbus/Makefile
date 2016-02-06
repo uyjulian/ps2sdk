@@ -17,7 +17,7 @@ LIB_DIR=lib
 IOP_OBJ_DIR=iop_obj
 IRX_NAME = sbus
 IOP_BIN = bin/$(IRX_NAME).irx
-IOP_CPPFLAGS = -miop -O2 -G0 -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -I./include -I./src -Wall -fno-builtin-printf -DIRX_NAME=$(IRX_NAME)
+IOP_CPPFLAGS = -O2 -G0 -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -I./include -I./src -Wall -fno-builtin-printf -DIRX_NAME=$(IRX_NAME)
 IOP_OBJS = ps2_sbus.o iop_sbus.o ps2_sif.o iop_sif2.o sif2cmd.o imports.o exports.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJ_DIR)/%)
 
@@ -55,7 +55,7 @@ $(IOP_OBJ_DIR)/%.o: src/%.s
 	$(IOP_AS) $(IOP_ASFLAGS) -c $< -o $@
 
 $(IOP_BIN): $(IOP_OBJS) src/imports.lst src/irx_imports.h
-	$(IOP_CC) $(IOP_LDFLAGS) -miop -nostdlib -s -o $(IOP_BIN) $(IOP_OBJS)
+	$(IOP_CC) $(IOP_LDFLAGS) -nostdlib -o $(IOP_BIN) $(IOP_OBJS)
 
 $(IOP_OBJ_DIR)/%.o: src/%.lst
 	echo "#include \"irx_imports.h\"" > src/build-imports.c

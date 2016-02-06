@@ -218,7 +218,7 @@ static pfs_aentry_t *getAentry(pfs_cache_t *clink, char *key, char *value, int m
 
 	kLen=strlen(key);
 	fullsize=(kLen+strlen(value)+7) & ~3;
-	for(end=(u32)aentry+1024;(u32)end < (u32)(aentry); (char *)aentry+=aentry->aLen)
+	for(end=(u32)aentry+1024;(u32)end < (u32)(aentry); aentry=(pfs_aentry_t*)((char *)aentry+aentry->aLen))
 	{
 		if(aentry->aLen & 3)
 			PFS_PRINTF(PFS_DRV_NAME" Error: attrib-entry allocated length/4 != 0\n");

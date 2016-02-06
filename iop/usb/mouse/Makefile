@@ -15,7 +15,6 @@ IOP_INC_DIR = include/
 IOP_BIN  = irx/ps2mouse.irx
 IOP_OBJS = obj/ps2mouse.o obj/imports.o
 
-IOP_CFLAGS=-Wall
 IOP_INCS += -I$(PS2SDKSRC)/iop/usb/usbd/include
 
 all: $(IOP_OBJS_DIR) $(IOP_BIN_DIR) $(IOP_BIN)

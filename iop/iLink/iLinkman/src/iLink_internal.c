@@ -49,7 +49,7 @@ void UBUFThread(void *arg){
 	}
 }
 
-inline int GetConsoleIDs(u64 *guid, unsigned char *ModelName){
+int GetConsoleIDs(u64 *guid, unsigned char *ModelName){
 	u64 ilink_id;
 	int stat, result;
 

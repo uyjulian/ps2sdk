@@ -9,23 +9,13 @@
 
 IOP_CC_VERSION := $(shell $(IOP_CC) --version 2>&1 | sed -n 's/^.*(GCC) //p')
 
-ASFLAGS_TARGET = -mcpu=r3000
-
-ifeq ($(IOP_CC_VERSION),3.2.2)
-ASFLAGS_TARGET = -march=r3000
-endif
-
-ifeq ($(IOP_CC_VERSION),3.2.3)
-ASFLAGS_TARGET = -march=r3000
-endif
-
 # include dir
 IOP_INCS := $(IOP_INCS) -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -Iinclude
 
 # C compiler flags
 IOP_CFLAGS  := -D_IOP -fno-builtin -O2 -G0 -Wall $(IOP_INCS) $(IOP_CFLAGS)
 # Linker flags
-IOP_LDFLAGS := -nostdlib -s $(IOP_LDFLAGS)
+IOP_LDFLAGS := -nostdlib $(IOP_LDFLAGS)
 
 # Assembler flags
 IOP_ASFLAGS := $(ASFLAGS_TARGET) -EL -G0 $(IOP_ASFLAGS)
@@ -45,14 +35,14 @@ $(IOP_OBJS_DIR)%.o : $(IOP_SRC_DIR)%.s
 $(IOP_OBJS_DIR)%.o : $(IOP_SRC_DIR)%.lst
 	$(ECHO) "#include \"irx_imports.h\"" > $(IOP_OBJS_DIR)build-imports.c
 	cat $< >> $(IOP_OBJS_DIR)build-imports.c
-	$(IOP_CC) $(IOP_CFLAGS) -I$(IOP_SRC_DIR) -c $(IOP_OBJS_DIR)build-imports.c -o $@
+	$(IOP_CC) $(IOP_CFLAGS) -fno-toplevel-reorder -I$(IOP_SRC_DIR) -c $(IOP_OBJS_DIR)build-imports.c -o $@
 	-rm -f $(IOP_OBJS_DIR)build-imports.c
 
 # A rule to build exports.tab.
 $(IOP_OBJS_DIR)%.o : $(IOP_SRC_DIR)%.tab
 	$(ECHO) "#include \"irx.h\"" > $(IOP_OBJS_DIR)build-exports.c
 	cat $< >> $(IOP_OBJS_DIR)build-exports.c
-	$(IOP_CC) $(IOP_CFLAGS) -I$(IOP_SRC_DIR) -c $(IOP_OBJS_DIR)build-exports.c -o $@
+	$(IOP_CC) $(IOP_CFLAGS) -fno-toplevel-reorder -I$(IOP_SRC_DIR) -c $(IOP_OBJS_DIR)build-exports.c -o $@
 	-rm -f $(IOP_OBJS_DIR)build-exports.c
 
 $(IOP_OBJS_DIR):

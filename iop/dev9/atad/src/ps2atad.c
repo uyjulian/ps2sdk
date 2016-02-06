@@ -466,12 +466,12 @@ static inline int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 		buf = cmd_state->buf;
 		for (i = 0; i < 256; i++) {
 			ata_hwport->r_data = *(unsigned short int *)buf;
-			cmd_state->buf = ++((unsigned short int *)buf);
+			cmd_state->buf = (unsigned short int *)buf + 1;
 		}
 		if (cmd_state->type == 8) {
 			for (i = 0; i < 4; i++) {
 				ata_hwport->r_data = *(u8 *)buf;
-				cmd_state->buf = ++((u8 *)buf);
+				cmd_state->buf = (u8 *)buf + 1;
 			}
 		}
 	} else if (type == 2) {
@@ -479,7 +479,7 @@ static inline int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 		buf = cmd_state->buf;
 		for (i = 0; i < 256; i++) {
 			*(unsigned short int *)buf = ata_hwport->r_data;
-			cmd_state->buf = ++((unsigned short int *)buf);
+			cmd_state->buf = (unsigned short int *)buf + 1;
 		}
 	}
 
@@ -532,7 +532,7 @@ next_transfer:
 		if ((res = dev9DmaTransfer(0, buf, (nbytes << 9)|32, dir)) < 0)
 			return res;
 
-		(u8 *)buf += nbytes;
+		buf = (void*)((u8 *)buf + nbytes);
 		blkcount -= count;
 	}
 
@@ -790,7 +790,7 @@ int ata_device_sector_io(int device, void *buf, unsigned int lba, unsigned int n
 		if ((res = ata_io_finish()) != 0)
 			return res;
 
-		(u8 *)buf += (len * 512);
+		buf = (void*)((u8 *)buf + (len * 512));
 		lba += len;
 		nsectors -= len;
 	}

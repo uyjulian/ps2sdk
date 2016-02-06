@@ -156,7 +156,8 @@ static void do_recv( void * rpcBuffer, int size )
 
 	} else {
 
-		erest = asize = (int)abuffer = (int)aebuffer = 0;
+		abuffer = aebuffer = NULL;
+		erest = asize =  0;
 
 	}
 
@@ -252,7 +253,8 @@ static void do_recvfrom( void * rpcBuffer, int size )
 
 	} else {
 
-		erest = asize = (int)abuffer = (int)aebuffer = 0;
+		abuffer = aebuffer = NULL;
+		erest = asize = 0;
 
 	}
 

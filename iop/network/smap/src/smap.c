@@ -40,8 +40,6 @@ static unsigned int EnableAutoNegotiation=1;
 static unsigned int EnablePinStrapConfig=0;
 static unsigned int SmapConfiguration=0x5E0;
 
-extern void *_gp;
-
 static void _smap_write_phy(volatile u8 *emac3_regbase, unsigned char address, unsigned short int value){
 	unsigned int i, PHYRegisterValue;
 
@@ -422,22 +420,15 @@ static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
 }
 
 static int Dev9IntrCb(int flag){
-	SaveGP();
-
 	dev9IntrDisable(SMAP_INTR_RXEND);
 	iSetEventFlag(SmapDriverData.Dev9IntrEventFlag, SMAP_EVENT_INTR);
-
-	RestoreGP();
 
 	return 0;
 }
 
 static int Dev9TXEndIntrHandler(int flag){
-	SaveGP();
-
 	dev9IntrDisable(SMAP_INTR_TXEND);
 	iWakeupThread(SmapDriverData.TxHandlerThreadID);
-	RestoreGP();
 
 	return 0;
 }
@@ -471,18 +462,14 @@ static void Dev9PostDmaCbHandler(int bcr, int dir){
 }
 
 int SMAPStart(void){
-	SaveGP();
 	SetEventFlag(SmapDriverData.Dev9IntrEventFlag, SMAP_EVENT_START);
-	RestoreGP();
 
 	return 0;
 }
 
 void SMAPStop(void){
-	SaveGP();
 	SetEventFlag(SmapDriverData.Dev9IntrEventFlag, SMAP_EVENT_STOP);
 	SmapDriverData.NetDevStopFlag=1;
-	RestoreGP();
 }
 
 static void TxHandlerThread(void *arg){
@@ -578,8 +565,6 @@ static inline int SMAPGetLinkStatus(void){
 int SMAPIoctl(unsigned int command, void *args, unsigned int args_len, void *output, unsigned int length){
 	int result;
 
-	SaveGP();
-
 	switch(command){
 		case NETMAN_NETIF_IOCTL_ETH_GET_MAC:
 			result=SMAPGetMACAddress(output);
@@ -626,8 +611,6 @@ int SMAPIoctl(unsigned int command, void *args, unsigned int args_len, void *out
 		default:
 			result=-1;
 	}
-
-	RestoreGP();
 
 	return result;
 }

@@ -215,7 +215,7 @@ static inline int initSBP2Disk(struct SBP2Device *dev){
 		switch(LeafData>>24){
 			/* Now get the address of the Management Agent CSR. */
 			case IEEE1394_CROM_CSR_OFFSET:
-				((u32)managementAgentAddr)=LeafData&0x00FFFFFF; /* Mask off the bits that represent the Management Agent key. */
+				managementAgentAddr=(void*)(LeafData&0x00FFFFFF); /* Mask off the bits that represent the Management Agent key. */
 				XPRINTF("managementAgentAddr=0x%08lx.\n", (u32)managementAgentAddr*4);
 
 				dev->ManagementAgent_low=(u32)managementAgentAddr*4+0xf0000000;

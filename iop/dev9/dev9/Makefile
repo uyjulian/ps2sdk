@@ -17,7 +17,7 @@ IOP_OBJS = ps2dev9.o exports.o imports.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 
 IOP_INCS += -I$(PS2SDKSRC)/iop/dev9/poweroff/include/
-IOP_CFLAGS  += -Os
+IOP_CFLAGS +=
 
 all: $(IOP_OBJS_DIR) $(IOP_BIN_DIR) $(IOP_BIN)
 

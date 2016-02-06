@@ -21,7 +21,6 @@
 
 #include "xfer.h"
 
-extern void *_gp;
 extern struct SmapDriverData SmapDriverData;
 
 static int SmapDmaTransfer(volatile u8 *smap_regbase, void *buffer, unsigned int size, int direction){
@@ -39,7 +38,7 @@ static int SmapDmaTransfer(volatile u8 *smap_regbase, void *buffer, unsigned int
 	return result;
 }
 
-static inline void CopyFromFIFO(volatile u8 *smap_regbase, void *buffer, unsigned int length, unsigned short int RxBdPtr){
+static void CopyFromFIFO(volatile u8 *smap_regbase, void *buffer, unsigned int length, unsigned short int RxBdPtr){
 	int i, result;
 
 	SMAP_REG16(SMAP_R_RXFIFO_RD_PTR)=RxBdPtr;
@@ -55,7 +54,7 @@ static inline void CopyFromFIFO(volatile u8 *smap_regbase, void *buffer, unsigne
 	}
 }
 
-inline int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData){
+int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData){
 	USE_SMAP_RX_BD;
 	int NumPacketsReceived;
 	volatile smap_bd_t *PktBdPtr;
@@ -110,8 +109,6 @@ int SMAPSendPacket(const void *data, unsigned int length){
 	u16 BD_data_ptr;
 	unsigned int SizeRounded;
 
-	SaveGP();
-
 	if(SmapDriverData.SmapIsInitialized){
 		ClearEventFlag(SmapDriverData.TxEndEventFlag, ~1);
 
@@ -149,8 +146,6 @@ int SMAPSendPacket(const void *data, unsigned int length){
 		result=1;
 	}
 	else result=-1;
-
-	RestoreGP();
 
 	return result;
 }

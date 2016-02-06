@@ -17,9 +17,6 @@ IOP_OBJS = main.o smap.o udp.o tty.o imports.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 IOP_INCS += -I. -I$(PS2SDKSRC)/iop/dev9/dev9/include
 
-IOP_CFLAGS = -Wall -O2 -G0
-IOP_LDFLAGS = -s
-
 # Paramaters for the UDP TTY driver.
 UDPTTY_ETH_DST = 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 UDPTTY_IP_ADDR_DST = IP_ADDR(255, 255, 255, 255)
