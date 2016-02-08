@@ -19,6 +19,8 @@ static const struct SyscallPatchData SyscallPatchData[]={
 
 u8 SystemConfiguration[40]={0x40};	/* 0x80074700 */
 
+int _start(int syscall) __attribute__((section(".start")));
+
 int _start(int syscall){
 	unsigned int i;
 	int result;

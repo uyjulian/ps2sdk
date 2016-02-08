@@ -13,7 +13,7 @@ EE_OBJS = tlbsrc.o
 
 EE_INCS := -I$(PS2SDKSRC)/common/include -I$(PS2SDKSRC)/ee/kernel/include -I$(PS2SDKSRC)/ee/rpc/cdvd/include -I.
 EE_CFLAGS = -D_EE -G0 -mno-gpopt -Wall -Os
-EE_LDFLAGS = -nostartfiles -Tlinkfile -s
+EE_LDFLAGS = -nostartfiles -Tlinkfile #-s
 
 $(EE_ELF) : $(EE_OBJS)
 	$(EE_CC) $(EE_LDFLAGS) \
