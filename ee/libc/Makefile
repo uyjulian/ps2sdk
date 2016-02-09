@@ -26,7 +26,7 @@ EE_SAMPLES := $(EE_SAMPLES:%=$(EE_SAMPLE_DIR)%)
 CORE_OBJS = sbrk.o memchr.o memcpy.o memset.o strcat.o \
 	strncmp.o memcmp.o memmove.o strcpy.o strncat.o \
 	strncpy.o terminate.o strlen.o strchr.o strcmp.o \
-	setjmp.o qsort.o #cxx.o
+	setjmp.o qsort.o cxx.o
 CORE_OBJS := $(CORE_OBJS:%=$(EE_OBJS_DIR)%)
 
 INIT_OBJS = init_libc.o init_args.o

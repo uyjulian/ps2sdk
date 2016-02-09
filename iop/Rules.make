@@ -7,8 +7,6 @@
 # Review ps2sdk README & LICENSE files for further details.
 #
 
-IOP_CC_VERSION := $(shell $(IOP_CC) --version 2>&1 | sed -n 's/^.*(GCC) //p')
-
 # include dir
 IOP_INCS := $(IOP_INCS) -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -Iinclude
 
