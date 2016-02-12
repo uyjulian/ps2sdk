@@ -11,7 +11,7 @@
 IOP_INCS := $(IOP_INCS) -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -Iinclude
 
 # C compiler flags
-IOP_CFLAGS  := -D_IOP -miop -O2 -G0 -Wall $(IOP_INCS) $(IOP_CFLAGS)
+IOP_CFLAGS  := -D_IOP -fno-builtin -O2 -G0 -Wall $(IOP_INCS) $(IOP_CFLAGS)
 # Linker flags
 IOP_LDFLAGS := -nostdlib $(IOP_LDFLAGS)
 
