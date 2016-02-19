@@ -36,12 +36,10 @@ release-lib:
 
 #
 # Any irx files should go to iop/irx
-# FIXME: strip refuses to strip symbols that are used in a relocation.
 #
 
 release-bin:
 	@if test $(IOP_BIN) ; then \
-	   $(IOP_STRIP) --strip-unneeded -R .comment -R .gnu.attributes $(IOP_BIN) ; \
 	   $(ECHO) Installing $(IOP_BIN) to $(PS2SDK)/iop/irx ; \
 	   cp -f $(IOP_BIN) $(PS2SDK)/iop/irx/ ; \
 	   chmod 644 $(PS2SDK)/iop/$(IOP_BIN) ; \

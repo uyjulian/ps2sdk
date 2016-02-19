@@ -13,7 +13,7 @@ IOP_INCS := -I$(PS2SDK)/iop/include -I$(PS2SDK)/common/include \
 	-I. $(IOP_INCS)
 
 # C compiler flags
-IOP_CFLAGS := $(CFLAGS_TARGET) -O2 -G0 -mno-gpopt -msoft-float -fno-builtin $(IOP_INCS) $(IOP_CFLAGS)
+IOP_CFLAGS := $(CFLAGS_TARGET) -O2 -G0 -mno-gpopt -msoft-float -fno-builtin -mno-explicit-relocs $(IOP_INCS) $(IOP_CFLAGS)
 
 # linker flags
 IOP_LDFLAGS := $(LDFLAGS_TARGET) -nostdlib -L$(PS2SDK)/iop/lib $(IOP_LDFLAGS)
