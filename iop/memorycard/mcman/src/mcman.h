@@ -66,7 +66,7 @@ typedef struct _sceMcTblGetDir { //size = 64
 	u16 Reserve1;			 // 22
 	u32 Reserve2;			 // 24
 	u32 PdaAplNo;			 // 28
-	u8  EntryName[32];		 // 32
+	char  EntryName[32];		 // 32
 } sceMcTblGetDir;
 
 typedef struct _MCCacheEntry {
@@ -118,7 +118,7 @@ typedef struct {				// size = 128
 	int mode;					// 0
 	int length;					// 4
 	s16 linked_block;			// 8
-	u8  name[20];				// 10
+	char  name[20];				// 10
 	u8  field_1e;				// 30
 	u8  field_1f;				// 31
 	sceMcStDateTime created;	// 32
@@ -143,7 +143,7 @@ typedef struct {				// size = 512
 	sceMcStDateTime modified;	// 24
 	u32 attr;					// 32
 	u32 unused2[7];				// 36
-	u8  name[32];				// 64
+	char  name[32];				// 64
 	u8  unused3[416];			// 96
 } McFsEntry;
 
@@ -156,7 +156,7 @@ char mcman_curdirpath[1024];
 char *mcman_curdirname;
 
 int mcman_PS1curcluster;
-u8 mcman_PS1curdir[64];
+char mcman_PS1curdir[64];
 
 typedef struct {  // size = 48
 	u8  status;   // 0

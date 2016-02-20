@@ -768,11 +768,11 @@ static int AddPassword(char *Password, int PasswordType, int AuthType, u16 *Ansi
 
 				default:
 					if (AuthType == LM_AUTH) {
-						LM_Password_Hash(Password, passwordhash);
+						LM_Password_Hash((const unsigned char*)Password, passwordhash);
 						memcpy(AnsiPassLen, &passwordlen, 2);
 					}
 					else if (AuthType == NTLM_AUTH) {
-						NTLM_Password_Hash(Password, passwordhash);
+						NTLM_Password_Hash((const unsigned char*)Password, passwordhash);
 						memcpy(UnicodePassLen, &passwordlen, 2);
 					}
 			}
@@ -1030,8 +1030,8 @@ int smb_NetShareEnum(int UID, int TID, ShareEntry_t *shareEntries, int index, in
 	int AvailableEntries = (int)*((u16 *)&SMB_buf[NSERsp->smbTrans.ParamOffset+4+6]);
 
 	// data start
-	u8 *data = (u8 *)&SMB_buf[NSERsp->smbTrans.DataOffset+4];
-	u8 *p = (u8 *)data;
+	char *data = (char *)&SMB_buf[NSERsp->smbTrans.DataOffset+4];
+	char *p = data;
 
 	for (i=0; i<AvailableEntries; i++) {
 

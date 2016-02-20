@@ -82,7 +82,7 @@ int mcman_open1(int port, int slot, char *filename, int flags)
 	register MC_FHANDLE *fh = (MC_FHANDLE *)&mcman_fdhandles[fd];
 	McFsEntryPS1 *fse; //sp18
 	McCacheEntry *mce;
-	char *p = (char *)filename;
+	char *p = filename;
 
 #ifdef DEBUG
 	DPRINTF("mcman: mcman_open1 port%d slot%d filename %s flags %x\n", port, slot, filename, flags);

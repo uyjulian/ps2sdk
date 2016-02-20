@@ -875,7 +875,7 @@ finish:
 static void ata_device_probe(ata_devinfo_t *devinfo)
 {
 	USE_ATA_REGS;
-	unsigned short int nsector, sector, lcyl, hcyl, select;
+	unsigned short int nsector, sector, lcyl, hcyl;//, select;
 
 	devinfo->exists = 0;
 	devinfo->has_packet = 0;
@@ -887,7 +887,7 @@ static void ata_device_probe(ata_devinfo_t *devinfo)
 	sector = ata_hwport->r_sector & 0xff;
 	lcyl = ata_hwport->r_lcyl & 0xff;
 	hcyl = ata_hwport->r_hcyl & 0xff;
-	select = ata_hwport->r_select;
+	//select = ata_hwport->r_select; // unused
 
 	if ((nsector != 1) || (sector != 1))
 		return;

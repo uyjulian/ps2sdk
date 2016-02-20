@@ -326,11 +326,11 @@ int ps2netfs_accept_pktunknown(int sock, char *buf)
  */
 static int ps2netfs_op_info(char *buf, int len)
 {
-  ps2netfs_pkt_open_req *cmd;
+//  ps2netfs_pkt_open_req *cmd;
   ps2netfs_pkt_info_rly *inforly;
   int count;
 
-  cmd = (ps2netfs_pkt_open_req *)buf;
+//  cmd = (ps2netfs_pkt_open_req *)buf; // Unused
 
   dbgprintf("ps2netfs: info\n");
 

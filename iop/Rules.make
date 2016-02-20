@@ -12,15 +12,17 @@ IOP_INCS := $(IOP_INCS) -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/
 
 # C compiler flags
 # -fno-builtin is required to prevent the GCC built-in functions from being included,
-# for finer-grained control over what goes into each IRX.
+#   for finer-grained control over what goes into each IRX.
+# -msoft-float is to "remind" GCC/Binutils that the soft-float ABI is to be used. This is due to a bug, which
+#   results in the ABI not being passed correctly to binutils and iop-as defaults to the hard-float ABI instead.
 # -mno-explicit-relocs is required to work around the fact that GCC is now known to
-# output multiple LO relocs after one HI reloc (which the IOP kernel cannot deal with).
+#   output multiple LO relocs after one HI reloc (which the IOP kernel cannot deal with).
 IOP_CFLAGS  := -D_IOP -fno-builtin -msoft-float -mno-explicit-relocs -O2 -G0 -Wall $(IOP_INCS) $(IOP_CFLAGS)
 # Linker flags
-IOP_LDFLAGS := -nostdlib $(IOP_LDFLAGS)
+IOP_LDFLAGS := -nostdlib -s $(IOP_LDFLAGS)
 
 # Assembler flags
-IOP_ASFLAGS := $(ASFLAGS_TARGET) -EL -G0 $(IOP_ASFLAGS)
+IOP_ASFLAGS := $(ASFLAGS_TARGET) -msoft-float -EL -G0 $(IOP_ASFLAGS)
 
 # Externally defined variables: IOP_BIN, IOP_OBJS, IOP_LIB
 

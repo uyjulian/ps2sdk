@@ -35,7 +35,10 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev);
 static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev);
 static inline int ieee1394_Sync_withTimeout(u32 n500mSecUnits);
 
-static volatile unsigned char statusFIFO[32]; /* Maximum 32 bytes. */
+static volatile union{
+	struct sbp2_status status;
+	unsigned char buffer[32]; /* Maximum 32 bytes. */
+} statusFIFO;
 
 static void ieee1394_callback(int reason, unsigned long int offset, unsigned long int size){
 #if 0
@@ -47,8 +50,8 @@ static void ieee1394_callback(int reason, unsigned long int offset, unsigned lon
 
 //		XPRINTF("Write request: Offset: 0x%08lx; size: 0x%08lx.\n", iLinkBufferOffset, iLinkTransferSize);
 
-		if(iLinkBufferOffset==(u32)statusFIFO){	/* Check to be sure that we don't signal ieee1394_Sync() too early; Some transactions are transactions involving multiple ORBs. */
-			statusFIFO_result=((struct sbp2_status *)statusFIFO)->status;
+		if(iLinkBufferOffset==(u32)&statusFIFO){	/* Check to be sure that we don't signal ieee1394_Sync() too early; Some transactions are transactions involving multiple ORBs. */
+			statusFIFO_result=statusFIFO.status.status;
 			if(RESP_SRC(statusFIFO_result)!=0) SetEventFlag(sbp2_event_flag, WRITE_REQ_INCOMING); /* Signal ieee1394_Sync() only after the last ORB was read. */
 		}
 	}
@@ -97,7 +100,7 @@ void init_ieee1394DiskDriver(void){
 	iLinkEnableSBus();
 }
 
-inline int initConfigureSBP2Device(struct SBP2Device *dev){
+static int initConfigureSBP2Device(struct SBP2Device *dev){
 	unsigned char retries;
 
 	retries=10;
@@ -407,11 +410,11 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev){
 	struct sbp2_login_response login_result;
 	struct management_ORB new_management_ORB;
 
-	memset((unsigned char *)statusFIFO, 0, sizeof(statusFIFO));
+	memset((void*)&statusFIFO, 0, sizeof(statusFIFO));
 	memset(&login_result, 0, sizeof(struct sbp2_login_response));
 	memset(&new_management_ORB, 0, sizeof(struct management_ORB));
 
-	new_management_ORB.status_FIFO.low=(u32)statusFIFO;
+	new_management_ORB.status_FIFO.low=(u32)&statusFIFO;
 
 	((struct login_req *)&new_management_ORB)->flags=(u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(0) |MANAGEMENT_ORB_FUNCTION(mode));
 
@@ -448,7 +451,7 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev){
 
 	result=ieee1394_Sync_withTimeout(dev->mgt_ORB_timeout);
 
-	XPRINTF("statusFIFO= %p; [0]=%u.\n", statusFIFO, statusFIFO[0]);
+	XPRINTF("statusFIFO= %p; [0]=%u.\n", &statusFIFO, statusFIFO.buffer[0]);
 	if(result>=0){
 		switch(mode){
 			case SBP2_LOGIN_REQUEST: /* Login. */
@@ -484,7 +487,7 @@ int ieee1394_SendCommandBlockORB(struct SBP2Device *dev, struct CommandDescripto
 	int result, retries;
 	struct sbp2_pointer address;
 
-	memset((unsigned char *)statusFIFO, 0, sizeof(statusFIFO));
+	memset((void*)&statusFIFO, 0, sizeof(statusFIFO));
 
 	address.low=(u32)firstCDB;
 	address.NodeID=dev->InitiatorNodeID;
@@ -525,12 +528,12 @@ static int ProcessStatus(void){
 	unsigned char status, resp, dead, sense, len;
 	int result;
 
-	statusFIFO_result=((struct sbp2_status *)statusFIFO)->status;
+	statusFIFO_result=statusFIFO.status.status;
 	status=RESP_SBP_STATUS(statusFIFO_result);
 	resp=RESP_RESP(statusFIFO_result);
 	dead=RESP_DEAD(statusFIFO_result);
 	len=RESP_LEN(statusFIFO_result);
-	sense=((((struct sbp2_status *)statusFIFO)->data[0])>>16)&0xF;
+	sense=((statusFIFO.status.data[0])>>16)&0xF;
 
 	XPRINTF("result: 0x%08lx; status: 0x%02x; RESP: 0x%02x; Dead: %u; len: 0x%02x; sense: 0x%02x.\n", statusFIFO_result, status, resp, dead, len, sense);
 	if(sense==0) sense=1;	/* Workaround for faulty firmwares: The sense code is 0 or was not sent when it's supposed to be sent. */
@@ -562,7 +565,7 @@ static inline int ieee1394_Sync_withTimeout(u32 n500mSecUnits){
 
 	unsigned int i=0;
 
-	while(RESP_SRC(((struct sbp2_status *)statusFIFO)->status)==0){
+	while(RESP_SRC(statusFIFO.status.status)==0){
 		if(i>n500mSecUnits*10000){
 			XPRINTF("-=Time out=-\n");
 			return(-1);
@@ -578,7 +581,7 @@ static inline int ieee1394_Sync_withTimeout(u32 n500mSecUnits){
 int ieee1394_Sync(void){
 //	WaitEventFlag(sbp2_event_flag, WRITE_REQ_INCOMING, WEF_AND|WEF_CLEAR, NULL);
 
-	while(RESP_SRC(((struct sbp2_status *)statusFIFO)->status)==0){
+	while(RESP_SRC(statusFIFO.status.status)==0){
 		DelayThread(50);
 	};
 

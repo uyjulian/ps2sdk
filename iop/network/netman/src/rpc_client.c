@@ -11,8 +11,15 @@
 #include "rpc_client.h"
 
 static SifRpcClientData_t EEClient;
-static unsigned char SifRpcRxBuffer[64];
-static unsigned char SifRpcTxBuffer[64];
+static union{
+	int result;
+	struct NetManEEInitResult EEInitResult;
+	unsigned char buffer[64];
+} SifRpcRxBuffer;
+static union{
+	int state;
+	unsigned char buffer[64];
+} SifRpcTxBuffer;
 
 static unsigned char *EEFrameBuffer = NULL;	/* On the EE side */
 
@@ -28,9 +35,9 @@ int NetManInitRPCClient(void){
 	if(FrameBuffer != NULL){
 		while((result=sceSifBindRpc(&EEClient, NETMAN_RPC_NUMBER, 0))<0 || EEClient.server==NULL) DelayThread(500);
 
-		if((result=sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_INIT, 0, NULL, 0, SifRpcRxBuffer, sizeof(struct NetManEEInitResult), NULL, NULL))>=0){
-			if((result=((struct NetManEEInitResult*)SifRpcRxBuffer)->result) == 0){
-				EEFrameBuffer=((struct NetManEEInitResult*)SifRpcRxBuffer)->FrameBuffer;
+		if((result=sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_INIT, 0, NULL, 0, &SifRpcRxBuffer, sizeof(struct NetManEEInitResult), NULL, NULL))>=0){
+			if((result=SifRpcRxBuffer.EEInitResult.result) == 0){
+				EEFrameBuffer=SifRpcRxBuffer.EEInitResult.FrameBuffer;
 			}
 		}
 	}else result = -ENOMEM;
@@ -48,8 +55,8 @@ void NetManDeinitRPCClient(void){
 }
 
 void NetManRpcToggleGlobalNetIFLinkState(unsigned int state){
-	*(unsigned int *)SifRpcTxBuffer=state;
-	sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_HANDLE_LINK_STATUS_CHANGE, 0, SifRpcTxBuffer, sizeof(unsigned int), NULL, 0, NULL, NULL);
+	SifRpcTxBuffer.state=state;
+	sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_HANDLE_LINK_STATUS_CHANGE, 0, &SifRpcTxBuffer, sizeof(unsigned int), NULL, 0, NULL, NULL);
 }
 
 static struct NetManPacketBuffer pbufs[NETMAN_RPC_BLOCK_SIZE];
@@ -90,8 +97,8 @@ int NetmanRpcFlushInputQueue(void){
 			but I've tried that before and it actually worsened performance over TCP. Perhaps the IOP ends up spending too much
 			time receiving data that the PlayStation 2 can't send acks in a timely manner.	*/
 		DMATransferDataToEEAligned(FrameBuffer, EEFrameBuffer, PacketReqs.TotalLength);
-		if((result=sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_HANDLE_PACKETS, 0, &PacketReqs, 8+sizeof(struct PacketTag)*PacketReqs.NumPackets, SifRpcRxBuffer, sizeof(int), NULL, NULL))>=0){
-			result=*(int*)SifRpcRxBuffer;
+		if((result=sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_HANDLE_PACKETS, 0, &PacketReqs, 8+sizeof(struct PacketTag)*PacketReqs.NumPackets, &SifRpcRxBuffer, sizeof(int), NULL, NULL))>=0){
+			result=SifRpcRxBuffer.result;
 		}
 
 		PacketReqs.NumPackets=0;

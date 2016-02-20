@@ -1155,7 +1155,7 @@ int mcman_getdir2(int port, int slot, char *dirname, int flags, int maxent, sceM
 
 	if (!flags) {
 
-		p = (char *)mcman_curdirpath;
+		p = mcman_curdirpath;
 		strncpy(p, dirname, 1023);
 		mcman_curdirpath[1023] = 0;
 

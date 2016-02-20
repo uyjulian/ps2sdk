@@ -65,9 +65,6 @@ int _start( int argc, char **argv)
 	iop_thread_t	param;
 	int				th;
 
-
-	FlushDcache();
-
 	PS2CamInitDriver();
 
 
@@ -83,12 +80,12 @@ int _start( int argc, char **argv)
 
 	if (th > 0)
 	{
-		StartThread(th,0);
-		return 0;
+		StartThread(th,NULL);
+		return MODULE_RESIDENT_END;
 	}
 	else
 	{
-		return 1;
+		return MODULE_NO_RESIDENT_END;
 	}
 }
 
@@ -106,7 +103,6 @@ int _start( int argc, char **argv)
 int PS2CamInitDriver(void)
 {
 	int				i;
-	int				ret;
 	iop_sema_t		sema;
 
 	printf("PS2 USB Camera Driver v.%d.%d  ((C) www.ps2dev.org)\n",DRIVER_VERSON_MAJOR,DRIVER_VERSON_MINOR);
@@ -131,10 +127,7 @@ int PS2CamInitDriver(void)
 
 
 	//connect to usb.irx
-
-	ret = UsbRegisterDriver(&cam_driver);
-
-	return 0;
+	return UsbRegisterDriver(&cam_driver);
 }
 
 
