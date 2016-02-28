@@ -260,7 +260,7 @@ void scr_printf(const char *format, ...)
 
 
    va_start(opt, format);
-   bufsz = vsnprintf( buff, sizeof(buff), format, opt);
+   bufsz = vsnprintf((char *)buff, sizeof(buff), format, opt);
 
    for (i = 0; i < bufsz; i++)
        {

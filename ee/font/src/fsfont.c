@@ -53,7 +53,7 @@ char *fontstudio_load_ini(const char *path)
 
 	FILE *file;
 
-	unsigned char *ini;
+	char *ini;
 	int size;
 
 	file = fopen(path, "r");
@@ -70,7 +70,7 @@ char *fontstudio_load_ini(const char *path)
 	size = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
-	ini = (unsigned char *)malloc(size);
+	ini = (char *)malloc(size);
 
 	if (ini == NULL)
 	{
@@ -340,7 +340,7 @@ int decode_unicode(const unsigned char *in, unsigned short *out)
 
 	int j = 0;
 
-	int length = strlen(in);
+	int length = strlen((const char *)in);
 
 	for (i = 0; i < length; i++)
 	{
