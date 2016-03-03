@@ -843,7 +843,7 @@ static int devctlSwapTemp(u32 device, char *argp)
 	if((rv=fioGetInput(argp, &params)) < 0)
 		return rv;
 
-	if(params.id[0] == params.id[1] == '_') // test for '__' system partition
+	if((params.id[0] == '_') && (params.id[1] == '_')) // test for '__' system partition
 		return -EINVAL;
 
 	memset(szBuf, 0, APA_IDMAX);

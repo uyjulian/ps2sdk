@@ -919,8 +919,8 @@ static int separatePathAndName(const unsigned char* fname, unsigned char* path, 
 	int path_len;
 	unsigned char *sp, *np;
 
-	if(!(sp=strrchr((const char*)fname, '/')))		//if last path separator missing ?
-		np = fname;					//  name starts at start of fname string
+	if(!(sp=(unsigned char *)strrchr((const char*)fname, '/')))		//if last path separator missing ?
+		np = (unsigned char *)fname;					//  name starts at start of fname string
 	else							//else last path separator found
 		np = sp+1;					//  name starts after separator
 	if(strlen((const char*)np) >= FAT_MAX_NAME)		//if name is too long
@@ -2072,7 +2072,7 @@ int fat_renameFile(fat_driver* fatd, fat_dir *fatdir, const char* fname) {
 	}
 
 	fatdir->parentDirCluster = dParentDirCluster;
-	strcpy(fatdir->name, (const char*)lname);
+	strcpy((char *)fatdir->name, (const char*)lname);
 
 	return 0;
 } //ends fat_renameFile

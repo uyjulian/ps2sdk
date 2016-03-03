@@ -503,7 +503,7 @@ qword_t *draw_fontx_char(qword_t *q, unsigned short c, vertex_t *v0, fontx_t *fo
 
 	fontx_hdr* fontx_header = (fontx_hdr*)fontx->font;
 
-	char_offset = fontx_get_char(fontx,c);
+	char_offset = (char *)fontx_get_char(fontx,c);
 
 	if (!char_offset)
 	{
@@ -552,7 +552,7 @@ qword_t *fontx_print_ascii(qword_t *q, int context, const unsigned char *str, in
 
 	vertex_t v_pos = *v0;
 
-	int length = strlen(str);
+	int length = strlen((const char *)str);
 	short line_num[100];
 	int line = 0;
 
@@ -728,7 +728,7 @@ qword_t *fontx_print_sjis(qword_t *q, int context, const unsigned char *str, int
 
 	vertex_t v_pos = *v0;
 
-	int length = strlen(str);
+	int length = strlen((const char *)str);
 
 	int line = 0;
 	short halfwidth[100];

@@ -100,7 +100,7 @@ int hddFormat()
 	if(retVal < 0)
 		return retVal;
 
-	retVal = hddMakeFilesystem(512, "boot", FS_GROUP_SYSTEM);
+ 	retVal = hddMakeFilesystem(512, "boot", FS_GROUP_SYSTEM);
 	if(retVal < 0)
 		return retVal;
 
