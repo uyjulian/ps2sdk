@@ -109,9 +109,9 @@ int sio_getc_block()
 /* Not really much to do in the way of error-handling.  sio_putc() already
    checks to see if there's room in the TX FIFO, and my cable doesn't support
    hardware flow control.  */
-size_t sio_write(void *buf, size_t size)
+size_t sio_write(const char *buf, size_t size)
 {
-	u8 *p = (u8 *)buf;
+	const char *p = (const char *)buf;
 	size_t i;
 
 	for (i = 0; i < size; i++)
@@ -124,9 +124,9 @@ size_t sio_write(void *buf, size_t size)
 #ifdef F_sio_read
 /* This will read from the serial port until size characters have been read or
    EOF (RX FIFO is empty).  */
-size_t sio_read(void *buf, size_t size)
+size_t sio_read(char *buf, size_t size)
 {
-	u8 *p = (u8 *)buf;
+	char *p = buf;
 	size_t i;
 	int c;
 
@@ -134,7 +134,7 @@ size_t sio_read(void *buf, size_t size)
 		if ((c = sio_getc()) == -1)
 			break;
 
-		p[i] = (u8)c;
+		p[i] = (char)c;
 	}
 
 	return i;

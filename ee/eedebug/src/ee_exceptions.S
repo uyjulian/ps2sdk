@@ -16,7 +16,6 @@
 */
 
 #include <ee_cop0_defs.h>
-#include <as_reg_compat.h>
 #include "eedebug_defs.h"
 
 .text
@@ -41,10 +40,10 @@ _ee_save_frame:
                         sq          $t1,   0x090($s0)
                         sq          $t2,   0x0A0($s0)
                         sq          $t3,   0x0B0($s0)
-                        sq          $t4,   0x0C0($s0)
-                        sq          $t5,   0x0D0($s0)
-                        sq          $t6,   0x0E0($s0)
-                        sq          $t7,   0x0F0($s0)
+                        sq          $a4,   0x0C0($s0)
+                        sq          $a5,   0x0D0($s0)
+                        sq          $a6,   0x0E0($s0)
+                        sq          $a7,   0x0F0($s0)
 #                        sq          $s0,   0x100($s0) # s0 already saved
                         sq          $s1,   0x110($s0)
                         sq          $s2,   0x120($s0)
@@ -132,7 +131,6 @@ _ee_load_frame:
 .set noat
                         lq          $at,   0x010($s0)
 .set at
-
                         lq          $v0,   0x020($s0)
                         lq          $v1,   0x030($s0)
                         lq          $a0,   0x040($s0)
@@ -142,10 +140,10 @@ _ee_load_frame:
                         lq          $t1,   0x090($s0)
                         lq          $t2,   0x0A0($s0)
                         lq          $t3,   0x0B0($s0)
-                        lq          $t4,   0x0C0($s0)
-                        lq          $t5,   0x0D0($s0)
-                        lq          $t6,   0x0E0($s0)
-                        lq          $t7,   0x0F0($s0)
+                        lq          $a4,   0x0C0($s0)
+                        lq          $a5,   0x0D0($s0)
+                        lq          $a6,   0x0E0($s0)
+                        lq          $a7,   0x0F0($s0)
 #                        lq          $s0,   0x100($s0)
                         lq          $s1,   0x110($s0)
                         lq          $s2,   0x120($s0)

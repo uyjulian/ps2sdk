@@ -415,20 +415,19 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev){
 	memset(&new_management_ORB, 0, sizeof(struct management_ORB));
 
 	new_management_ORB.status_FIFO.low=(u32)&statusFIFO;
-
-	((struct login_req *)&new_management_ORB)->flags=(u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(0) |MANAGEMENT_ORB_FUNCTION(mode));
+	new_management_ORB.flags=(u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(0) |MANAGEMENT_ORB_FUNCTION(mode));
 
 	switch(mode){
 		case SBP2_LOGIN_REQUEST: /* Login. */
 			/* The reconnect timeout is now set to 0, since the mechanism that determines whether the initiator was already logged into the target or not was not accurate. */
-			((struct login_req *)&new_management_ORB)->flags|=(u32)(MANAGEMENT_ORB_RECONNECT(0) | MANAGEMENT_ORB_EXCLUSIVE(1) | MANAGEMENT_ORB_LUN(dev->LUN));
+			new_management_ORB.flags|=(u32)(MANAGEMENT_ORB_RECONNECT(0) | MANAGEMENT_ORB_EXCLUSIVE(1) | MANAGEMENT_ORB_LUN(dev->LUN));
 
-			((struct login_req *)&new_management_ORB)->login_response.low=(u32)&login_result;
-			((struct login_req *)&new_management_ORB)->length=(MANAGEMENT_ORB_RESPONSE_LENGTH(sizeof(struct sbp2_login_response))|MANAGEMENT_ORB_PASSWORD_LENGTH(0));
+			new_management_ORB.login.response.low=(u32)&login_result;
+			new_management_ORB.length=(MANAGEMENT_ORB_RESPONSE_LENGTH(sizeof(struct sbp2_login_response))|MANAGEMENT_ORB_PASSWORD_LENGTH(0));
 			break;
 #if 0
 		case SBP2_RECONNECT_REQUEST: /* Reconnect. */
-			((struct login_req *)&new_management_ORB)->flags|=(u32)(MANAGEMENT_ORB_RECONNECT(4) | MANAGEMENT_ORB_LOGINID(dev->loginID)); /* loginID was stored as a big endian number, so it has to be converted into little endian first. :( */
+			new_management_ORB.flags|=(u32)(MANAGEMENT_ORB_RECONNECT(4) | MANAGEMENT_ORB_LOGINID(dev->loginID)); /* loginID was stored as a big endian number, so it has to be converted into little endian first. :( */
 			break;
 #endif
 		default:

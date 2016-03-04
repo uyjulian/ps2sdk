@@ -194,9 +194,11 @@ int ps2_screenshot( void *pDest, unsigned int VramAdress, unsigned int x,
                     unsigned int y, unsigned int Width, unsigned int Height,
                     unsigned int Psm )
 {
-  static u32 enable_path3[4] ALIGNED(16) =
-  {
-    PS2SS_VIF1_MSKPATH3(0), PS2SS_VIF1_NOP, PS2SS_VIF1_NOP, PS2SS_VIF1_NOP,
+  static union {
+	u32 value_u32[4];
+	u128 value;
+  } enable_path3 ALIGNED(16) = {
+    {PS2SS_VIF1_MSKPATH3(0), PS2SS_VIF1_NOP, PS2SS_VIF1_NOP, PS2SS_VIF1_NOP}
   };
 
   u32  dma_chain[20*2] ALIGNED(16);
@@ -311,7 +313,7 @@ int ps2_screenshot( void *pDest, unsigned int VramAdress, unsigned int x,
   // Enable path3 again
 
 
-  *PS2SS_VIF1_FIFO = *(u128*) enable_path3;
+  *PS2SS_VIF1_FIFO = enable_path3.value;
 
   return 1;
 }

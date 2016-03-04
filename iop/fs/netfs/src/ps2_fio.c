@@ -37,7 +37,6 @@
 #define ntohs(x) htons(x)
 
 //#define DEBUG
-//#define DEBUG
 #ifdef DEBUG
 #define dbgprintf(args...) printf(args)
 #else
@@ -262,7 +261,9 @@ int ps2netfs_accept_pktunknown(int sock, char *buf)
 {
   int length;
   ps2netfs_pkt_hdr *hdr;
+#ifdef DEBUG
   unsigned int hcmd;
+#endif
   unsigned short hlen;
 
   dbgprintf("ps2netfs: accept_pkt\n");
@@ -280,7 +281,9 @@ int ps2netfs_accept_pktunknown(int sock, char *buf)
   }
 
   hdr = (ps2netfs_pkt_hdr *)buf;
+#ifdef DEBUG
   hcmd = ntohl(hdr->cmd);
+#endif
   hlen = ntohs(hdr->len);
 
   dbgprintf("ps2netfs: accept_pkt: got 0x%x , hlen: %d, length: %d\n", hcmd,hlen,length);

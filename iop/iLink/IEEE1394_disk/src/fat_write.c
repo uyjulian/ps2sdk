@@ -917,19 +917,20 @@ static int createShortNameMask(unsigned char* lname, unsigned char* sname) {
 */
 static int separatePathAndName(const unsigned char* fname, unsigned char* path, unsigned char* name) {
 	int path_len;
-	unsigned char *sp, *np;
+	const unsigned char *np;
+	unsigned char *sp;
 
-	if(!(sp=strrchr((const char*)fname, '/')))		//if last path separator missing ?
-		np = fname;					//  name starts at start of fname string
-	else							//else last path separator found
-		np = sp+1;					//  name starts after separator
-	if(strlen((const char*)np) >= FAT_MAX_NAME)		//if name is too long
-		return -ENAMETOOLONG;				//  return error code
-	strcpy((char*)name, (const char*)np);			//copy name from correct part of fname string
-	if((path_len = (np - fname)) >= FAT_MAX_PATH)		//if path is too long
-		return -ENAMETOOLONG;				//  return error code
-	strncpy((char*)path, (const char*)fname, path_len);	//copy path from start of fname string
-	path[path_len] = 0;					//terminate path
+	if(!(sp=(unsigned char*)strrchr((const char*)fname, '/')))		//if last path separator missing ?
+		np = fname;							//  name starts at start of fname string
+	else									//else last path separator found
+		np = sp+1;							//  name starts after separator
+	if(strlen((const char*)np) >= FAT_MAX_NAME)				//if name is too long
+		return -ENAMETOOLONG;						//  return error code
+	strcpy((char*)name, (const char*)np);					//copy name from correct part of fname string
+	if((path_len = (np - fname)) >= FAT_MAX_PATH)				//if path is too long
+		return -ENAMETOOLONG;						//  return error code
+	strncpy((char*)path, (const char*)fname, path_len);			//copy path from start of fname string
+	path[path_len] = 0;							//terminate path
 	return 1;
 }
 

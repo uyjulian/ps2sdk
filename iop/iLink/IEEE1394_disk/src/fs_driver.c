@@ -235,7 +235,7 @@ static int fs_open(iop_file_t* fd, const char *name, int mode) {
 	//find the file
 	cluster = 0; //allways start from root
 	XPRINTF("USBHDFSD: Calling fat_getFileStartCluster from fs_open\n");
-	ret = fat_getFileStartCluster(fatd, name, &cluster, &rec->dirent.fatdir);
+	ret = fat_getFileStartCluster(fatd, (unsigned char*)name, &cluster, &rec->dirent.fatdir);
 	if (ret < 0 && ret != -ENOENT) {
 		_fs_unlock();
 		return ret;

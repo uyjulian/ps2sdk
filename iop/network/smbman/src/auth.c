@@ -36,10 +36,10 @@ unsigned char *LM_Password_Hash(const unsigned char *password, unsigned char *ci
 	memcpy(K2, &tmp_pass[7], 7);
 
 	/* encrypt the magic string with the keys */
-	DES(K1, (unsigned char*)"KGS!@#$%", &cipher[0]);
-	DES(K2, (unsigned char*)"KGS!@#$%", &cipher[8]);
+	DES(K1, (const unsigned char*)"KGS!@#$%", &cipher[0]);
+	DES(K2, (const unsigned char*)"KGS!@#$%", &cipher[8]);
 
-	return (unsigned char *)cipher;
+	return cipher;
 }
 
 /*

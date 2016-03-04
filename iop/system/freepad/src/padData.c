@@ -142,7 +142,7 @@ u32 mtapChangeSlot(u32 slot)
 	if(padData[1][slot].active == 1)
 		change_slot_buffer[1] = slot;
 
-	sio2_mtap_change_slot((u32 *)change_slot_buffer);
+	sio2_mtap_change_slot(change_slot_buffer);
 
 	return 1;
 }
@@ -432,7 +432,7 @@ u32 pdCheckConnection(u32 port, u32 slot)
 	change_slot_buffer[2] = -1;
 	change_slot_buffer[3] = -1;
 
-	sio2_mtap_change_slot((u32 *)change_slot_buffer);
+	sio2_mtap_change_slot(change_slot_buffer);
 
 	res = pdGetStat70bit(0, slot);
 	setupReadData(0, slot, res);
@@ -452,7 +452,7 @@ u32 pdCheckConnection(u32 port, u32 slot)
 	change_slot_buffer[2] = -1;
 	change_slot_buffer[3] = -1;
 
-	sio2_mtap_change_slot((u32 *)change_slot_buffer);
+	sio2_mtap_change_slot(change_slot_buffer);
 
 	sio2_transfer_reset();
 

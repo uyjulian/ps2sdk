@@ -62,7 +62,7 @@ typedef struct _mouse_data_recv
 {
   unsigned char buttons;
   char x, y, wheel;
-} mouse_data_recv __attribute__ ((packed));
+} mouse_data_recv;
 
 typedef struct _mouse_dev
 
