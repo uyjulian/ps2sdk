@@ -544,7 +544,6 @@ int hddLseek(iop_file_t *f, int post, int whence)
 
 void fioGetStatFiller(apa_cache_t *clink, iox_stat_t *stat)
 {
-	apa_header_t *header;
 	u64 size;
 
 	stat->mode=clink->header->type;
@@ -555,7 +554,6 @@ void fioGetStatFiller(apa_cache_t *clink, iox_stat_t *stat)
 	stat->size=size & 0xFFFFFFFF;
 	size >>= 32;
 	stat->hisize=size & 0xFFFFFFFF;
-	header=clink->header;
 	memcpy(&stat->ctime, &clink->header->created, sizeof(apa_ps2time_t));
 	memcpy(&stat->atime, &clink->header->created, sizeof(apa_ps2time_t));
 	memcpy(&stat->mtime, &clink->header->created, sizeof(apa_ps2time_t));
@@ -845,7 +843,7 @@ static int devctlSwapTemp(u32 device, char *argp)
 	if((rv=fioGetInput(argp, &params)) < 0)
 		return rv;
 
-	if(*(u16 *)(params.id)==(u16)0x5F5F)// test for '__' system partition
+	if((params.id[0] == '_') && (params.id[1] == '_')) // test for '__' system partition
 		return -EINVAL;
 
 	memset(szBuf, 0, APA_IDMAX);

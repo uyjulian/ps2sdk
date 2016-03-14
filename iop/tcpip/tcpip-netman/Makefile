@@ -53,7 +53,7 @@ endif
 IOP_BIN = $(IOP_BIN_DIR)ps2ip-nm.irx
 IOP_OBJS = $(ps2ip_OBJECTS) $(ps2api_OBJECTS) $(ps2api_IPV4)
 IOP_INCS += -I$(LWIP)/src/include -I$(LWIP)/src/include/ipv4 -Isrc/include
-IOP_CFLAGS += -DLWIP_NOASSERT -DLWIP_COMPAT_MUTEX $(DEBUG_FLAGS)
+IOP_CFLAGS += -DLWIP_NOASSERT -DLWIP_COMPAT_MUTEX -mno-check-zero-division -Wno-attributes -Wno-unused-but-set-variable $(DEBUG_FLAGS)
 
 all: $(IOP_OBJS_DIR) $(IOP_BIN_DIR) $(IOP_BIN)
 

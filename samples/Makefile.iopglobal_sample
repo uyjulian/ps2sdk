@@ -8,37 +8,18 @@
 #
 # $Id$
 
-IOP_CC_VERSION := $(shell $(IOP_CC) --version 2>&1 | sed -n 's/^.*(GCC) //p')
-
-ASFLAGS_TARGET = -mcpu=r3000
-
-ifeq ($(IOP_CC_VERSION),3.2.2)
-CFLAGS_TARGET  = -miop
-ASFLAGS_TARGET = -march=r3000
-LDFLAGS_TARGET = -miop
-endif
-
-ifeq ($(IOP_CC_VERSION),3.2.3)
-CFLAGS_TARGET  = -miop
-ASFLAGS_TARGET = -march=r3000
-LDFLAGS_TARGET = -miop
-endif
-
 # include dir
 IOP_INCS := -I$(PS2SDK)/iop/include -I$(PS2SDK)/common/include \
 	-I. $(IOP_INCS)
 
 # C compiler flags
-IOP_CFLAGS := $(CFLAGS_TARGET) -O2 -G0 $(IOP_INCS) $(IOP_CFLAGS)
+IOP_CFLAGS := $(CFLAGS_TARGET) -O2 -G0 -mno-gpopt -msoft-float -fno-builtin -mno-explicit-relocs $(IOP_INCS) $(IOP_CFLAGS)
 
 # linker flags
-IOP_LDFLAGS := $(LDFLAGS_TARGET) -nostdlib -L$(PS2SDK)/iop/lib $(IOP_LDFLAGS)
+IOP_LDFLAGS := $(LDFLAGS_TARGET) -nostdlib -s -L$(PS2SDK)/iop/lib $(IOP_LDFLAGS)
 
 # asssembler flags
 IOP_ASFLAGS := $(ASFLAGS_TARGET) -EL -G0 $(IOP_ASFLAGS)
-
-# link with following libraries (libs need to be defined multiple times in order for linking to work!!)
-IOP_LIBS += -lkernel -lgcc
 
 # Externally defined variables: IOP_BIN, IOP_OBJS, IOP_LIB
 

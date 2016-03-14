@@ -32,6 +32,8 @@ static const struct SyscallPatchData SyscallPatchData[]={
 	{ 0x03, &unknown},
 };
 
+int _start(int syscall) __attribute__((section(".start")));
+
 /* 0x80075000 */
 int _start(int syscall){
 	unsigned int i;

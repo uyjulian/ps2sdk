@@ -75,11 +75,9 @@ static void swapClStack(fat_driver* fatd, int startIndex, int endIndex) {
 
 static int fat_readEmptyClusters12(fat_driver* fatd) {
 	int ret;
-	int i;
 	int recordOffset;
 	int sectorSpan;
 	int fatSector;
-	int cont;
 	int lastFatSector;
 	unsigned int cluster;
 	unsigned int clusterValue;
@@ -89,9 +87,7 @@ static int fat_readEmptyClusters12(fat_driver* fatd) {
 
 	oldClStackIndex = fatd->clStackIndex;
 
-	cont = 1;
 	lastFatSector = -1;
-	i = 0;
 	cluster = fatd->clStackLast;
 
 	while(fatd->clStackIndex < MAX_CLUSTER_STACK ) {
@@ -639,7 +635,7 @@ returns number of direntry positions that the name takes
 static int getDirentrySize(const unsigned char* lname) {
 	int len;
 	int result;
-	len = strlen(lname);
+	len = strlen((const char*)lname);
 	result = len / 13;
 	if (len % 13 > 0) result++;
 	return result;
@@ -880,7 +876,7 @@ static int createShortNameMask(unsigned char* lname, unsigned char* sname) {
 	//XPRINTF("USBHDFSD: fit2=%d\n", fit);
 
 	//find the last dot "." - filename extension
-	size = strlen(lname);
+	size = strlen((const char*)lname);
 	size--;
 
 	for (i = size; i > 0 && lname[i] !='.'; i--);
@@ -921,19 +917,20 @@ static int createShortNameMask(unsigned char* lname, unsigned char* sname) {
 */
 static int separatePathAndName(const unsigned char* fname, unsigned char* path, unsigned char* name) {
 	int path_len;
-	unsigned char *sp, *np;
+	const unsigned char *np;
+	unsigned char *sp;
 
-	if(!(sp=strrchr(fname, '/')))			//if last path separator missing ?
-		np = (char *)fname;			//  name starts at start of fname string
-	else						//else last path separator found
-		np = sp+1;				//  name starts after separator
-	if(strlen(np) >= FAT_MAX_NAME)			//if name is too long
-		return -ENAMETOOLONG;			//  return error code
-	strcpy(name, np);				//copy name from correct part of fname string
-	if((path_len = (np - fname)) >= FAT_MAX_PATH)	//if path is too long
-		return -ENAMETOOLONG;			//  return error code
-	strncpy(path, fname, path_len);			//copy path from start of fname string
-	path[path_len] = 0;				//terminate path
+	if(!(sp=(unsigned char*)strrchr((const char*)fname, '/')))		//if last path separator missing ?
+		np = fname;							//  name starts at start of fname string
+	else									//else last path separator found
+		np = sp+1;							//  name starts after separator
+	if(strlen((const char*)np) >= FAT_MAX_NAME)				//if name is too long
+		return -ENAMETOOLONG;						//  return error code
+	strcpy((char*)name, (const char*)np);					//copy name from correct part of fname string
+	if((path_len = (np - fname)) >= FAT_MAX_PATH)				//if path is too long
+		return -ENAMETOOLONG;						//  return error code
+	strncpy((char*)path, (const char*)fname, path_len);			//copy path from start of fname string
+	path[path_len] = 0;							//terminate path
 	return 1;
 }
 
@@ -970,7 +967,7 @@ static int getShortNameSequence(unsigned char* name, unsigned char* ext, const u
 	buf[j-i-1] = 0; //terminate
 
 	XPRINTF("USBHDFSD: found short name sequence number='%s' \n", buf);
-	return strtol(buf, NULL, 10);
+	return strtol((const char*)buf, NULL, 10);
 }
 
 //---------------------------------------------------------------------------
@@ -1116,9 +1113,7 @@ static int fat_fillDirentryInfo(fat_driver* fatd, const unsigned char* lname, un
 			unsigned int* retSector, int* retOffset) {
 	fat_direntry_summary dir;
 	int i, j;
-	int dirSector;
-	unsigned int startSector;
-	unsigned int theSector;
+	unsigned int startSector, dirSector, theSector;
 	int cont;
 	int ret;
 	unsigned int dirPos;
@@ -1235,8 +1230,7 @@ static int fat_fillDirentryInfo(fat_driver* fatd, const unsigned char* lname, un
 static int enlargeDirentryClusterSpace(fat_driver* fatd, unsigned int startCluster, int entryCount, int entryIndex, int direntrySize)
 {
 	int ret;
-	int dirSector;
-	unsigned int startSector;
+	unsigned int startSector, dirSector;
 	int i;
 	int maxSector;
 	int entriesPerSector;
@@ -1369,9 +1363,7 @@ static int saveDirentry(fat_driver* fatd, unsigned int startCluster,
 	const unsigned char* lname, const unsigned char* sname, char directory, unsigned int cluster,
 	int entrySize, int entryIndex, unsigned int* retSector, int* retOffset, const fat_direntry_sfn *orig_dsfn) {
 	int i, j;
-	int dirSector;
-	unsigned int startSector;
-	unsigned int theSector;
+	unsigned int startSector, dirSector, theSector;
 	int cont;
 	int ret;
 	unsigned int dirPos;
@@ -1385,7 +1377,7 @@ static int saveDirentry(fat_driver* fatd, unsigned int startCluster,
 	unsigned char chsum;
 
 	chsum = computeNameChecksum(sname);
-	nameSize = strlen(lname);
+	nameSize = strlen((const char*)lname);
 
 	cont = 1;
 	//clear name strings
@@ -1997,13 +1989,13 @@ int fat_renameFile(fat_driver* fatd, fat_dir *fatdir, const char* fname) {
 	unsigned int sDirCluster;
 	unsigned int dDirCluster, dParentDirCluster;
 	unsigned char lname[FAT_MAX_NAME], pathToDirent[FAT_MAX_PATH];
-	unsigned int sfnSector, sfnOffset, new_sfnSector, new_sfnOffset;
-	int directory;
+	unsigned int sfnSector, new_sfnSector;
+	int directory, sfnOffset, new_sfnOffset;
 	unsigned char sname[12]; //short name 8+3 + terminator
 	unsigned char* sbuf = NULL;
 	fat_direntry_sfn OriginalSFN;
 
-	ret = separatePathAndName(fname, pathToDirent, lname);
+	ret = separatePathAndName((const unsigned char*)fname, pathToDirent, lname);
 	if(	(ret < 0)               //if name invalid to separation routine
 		||(	(lname[0] == 0)       //or name is empty string
 			||(	(lname[0]=='.')
@@ -2079,7 +2071,7 @@ int fat_renameFile(fat_driver* fatd, fat_dir *fatdir, const char* fname) {
 	}
 
 	fatdir->parentDirCluster = dParentDirCluster;
-	strcpy(fatdir->name, lname);
+	strcpy((char*)fatdir->name, (const char*)lname);
 
 	return 0;
 } //ends fat_renameFile

@@ -368,11 +368,11 @@ int mcman_checkdirpath(char *str1, char *str2)
 	u8 *p2 = (u8 *)str2;
 
 	do {
-		pos1 = mcman_chrpos(p2, '?');
-		pos2 = mcman_chrpos(p2, '*');
+		pos1 = mcman_chrpos((char *)p2, '?');
+		pos2 = mcman_chrpos((char *)p2, '*');
 
 		if ((pos1 < 0) && (pos2 < 0)) {
-			if (!strcmp(p2, p1))
+			if (!strcmp((const char *)p2, (const char *)p1))
 				return 1;
 			return 0;
 		}
@@ -386,7 +386,7 @@ int mcman_checkdirpath(char *str1, char *str2)
 				}
 			}
 		}
-		if (strncmp(p2, p1, pos) != 0)
+		if (strncmp((char *)p2, (const char *)p1, pos) != 0)
 			return 0;
 
 		p2 += pos;
@@ -405,11 +405,11 @@ int mcman_checkdirpath(char *str1, char *str2)
 
 	if (p2[0] != 0) {
 		do {
-			pos = mcman_chrpos(p1, (u8)p2[0]);
+			pos = mcman_chrpos((char *)p1, (u8)p2[0]);
 			p1 += pos;
 			if (pos < 0)
 				return 0;
-			r = mcman_checkdirpath(p1, p2);
+			r = mcman_checkdirpath((char *)p1, (char *)p2);
 			p1++;
 		} while (r == 0);
 	}
@@ -1311,7 +1311,7 @@ int mcman_setdevinfos(int port, int slot)
 	if (r != sceMcResSucceed)
 		return -48;
 
-	if (strncmp(SUPERBLOCK_MAGIC, mcman_pagebuf, 28) != 0) {
+	if (strncmp(SUPERBLOCK_MAGIC, (const char *)mcman_pagebuf, 28) != 0) {
 #ifdef DEBUG
 		DPRINTF("mcman: mcman_setdevinfos No card format !!!\n");
 #endif
@@ -1811,8 +1811,8 @@ int mcman_cachedirentry(int port, int slot, char *filename, McCacheDir *pcacheDi
 			if ((fse->mode & fmode) != fmode)
 				return sceMcResDeniedPermit;
 
-			if (mcman_chrpos(p, '/') < 0)
-				strlen(p);
+			if (mcman_chrpos((char *)p, '/') < 0)
+				strlen((const char *)p);
 
 			pfsentry = (u8 *)fse;
 			pcache = (u8 *)&mcman_dircache[0];
@@ -1827,10 +1827,10 @@ int mcman_cachedirentry(int port, int slot, char *filename, McCacheDir *pcacheDi
 				pcache += 16;
 			} while (pfsentry < pfseend);
 
-			r = mcman_getdirinfo(port, slot, (McFsEntry *)&mcman_dircache[0], p, pcacheDir, unknown_flag);
+			r = mcman_getdirinfo(port, slot, (McFsEntry *)&mcman_dircache[0], (char *)p, pcacheDir, unknown_flag);
 
 			if (r > 0) {
-				if (mcman_chrpos(p, '/') >= 0)
+				if (mcman_chrpos((char *)p, '/') >= 0)
 					return 2;
 
 				pcacheDir->cluster = cluster;
@@ -1839,9 +1839,9 @@ int mcman_cachedirentry(int port, int slot, char *filename, McCacheDir *pcacheDi
 				return 1;
 			}
 
-			r = mcman_chrpos(p, '/');
+			r = mcman_chrpos((char *)p, '/');
 			if ((r >= 0) && (p[r + 1] != 0)) {
-				p += mcman_chrpos(p, '/') + 1;
+				p += mcman_chrpos((char *)p, '/') + 1;
 				cluster = pcacheDir->cluster;
 				fsindex = pcacheDir->fsindex;
 

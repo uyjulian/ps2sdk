@@ -234,7 +234,7 @@ static int fs_open(iop_file_t* fd, const char *name, int mode) {
 	//find the file
 	cluster = 0; //allways start from root
 	XPRINTF("USBHDFSD: Calling fat_getFileStartCluster from fs_open\n");
-	ret = fat_getFileStartCluster(fatd, name, &cluster, &rec->dirent.fatdir);
+	ret = fat_getFileStartCluster(fatd, (const unsigned char*)name, &cluster, &rec->dirent.fatdir);
 	if (ret < 0 && ret != -ENOENT) {
 		_fs_unlock();
 		return ret;
@@ -261,7 +261,7 @@ static int fs_open(iop_file_t* fd, const char *name, int mode) {
 
 		rec->sfnSector = 0;
 		rec->sfnOffset = 0;
-		ret = fat_createFile(fatd, name, 0, escapeNotExist, &cluster, &rec->sfnSector, &rec->sfnOffset);
+		ret = fat_createFile(fatd, (const unsigned char*)name, 0, escapeNotExist, &cluster, &rec->sfnSector, &rec->sfnOffset);
 		if (ret < 0) {
 			_fs_unlock();
 			return ret;
@@ -275,7 +275,7 @@ static int fs_open(iop_file_t* fd, const char *name, int mode) {
 		//find the file
 		cluster = 0; //allways start from root
 		XPRINTF("USBHDFSD: Calling fat_getFileStartCluster from fs_open after file creation\n");
-		ret = fat_getFileStartCluster(fatd, name, &cluster, &rec->dirent.fatdir);
+		ret = fat_getFileStartCluster(fatd, (const unsigned char*)name, &cluster, &rec->dirent.fatdir);
 	}
 
 	if (ret < 0) {	//At this point, the file should be locatable without any errors.
@@ -490,7 +490,7 @@ static int fs_remove(iop_file_t *fd, const char *name) {
 
 	cluster = 0; //allways start from root
 	XPRINTF("USBHDFSD: Calling fat_getFileStartCluster from fs_remove\n");
-	result = fat_getFileStartCluster(fatd, name, &cluster, &fatdir);
+	result = fat_getFileStartCluster(fatd, (const unsigned char*)name, &cluster, &fatdir);
 	if (result < 0) {
 		_fs_unlock();
 		return result;
@@ -505,7 +505,7 @@ static int fs_remove(iop_file_t *fd, const char *name) {
 		return result;
 	}
 
-	result = fat_deleteFile(fatd, name, 0);
+	result = fat_deleteFile(fatd, (const unsigned char*)name, 0);
 	FLUSH_SECTORS(fatd);
 
 	_fs_unlock();
@@ -526,7 +526,7 @@ static int fs_mkdir(iop_file_t *fd, const char *name) {
 	if (fatd == NULL) { _fs_unlock(); return -ENODEV; }
 
 	XPRINTF("USBHDFSD: fs_mkdir: name=%s \n",name);
-	ret = fat_createFile(fatd, name, 1, 0, &cluster,  &sfnSector, &sfnOffset);
+	ret = fat_createFile(fatd, (const unsigned char*)name, 1, 0, &cluster,  &sfnSector, &sfnOffset);
 
 	//directory of the same name already exist
 	if (ret == 2) {
@@ -548,7 +548,7 @@ static int fs_rmdir(iop_file_t *fd, const char *name) {
 	fatd = fat_getData(fd->unit);
 	if (fatd == NULL) { _fs_unlock(); return -ENODEV; }
 
-	ret = fat_deleteFile(fatd, name, 1);
+	ret = fat_deleteFile(fatd, (const unsigned char*)name, 1);
 	FLUSH_SECTORS(fatd);
 	_fs_unlock();
 	return ret;
@@ -579,7 +579,7 @@ static int fs_dopen(iop_file_t *fd, const char *name)
 	memset(fd->privdata, 0, sizeof(fs_dir)); //NB: also implies "file_flag = FS_FILE_FLAG_FOLDER;"
 	rec = (fs_dir *) fd->privdata;
 
-	rec->status = fat_getFirstDirentry(fatd, (char*)name, &rec->fatdlist, &rec->dirent.fatdir, &rec->current_fatdir);
+	rec->status = fat_getFirstDirentry(fatd, (const unsigned char*)name, &rec->fatdlist, &rec->dirent.fatdir, &rec->current_fatdir);
 
 	// root directory may have no entries, nothing else may.
 	if(rec->status == 0 && !is_root)
@@ -645,7 +645,7 @@ static int fs_dread(iop_file_t *fd, fio_dirent_t *buffer)
 	{
 		memset(buffer, 0, sizeof(fio_dirent_t));
 		fillStat(&buffer->stat, &rec->current_fatdir);
-		strcpy(buffer->name, rec->current_fatdir.name);
+		strcpy(buffer->name, (const char*)rec->current_fatdir.name);
 	}
 
 	if (rec->status > 0)
@@ -671,7 +671,7 @@ static int fs_getstat(iop_file_t *fd, const char *name, fio_stat_t *stat)
 	if (fatd == NULL) { _fs_unlock(); return -ENODEV; }
 
 	XPRINTF("USBHDFSD: Calling fat_getFileStartCluster from fs_getstat\n");
-	ret = fat_getFileStartCluster(fatd, name, &cluster, &fatdir);
+	ret = fat_getFileStartCluster(fatd, (const unsigned char*)name, &cluster, &fatdir);
 	if (ret < 0) {
 		_fs_unlock();
 		return ret;

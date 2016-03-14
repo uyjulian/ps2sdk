@@ -246,7 +246,7 @@ void pfsFillSelfAndParentDentries(pfs_cache_t *clink, pfs_blockinfo *self, pfs_b
 
 	memset(dentry, 0, pfsMetaSize);
 	dentry->inode=self->number;
-	*(u32*)dentry->path='.';
+	dentry->path[0]='.';
 	dentry->sub=(u8)self->subpart;
 	dentry->pLen=1;
 	dentry->aLen=12 | FIO_S_IFDIR;
@@ -254,7 +254,7 @@ void pfsFillSelfAndParentDentries(pfs_cache_t *clink, pfs_blockinfo *self, pfs_b
 	dentry=(pfs_dentry *)((u32)dentry + 12);
 
 	dentry->inode=parent->number;
-	*(u32*)dentry->path=('.'<<8) + '.';
+	dentry->path[1]=dentry->path[0]='.';
 	dentry->sub=(u8)parent->subpart;
 	dentry->pLen=2;
 	dentry->aLen=500 | FIO_S_IFDIR;

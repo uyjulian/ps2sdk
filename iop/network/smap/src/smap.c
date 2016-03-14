@@ -40,8 +40,6 @@ static unsigned int EnableAutoNegotiation=1;
 static unsigned int EnablePinStrapConfig=0;
 static unsigned int SmapConfiguration=0x5E0;
 
-extern void *_gp;
-
 static void _smap_write_phy(volatile u8 *emac3_regbase, unsigned char address, unsigned short int value){
 	unsigned int i, PHYRegisterValue;
 
@@ -310,11 +308,9 @@ static unsigned int LinkCheckTimerCB(struct SmapDriverData *SmapDrivPrivData){
 
 static int HandleTxIntr(struct SmapDriverData *SmapDrivPrivData){
 	int result, OldState;
-	volatile u8 *smap_regbase;
 	USE_SMAP_TX_BD;
 	unsigned short int ctrl_stat;
 
-	smap_regbase=SmapDrivPrivData->smap_regbase;
 	result=0;
 	if(SmapDrivPrivData->NumPacketsInTx>0){
 		do{
@@ -422,22 +418,15 @@ static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
 }
 
 static int Dev9IntrCb(int flag){
-	SaveGP();
-
 	dev9IntrDisable(SMAP_INTR_RXEND);
 	iSetEventFlag(SmapDriverData.Dev9IntrEventFlag, SMAP_EVENT_INTR);
-
-	RestoreGP();
 
 	return 0;
 }
 
 static int Dev9TXEndIntrHandler(int flag){
-	SaveGP();
-
 	dev9IntrDisable(SMAP_INTR_TXEND);
 	iWakeupThread(SmapDriverData.TxHandlerThreadID);
-	RestoreGP();
 
 	return 0;
 }
@@ -471,18 +460,14 @@ static void Dev9PostDmaCbHandler(int bcr, int dir){
 }
 
 int SMAPStart(void){
-	SaveGP();
 	SetEventFlag(SmapDriverData.Dev9IntrEventFlag, SMAP_EVENT_START);
-	RestoreGP();
 
 	return 0;
 }
 
 void SMAPStop(void){
-	SaveGP();
 	SetEventFlag(SmapDriverData.Dev9IntrEventFlag, SMAP_EVENT_STOP);
 	SmapDriverData.NetDevStopFlag=1;
-	RestoreGP();
 }
 
 static void TxHandlerThread(void *arg){
@@ -578,8 +563,6 @@ static inline int SMAPGetLinkStatus(void){
 int SMAPIoctl(unsigned int command, void *args, unsigned int args_len, void *output, unsigned int length){
 	int result;
 
-	SaveGP();
-
 	switch(command){
 		case NETMAN_NETIF_IOCTL_ETH_GET_MAC:
 			result=SMAPGetMACAddress(output);
@@ -627,8 +610,6 @@ int SMAPIoctl(unsigned int command, void *args, unsigned int args_len, void *out
 			result=-1;
 	}
 
-	RestoreGP();
-
 	return result;
 }
 
@@ -636,7 +617,6 @@ static inline int SetupNetDev(void){
 	int result;
 	iop_event_t EventFlagData;
 	iop_thread_t ThreadData;
-	volatile u8 *emac3_regbase;
 	static struct NetManNetIF device={
 		"SMAP",
 		0,
@@ -646,8 +626,6 @@ static inline int SetupNetDev(void){
 		&SMAPSendPacket,
 		&SMAPIoctl
 	};
-
-	emac3_regbase=SmapDriverData.emac3_regbase;
 
 	EventFlagData.attr=0;
 	EventFlagData.option=0;
@@ -770,9 +748,9 @@ int smap_init(int argc, char *argv[]){
 			EnablePinStrapConfig=0;
 		}
 		else if(strncmp("thpri=", *argv, 6)==0){
-			CmdString=&((unsigned char*)*argv)[6];
+			CmdString=&((char*)*argv)[6];
 			if(look_ctype_table(CmdString[0])&4){
-				ThreadPriority=strtoul(&((unsigned char*)*argv)[6], NULL, 10);
+				ThreadPriority=strtoul(&((char*)*argv)[6], NULL, 10);
 				if(ThreadPriority-9>=0x73){
 					return DisplayHelpMessage();
 				}
@@ -787,9 +765,9 @@ int smap_init(int argc, char *argv[]){
 			else return DisplayHelpMessage();
 		}
 		else if(strncmp("thstack=", *argv, 8)==0){
-			CmdString=&((unsigned char*)*argv)[8];
+			CmdString=&((char*)*argv)[8];
 			if(look_ctype_table(CmdString[0])&4){
-				ThreadStackSize=strtoul(&((unsigned char*)*argv)[8], NULL, 10);
+				ThreadStackSize=strtoul(&((char*)*argv)[8], NULL, 10);
 				if(((unsigned char*)*argv)[8]!='\0'){
 					while(look_ctype_table(*CmdString)&4){
 						CmdString++;

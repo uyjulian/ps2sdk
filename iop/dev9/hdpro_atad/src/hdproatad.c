@@ -585,7 +585,7 @@ static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 			unsigned short int r_data = *(unsigned short int *)buf;
 			hdpro_io_write(ATAreg_DATA_WR, r_data);
 			chk ^= r_data + i;
-			cmd_state->buf = ++((unsigned short int *)buf);
+			cmd_state->buf = (unsigned short int *)buf + 1;
 		}
 
 		unsigned short int out = hdpro_io_read(ATAreg_DATA_RD) & 0xffff;
@@ -595,7 +595,7 @@ static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 		if (cmd_state->type == 8) {
 			for (i = 0; i < 4; i++) {
 				hdpro_io_write(ATAreg_DATA_WR, *(unsigned char *)buf);
-				cmd_state->buf = ++((unsigned char *)buf);
+				cmd_state->buf = (unsigned char *)buf + 1;
 			}
 		}
 
@@ -620,7 +620,7 @@ static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 			chk ^= res0 + i;
 
 			*(unsigned short int *)buf = res0 & 0xffff;
-			cmd_state->buf = ++((unsigned short int *)buf);
+			cmd_state->buf = (unsigned short int *)buf + 1;
 		}
 
 		HDPROreg_IO8 = 0x51;
@@ -902,7 +902,7 @@ int ata_device_sector_io(int device, void *buf, unsigned int lba, unsigned int n
 			continue;
 
 		nbytes = len * 512;
-		(u8 *)buf += nbytes;
+		buf = (void*)((u8 *)buf + nbytes);
 		lba += len;
 		nsectors -= len;
 	}

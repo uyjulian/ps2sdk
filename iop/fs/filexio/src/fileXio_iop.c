@@ -93,12 +93,12 @@ int fileXio_GetDeviceList_RPC(struct fileXioDevice* ee_devices, int eecount)
     while (devices[device_count] && device_count < eecount)
     {
         iop_device_t *device = devices[device_count];
-        strncpy(local_devices[device_count].name, device->name, 128);
-        local_devices[device_count].name[127] = '\0';
+        strncpy(local_devices[device_count].name, device->name, sizeof(local_devices[device_count].name));
+        local_devices[device_count].name[sizeof(local_devices[device_count].name) - 1] = '\0';
         local_devices[device_count].type = device->type;
         local_devices[device_count].version = device->version;
-        strncpy(local_devices[device_count].desc, device->desc, 128);
-        local_devices[device_count].desc[127] = '\0';
+        strncpy(local_devices[device_count].desc, device->desc, sizeof(local_devices[device_count].desc));
+        local_devices[device_count].desc[sizeof(local_devices[device_count].desc) - 1] = '\0';
         ++device_count;
     }
     if (device_count)
@@ -249,7 +249,7 @@ EXIT:
 	return (total);
 }
 
-int fileXio_Write_RPC(int outfd, const char *write_buf, int write_size, int mis,char *misbuf)
+int fileXio_Write_RPC(int outfd, const char *write_buf, int write_size, int mis,u8 *misbuf)
 {
      SifRpcReceiveData_t rdata;
      int left;

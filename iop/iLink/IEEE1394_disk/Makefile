@@ -17,7 +17,7 @@ IOP_OBJS = sbp2_driver.o imports.o main.o scsi.o fat_write.o fs_driver.o scache.
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 
 IOP_INCS += -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -I$(IOP_SRC_DIR)/include
-IOP_CFLAGS += -mno-check-zero-division #-DSIF_CALLBACKS_12_13
+IOP_CFLAGS += -mno-check-zero-division -Wno-attributes #-DSIF_CALLBACKS_12_13
 
 all: $(IOP_OBJS_DIR) $(IOP_BIN_DIR) $(IOP_BIN)
 

@@ -4,6 +4,8 @@
 
 #define SPR_BEGIN 0x70000000
 
+#include <stdio.h>
+
 packet_t *packet_init(int qwords, int type)
 {
 

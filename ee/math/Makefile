@@ -11,7 +11,7 @@ EE_OBJS_DIR = obj/
 EE_LIB_DIR = lib/
 EE_SRC_DIR = src/
 EE_INC_DIR = include/
-EE_CFLAGS = -fshort-double -mlong64 -mhard-float -fno-builtin
+EE_CFLAGS = -fno-builtin
 
 EE_OBJS = acoshf.o airyf.o asinf.o asinhf.o atanf.o \
 atanhf.o bdtrf.o betaf.o cbrtf.o chbevlf.o chdtrf.o \

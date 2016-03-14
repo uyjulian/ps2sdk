@@ -928,13 +928,13 @@ int mcman_open2(int port, int slot, char *filename, int flags)
 	do {
 		p = (u8 *)(filename + i + 1);
 		pos = i + 1;
-		r = mcman_chrpos(p, '/');
+		r = mcman_chrpos((char *)p, '/');
 		if (r < 0)
 			break;
 		i = pos + r;
 	} while (1);
 
-	p = (char *)(filename + pos);
+	p = (u8 *)(filename + pos);
 
 	mcfree = 0;
 
@@ -955,7 +955,7 @@ int mcman_open2(int port, int slot, char *filename, int flags)
 
 	mcman_wmemset((void *)fse2, sizeof (McFsEntry), 0);
 
-	strncpy((void *)fse2->name, p, 32);
+	strncpy((void *)fse2->name, (const char *)p, 32);
 
 	fse2->created = mcman_dircache[2].modified;
 	fse2->modified = mcman_dircache[2].modified;
@@ -1155,7 +1155,7 @@ int mcman_getdir2(int port, int slot, char *dirname, int flags, int maxent, sceM
 
 	if (!flags) {
 
-		p = (char *)mcman_curdirpath;
+		p = mcman_curdirpath;
 		strncpy(p, dirname, 1023);
 		mcman_curdirpath[1023] = 0;
 

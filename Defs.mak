@@ -32,7 +32,7 @@ LSTDIR = $(BUILDDIR)/lst
 #
 ifeq ($(CPU),ee)
   ifndef EE_TOOL_PREFIX
-    EE_TOOL_PREFIX := $(CPU)-
+    EE_TOOL_PREFIX := mips64r5900el-ps2-elf-
   endif
 
   CC      = $(EE_TOOL_PREFIX)gcc
@@ -46,7 +46,7 @@ ifeq ($(CPU),ee)
 else
   ifeq ($(CPU),iop)
     ifndef IOP_TOOL_PREFIX
-      IOP_TOOL_PREFIX := $(CPU)-
+      IOP_TOOL_PREFIX := mipsel-ps2-irx-
     endif
 
     CC      = $(IOP_TOOL_PREFIX)gcc
