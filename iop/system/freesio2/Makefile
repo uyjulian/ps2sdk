@@ -17,6 +17,7 @@ IOP_OBJS = sio2man.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 
 IOP_CFLAGS += -fno-builtin-printf -fno-builtin-memcpy -DXSIO2MAN
+IOP_INCS += -I$(PS2SDKSRC)/iop/system/sio2log/include/
 
 all: $(IOP_OBJS_DIR) $(IOP_BIN_DIR) $(IOP_BIN)
 

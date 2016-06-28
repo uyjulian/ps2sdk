@@ -22,7 +22,7 @@ endif
 
 LWIP=$(PS2SDKSRC)/common/tcpip/lwip-1.4.1
 
-ps2ip_OBJECTS = ps2ip.o sys.o sys_arch.o init.o mem.o netif.o pbuf.o stats.o tcp_in.o tcp_out.o udp.o memp.o tcp.o etharp.o raw.o def.o timers.o
+ps2ip_OBJECTS = ps2ip.o sys.o sys_arch.o init.o mem.o netif.o pbuf.o stats.o tcp_in.o tcp_out.o udp.o memp.o tcp.o etharp.o raw.o def.o timers.o imports.o exports.o
 
 ifdef PS2IP_DHCP
 ps2ip_OBJECTS+= dhcp.o
@@ -51,7 +51,7 @@ IOP_CFLAGS += -DPS2IP_DNS
 endif
 
 IOP_BIN = $(IOP_BIN_DIR)ps2ip.irx
-IOP_OBJS = $(ps2ip_OBJECTS) $(ps2api_OBJECTS) $(ps2api_IPV4) imports.o exports.o
+IOP_OBJS = $(ps2ip_OBJECTS) $(ps2api_OBJECTS) $(ps2api_IPV4)
 IOP_INCS += -I$(LWIP)/src/include -I$(LWIP)/src/include/ipv4 -I$(IOP_SRC_DIR)include
 IOP_CFLAGS += -DLWIP_NOASSERT -DLWIP_COMPAT_MUTEX -mno-check-zero-division -Wno-attributes -Wno-unused-but-set-variable $(DEBUG_FLAGS)
 
