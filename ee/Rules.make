@@ -6,15 +6,15 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 #
-# $Id$
 
+# Include directories
 EE_INCS := $(EE_INCS) -I$(PS2SDKSRC)/ee/kernel/include -I$(PS2SDKSRC)/common/include -I$(PS2SDKSRC)/ee/libc/include -I$(PS2SDKSRC)/ee/erl/include -I$(EE_INC_DIR)
 
 # C compiler flags
-EE_CFLAGS := -D_EE -G0 -O2 -Wall $(EE_CFLAGS)
+EE_CFLAGS := -D_EE -O2 -G0 -Wall $(EE_CFLAGS)
 
 # C++ compiler flags
-EE_CXXFLAGS := -D_EE -G0 -O2 -Wall $(EE_CXXFLAGS)
+EE_CXXFLAGS := -D_EE -O2 -G0 -Wall $(EE_CXXFLAGS)
 
 # Linker flags
 #EE_LDFLAGS := -nostartfiles $(EE_LDFLAGS)

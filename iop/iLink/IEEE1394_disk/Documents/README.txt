@@ -5,6 +5,7 @@ IEEE1394_disk is an SBP-2 over IEEE1394 device software driver.
 It's designed to be used with iLinkman v0.98H and later.
 
 It was based on USBHDFSD, and hence shares the features of USBHDFSD.
+Licenses can be found at USBHDFSD project folder.
 It supports the FAT12, FAT16 and FAT32 filesystems, and has experimental (Untested) write support.
 Caution should be exercised when attempting to write data with this driver as anything can go wrong, possibly causing the existing data on your disk to be damaged.
 

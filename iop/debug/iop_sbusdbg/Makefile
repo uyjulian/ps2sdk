@@ -13,7 +13,7 @@ IOP_SRC_DIR = src/
 IOP_INC_DIR = include/
 
 IOP_BIN  = $(IOP_BIN_DIR)iop_sbusdbg.irx
-IOP_OBJS = main.o sbus_dbg_low.o sbus_tty.o sbus_dbg.o imports.o
+IOP_OBJS = iop_sbusdbg.o sbus_dbg_low.o sbus_tty.o sbus_dbg.o imports.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 IOP_INCS = -I$(PS2SDKSRC)/common/sbus/include -I$(PS2SDKSRC)/iop/debug/iopdebug/include
 

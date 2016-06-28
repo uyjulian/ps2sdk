@@ -14,7 +14,6 @@ EE_OBJS_DIR = obj/
 EE_LIB_DIR = lib/
 EE_SRC_DIR = src/
 EE_INC_DIR = include/
-EE_SAMPLE_DIR = samples/
 
 LIBSBV_LIB  = $(EE_LIB_DIR)libpatches.a
 
