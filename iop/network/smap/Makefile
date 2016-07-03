@@ -16,10 +16,10 @@ IOP_INC_DIR = include/
 LWIP_DHCP=1
 
 IOP_BIN  = $(IOP_BIN_DIR)smap.irx
-IOP_OBJS = main.o smap.o xfer.o imports.o exports.o
+IOP_OBJS = smap_main.o smap.o xfer.o imports.o exports.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 
-IOP_INCS += -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -I$(PS2SDKSRC)/iop/dev9/dev9/include -I$(IOP_SRC_DIR)/include
+IOP_INCS += -I$(PS2SDKSRC)/iop/dev9/dev9/include -I$(IOP_SRC_DIR)include
 IOP_CFLAGS += -mno-check-zero-division -Wno-unused-value
 
 ifdef LWIP_DHCP

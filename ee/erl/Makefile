@@ -14,12 +14,8 @@ EE_OBJS_DIR = obj/
 EE_LIB_DIR = lib/
 EE_SRC_DIR = src/
 EE_INC_DIR = include/
-EE_SAMPLE_DIR = samples/
 
 EE_LIB = $(EE_LIB_DIR)liberl.a
-EE_SAMPLES = hello
-
-EE_SAMPLES := $(EE_SAMPLES:%=$(EE_SAMPLE_DIR)%)
 
 EE_OBJS = erl.o hashtab.o lookupa.o recycle.o
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)

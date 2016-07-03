@@ -7,12 +7,12 @@
 # Review ps2sdk README & LICENSE files for further details.
 #
 
-EE_BIN = main.elf
-EE_OBJS = main.o
+EE_BIN = libgs_doublebuffer.elf
+EE_OBJS = libgs_doublebuffer.o
 EE_LIBS = -lgs
 
 all: $(EE_BIN)
-	ee-strip --strip-all $(EE_BIN)
+	$(EE_STRIP) --strip-all $(EE_BIN)
 
 clean:
 	rm -f $(EE_BIN) $(EE_OBJS)

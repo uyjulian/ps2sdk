@@ -8,7 +8,7 @@
 # Review ps2sdk README & LICENSE files for further details.
 #
 # $Id$
-# Linkfile script for ee-ld
+# Linkfile script for $(EE_LD)
 */
 
 ENTRY(_start);

@@ -14,14 +14,10 @@ EE_OBJS_DIR = obj/
 EE_LIB_DIR = lib/
 EE_SRC_DIR = src/
 EE_INC_DIR = include/
-EE_SAMPLE_DIR = samples/
 
 LIBC_LIB  = $(EE_LIB_DIR)libc.a
 
 EE_LIB = $(LIBC_LIB)
-
-EE_SAMPLES = hello prof regress
-EE_SAMPLES := $(EE_SAMPLES:%=$(EE_SAMPLE_DIR)%)
 
 CORE_OBJS = sbrk.o memchr.o memcpy.o memset.o strcat.o \
 	strncmp.o memcmp.o memmove.o strcpy.o strncat.o \
