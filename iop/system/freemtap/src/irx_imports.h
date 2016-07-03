@@ -7,22 +7,21 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 #
-# $Id$
 # Defines all IRX imports.
 */
 
 #ifndef IOP_IRX_IMPORTS_H
 #define IOP_IRX_IMPORTS_H
 
-#include "irx.h"
+#include <irx.h>
 
 /* Please keep these in alphabetical order!  */
-#include "loadcore.h"
-#include "sifcmd.h"
-#include "sifman.h"
-#include "stdio.h"
-#include "thbase.h"
-#include "thevent.h"
-#include "xsio2man.h"
+#include <loadcore.h>
+#include <sifcmd.h>
+#include <sifman.h>
+#include <stdio.h>
+#include <thbase.h>
+#include <thevent.h>
+#include <xsio2man.h>
 
 #endif /* IOP_IRX_IMPORTS_H */

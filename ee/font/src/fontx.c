@@ -379,7 +379,7 @@ void fontx_unload(fontx_t *fontx)
 
 }
 
-unsigned char *fontx_get_char(fontx_t* fontx, unsigned short c)
+char *fontx_get_char(fontx_t* fontx, unsigned short c)
 {
 
 	unsigned int i;
@@ -402,7 +402,7 @@ unsigned char *fontx_get_char(fontx_t* fontx, unsigned short c)
 	if ((fontx_header->type == SINGLE_BYTE) && (c <= 0xFF))
 	{
 
-		return (unsigned char *)(fontx->font + (fontx->offset + c * fontx->charsize));
+		return (fontx->font + (fontx->offset + c * fontx->charsize));
 
 	}
 
@@ -435,7 +435,7 @@ unsigned char *fontx_get_char(fontx_t* fontx, unsigned short c)
 
 	table_offset = table_offset + table + ( c - fontx_header->block[table].start);
 
-	return (unsigned char *)(fontx->font + (fontx->offset + table_offset*fontx->charsize));
+	return (fontx->font + (fontx->offset + table_offset*fontx->charsize));
 
 }
 
@@ -503,7 +503,7 @@ qword_t *draw_fontx_char(qword_t *q, unsigned short c, vertex_t *v0, fontx_t *fo
 
 	fontx_hdr* fontx_header = (fontx_hdr*)fontx->font;
 
-	char_offset = (char *)fontx_get_char(fontx,c);
+	char_offset = fontx_get_char(fontx,c);
 
 	if (!char_offset)
 	{

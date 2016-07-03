@@ -7,8 +7,6 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 #
-# NB: inapplicable old copyright claim to this material removed, as that
-# NB: claim would only relate to the old material created by that author
 # Defines all IRX imports.
 */
 

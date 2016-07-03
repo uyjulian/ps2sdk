@@ -20,7 +20,6 @@
 #include <thbase.h>
 #include <intrman.h>
 #include <sysmem.h>
-#include <iomanX.h>
 #include <thsemap.h>
 #include <ps2snd.h>
 #include "mod.h"
