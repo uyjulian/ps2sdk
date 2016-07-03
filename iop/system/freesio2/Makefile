@@ -10,6 +10,7 @@
 IOP_OBJS_DIR = obj/
 IOP_BIN_DIR = irx/
 IOP_SRC_DIR = $(PS2SDKSRC)/iop/system/sio2log/src/
+IOP_INC_DIR = $(PS2SDKSRC)/iop/system/sio2log/include/
 
 IOP_BIN  = $(IOP_BIN_DIR)freesio2.irx
 IOP_OBJS = sio2man.o imports.o exports.o

@@ -13,7 +13,7 @@ IOP_SRC_DIR = src/
 IOP_INC_DIR = include/
 
 IOP_BIN = $(IOP_BIN_DIR)udptty.irx
-IOP_OBJS = main.o smap.o udp.o tty.o imports.o
+IOP_OBJS = udptty.o smap.o udp.o tty.o imports.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 IOP_INCS += -I. -I$(PS2SDKSRC)/iop/dev9/dev9/include
 

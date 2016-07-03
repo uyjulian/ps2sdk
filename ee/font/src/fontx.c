@@ -402,7 +402,7 @@ unsigned char *fontx_get_char(fontx_t* fontx, unsigned short c)
 	if ((fontx_header->type == SINGLE_BYTE) && (c <= 0xFF))
 	{
 
-		return (fontx->font + (fontx->offset + c * fontx->charsize));
+		return (unsigned char *)(fontx->font + (fontx->offset + c * fontx->charsize));
 
 	}
 
@@ -435,7 +435,7 @@ unsigned char *fontx_get_char(fontx_t* fontx, unsigned short c)
 
 	table_offset = table_offset + table + ( c - fontx_header->block[table].start);
 
-	return (fontx->font + (fontx->offset + table_offset*fontx->charsize));
+	return (unsigned char *)(fontx->font + (fontx->offset + table_offset*fontx->charsize));
 
 }
 
