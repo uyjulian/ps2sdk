@@ -30,7 +30,7 @@ void SetOsdConfigParam(ConfigParam* config){
 	OSDConfig.videoOutput=config->videoOutput;
 	OSDConfig.japLanguage=config->japLanguage;
 	OSDConfig.ps1drvConfig=config->ps1drvConfig;
-	OSDConfig.region=config->region;
+	OSDConfig.version=config->version;
 	OSDConfig.language=config->language;
 	OSDConfig.timezoneOffset=config->timezoneOffset;
 }
@@ -41,7 +41,7 @@ void GetOsdConfigParam(ConfigParam* config){
 	config->videoOutput=OSDConfig.videoOutput;
 	config->japLanguage=OSDConfig.japLanguage;
 	config->ps1drvConfig=OSDConfig.ps1drvConfig;
-	config->region=OSDConfig.region;
+	config->version=OSDConfig.version;
 	config->language=OSDConfig.language;
 	config->timezoneOffset=OSDConfig.timezoneOffset;
 }
@@ -72,7 +72,7 @@ void SetOsdConfigParam2(void* config, int size, int offset){
 
 int GetOsdConfigParam2(void* config, int size, int offset){
 	unsigned int AmountToRead, ReadEnd, i;
-	u8*ptr;
+	u8 *ptr;
 	u64 SysConfigParam;
 
 	ptr=config;
