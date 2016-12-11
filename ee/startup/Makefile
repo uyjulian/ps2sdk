@@ -16,10 +16,10 @@ clean:
 	rm -f -r $(EE_OBJS_DIR)
 
 release:
-	$(ECHO) Installing src/linkfile into $(PS2SDK)/ee/startup
-	$(ECHO) Installing $(EE_OBJS_DIR)crt0.o into $(PS2SDK)/ee/startup
-	cp -f src/linkfile $(PS2SDK)/ee/startup
-	cp -f obj/crt0.o $(PS2SDK)/ee/startup
+	$(ECHO) Installing src/linkfile into $(PS2SDKUJ)/ee/startup
+	$(ECHO) Installing $(EE_OBJS_DIR)crt0.o into $(PS2SDKUJ)/ee/startup
+	cp -f src/linkfile $(PS2SDKUJ)/ee/startup
+	cp -f obj/crt0.o $(PS2SDKUJ)/ee/startup
 
 include $(PS2SDKSRC)/Defs.make
 include $(PS2SDKSRC)/ee/Rules.make

@@ -14,7 +14,7 @@
 #
 
 RELEASE_IOP_DIRS = iop/ iop/include/ iop/irx/ iop/lib
-RELEASE_IOP_DIRS := $(RELEASE_IOP_DIRS:%=$(PS2SDK)/%)
+RELEASE_IOP_DIRS := $(RELEASE_IOP_DIRS:%=$(PS2SDKUJ)/%)
 
 
 release-dirs:
@@ -28,9 +28,9 @@ release-dirs:
 
 release-lib:
 	@if test $(IOP_LIB) ; then \
-	   $(ECHO) Installing $(IOP_LIB) to $(PS2SDK)/iop/lib ; \
-	   cp -f $(IOP_LIB) $(PS2SDK)/iop/lib/ ; \
-	   chmod 644 $(PS2SDK)/iop/$(IOP_LIB) ; \
+	   $(ECHO) Installing $(IOP_LIB) to $(PS2SDKUJ)/iop/lib ; \
+	   cp -f $(IOP_LIB) $(PS2SDKUJ)/iop/lib/ ; \
+	   chmod 644 $(PS2SDKUJ)/iop/$(IOP_LIB) ; \
 	fi;
 
 
@@ -40,9 +40,9 @@ release-lib:
 
 release-bin:
 	@if test $(IOP_BIN) ; then \
-	   $(ECHO) Installing $(IOP_BIN) to $(PS2SDK)/iop/irx ; \
-	   cp -f $(IOP_BIN) $(PS2SDK)/iop/irx/ ; \
-	   chmod 644 $(PS2SDK)/iop/$(IOP_BIN) ; \
+	   $(ECHO) Installing $(IOP_BIN) to $(PS2SDKUJ)/iop/irx ; \
+	   cp -f $(IOP_BIN) $(PS2SDKUJ)/iop/irx/ ; \
+	   chmod 644 $(PS2SDKUJ)/iop/$(IOP_BIN) ; \
 	fi;
 
 #
@@ -54,9 +54,9 @@ release-include:
 	@if test -d include ; then \
 	   for file in include/*; do \
 	     if test -f $$file ; then \
-	       $(ECHO) Installing $$file to $(PS2SDK)/iop/include ; \
-	       cp -f $$file $(PS2SDK)/iop/include ; \
-	       chmod 644 $(PS2SDK)/iop/$$file ; \
+	       $(ECHO) Installing $$file to $(PS2SDKUJ)/iop/include ; \
+	       cp -f $$file $(PS2SDKUJ)/iop/include ; \
+	       chmod 644 $(PS2SDKUJ)/iop/$$file ; \
 	     fi \
 	   done; \
 	fi;
@@ -65,6 +65,6 @@ release: release-dirs release-lib release-bin release-include
 
 
 release-clean:
-	rm -f $(PS2SDK)/iop/include/*
-	rm -f $(PS2SDK)/iop/irx/*
-	rm -f $(PS2SDK)/iop/lib/*
+	rm -f $(PS2SDKUJ)/iop/include/*
+	rm -f $(PS2SDKUJ)/iop/irx/*
+	rm -f $(PS2SDKUJ)/iop/lib/*

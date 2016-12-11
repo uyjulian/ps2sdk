@@ -13,7 +13,7 @@
 #
 
 RELEASE_TOOLS_DIRS = bin/
-RELEASE_TOOLS_DIRS := $(RELEASE_TOOLS_DIRS:%=$(PS2SDK)/%)
+RELEASE_TOOLS_DIRS := $(RELEASE_TOOLS_DIRS:%=$(PS2SDKUJ)/%)
 
 
 release-dirs:
@@ -25,7 +25,7 @@ release-dirs:
 
 release-bin:
 	 @if test $(TOOLS_BIN) ; then \
-	    $(ECHO) Installing $(TOOLS_BIN) to $(PS2SDK) ; \
+	    $(ECHO) Installing $(TOOLS_BIN) to $(PS2SDKUJ) ; \
 	    cp -f $(TOOLS_BIN) $(RELEASE_TOOLS_DIRS) ; \
 	 fi;
 

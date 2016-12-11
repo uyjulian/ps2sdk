@@ -179,10 +179,10 @@ include $(PS2SDKSRC)/ee/Rules.make
 include $(PS2SDKSRC)/ee/Rules.release
 
 release:
-	$(ECHO) Installing $(LIBSYSCALL_LIB) into $(PS2SDK)/ee/lib
-	$(ECHO) Installing $(EE_LIB) into $(PS2SDK)/ee/lib
-	$(ECHO) Installing *.erl into $(PS2SDK)/ee/lib
-	cp -f $(LIBSYSCALL_LIB) $(PS2SDK)/ee/lib
-	cp -f $(EE_LIB) $(PS2SDK)/ee/lib
-	cp -f $(EE_LIB:%.a=%.erl) $(PS2SDK)/ee/lib
-	chmod 644 $(PS2SDK)/ee/$(LIBSYSCALL_LIB) $(PS2SDK)/ee/$(EE_LIB) $(PS2SDK)/ee/$(EE_LIB:%.a=%.erl)
+	$(ECHO) Installing $(LIBSYSCALL_LIB) into $(PS2SDKUJ)/ee/lib
+	$(ECHO) Installing $(EE_LIB) into $(PS2SDKUJ)/ee/lib
+	$(ECHO) Installing *.erl into $(PS2SDKUJ)/ee/lib
+	cp -f $(LIBSYSCALL_LIB) $(PS2SDKUJ)/ee/lib
+	cp -f $(EE_LIB) $(PS2SDKUJ)/ee/lib
+	cp -f $(EE_LIB:%.a=%.erl) $(PS2SDKUJ)/ee/lib
+	chmod 644 $(PS2SDKUJ)/ee/$(LIBSYSCALL_LIB) $(PS2SDKUJ)/ee/$(EE_LIB) $(PS2SDKUJ)/ee/$(EE_LIB:%.a=%.erl)

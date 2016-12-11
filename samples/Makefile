@@ -9,7 +9,7 @@
 # $Id$
 
 
-SAMPLES_TARGET = $(PS2SDK)/samples
+SAMPLES_TARGET = $(PS2SDKUJ)/samples
 
 all:
 	@$(ECHO) Nothing to do in samples

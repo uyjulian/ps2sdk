@@ -45,9 +45,9 @@ clean:
 	rm -f -r $(EE_OBJS_DIR) $(EE_BIN_DIR) $(EE_SRC_DIR)exports.c
 
 release:
-	$(ECHO) Installing $(LOADER_BIN) to $(PS2SDK)/ee/bin/ ;
-	cp -f $(LOADER_BIN) $(PS2SDK)/ee/bin/
-	chmod 644 $(PS2SDK)/ee/bin/erl-loader.elf
+	$(ECHO) Installing $(LOADER_BIN) to $(PS2SDKUJ)/ee/bin/ ;
+	cp -f $(LOADER_BIN) $(PS2SDKUJ)/ee/bin/
+	chmod 644 $(PS2SDKUJ)/ee/bin/erl-loader.elf
 
 include $(PS2SDKSRC)/Defs.make
 include $(PS2SDKSRC)/ee/Rules.make

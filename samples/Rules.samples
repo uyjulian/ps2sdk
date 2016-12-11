@@ -9,7 +9,7 @@
 # $Id$
 
 
-TARGET = $(PS2SDK)/samples/$(SAMPLE_DIR)
+TARGET = $(PS2SDKUJ)/samples/$(SAMPLE_DIR)
 
 #
 # The only valid target is release, but there are here just in case.

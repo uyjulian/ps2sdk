@@ -82,10 +82,10 @@ obj/%.o: src/%.S
 	$(EE_CC) $(EE_CFLAGS) $(EE_INC) -c $< -o $@
 
 release: all
-	mkdir -p $(PS2SDK)/ee/include
-	$(ECHO) Installing $(IOP_BIN) into $(PS2SDK)/iop/irx
-	cp -f $(IOP_BIN) $(PS2SDK)/iop/irx
-	$(ECHO) Installing $(EE_LIB) into $(PS2SDK)/ee/lib
-	cp -f $(EE_LIB) $(PS2SDK)/ee/lib
-	$(ECHO) Installing include/*.h into $(PS2SDK)/common/include
-	cp -f include/*.h $(PS2SDK)/common/include
+	mkdir -p $(PS2SDKUJ)/ee/include
+	$(ECHO) Installing $(IOP_BIN) into $(PS2SDKUJ)/iop/irx
+	cp -f $(IOP_BIN) $(PS2SDKUJ)/iop/irx
+	$(ECHO) Installing $(EE_LIB) into $(PS2SDKUJ)/ee/lib
+	cp -f $(EE_LIB) $(PS2SDKUJ)/ee/lib
+	$(ECHO) Installing include/*.h into $(PS2SDKUJ)/common/include
+	cp -f include/*.h $(PS2SDKUJ)/common/include

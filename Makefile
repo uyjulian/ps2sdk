@@ -50,28 +50,28 @@ release-clean:
 	
 rebuild: env_build_check $(subdir_clean) $(subdir_list)
 
-$(PS2SDK)/common/include:
-	$(MKDIR) -p $(PS2SDK)/common
-	$(MKDIR) -p $(PS2SDK)/common/include
-	cp -f $(PS2SDKSRC)/common/include/*.h $(PS2SDK)/common/include/
+$(PS2SDKUJ)/common/include:
+	$(MKDIR) -p $(PS2SDKUJ)/common
+	$(MKDIR) -p $(PS2SDKUJ)/common/include
+	cp -f $(PS2SDKSRC)/common/include/*.h $(PS2SDKUJ)/common/include/
 
-$(PS2SDK)/ports:
-	$(MKDIR) -p $(PS2SDK)/ports
+$(PS2SDKUJ)/ports:
+	$(MKDIR) -p $(PS2SDKUJ)/ports
 
 install: release
 
-release: build release_base release-clean $(PS2SDK)/common/include $(PS2SDK)/ports $(subdir_release)
+release: build release_base release-clean $(PS2SDKUJ)/common/include $(PS2SDKUJ)/ports $(subdir_release)
 
 release_base: env_release_check
-	@if test ! -d $(PS2SDK) ; then \
-	  $(MKDIR) -p $(PS2SDK) ; \
+	@if test ! -d $(PS2SDKUJ) ; then \
+	  $(MKDIR) -p $(PS2SDKUJ) ; \
 	fi
-	cp -f README.md $(PS2SDK)
-	cp -f CHANGELOG $(PS2SDK)
-	cp -f AUTHORS $(PS2SDK)
-	cp -f LICENSE $(PS2SDK)
-	cp -f ID $(PS2SDK)
-	cp -f Defs.make $(PS2SDK)
+	cp -f README.md $(PS2SDKUJ)
+	cp -f CHANGELOG $(PS2SDKUJ)
+	cp -f AUTHORS $(PS2SDKUJ)
+	cp -f LICENSE $(PS2SDKUJ)
+	cp -f ID $(PS2SDKUJ)
+	cp -f Defs.make $(PS2SDKUJ)
 
 env_build_check:
 	@if test -z $(PS2SDKSRC) ; \
@@ -80,9 +80,9 @@ env_build_check:
 	fi
 
 env_release_check:
-	@if test -z $(PS2SDK) ; \
+	@if test -z $(PS2SDKUJ) ; \
 	then \
-	  $(ECHO) PS2SDK environment variable must be defined. ; \
+	  $(ECHO) PS2SDKUJ environment variable must be defined. ; \
 	  exit 1; \
 	fi
 
