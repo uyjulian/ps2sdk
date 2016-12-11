@@ -119,9 +119,9 @@ ComputeTimeDiff(iop_sys_clock_t* pStart,iop_sys_clock_t* pEnd)
 	u32 iSec, iUSec, iDiff;
 
 	Diff.lo=pEnd->lo-pStart->lo;
-	Diff.hi=pEnd->hi-pStart->hi;
+	Diff.hi=pEnd->hi-pStart->hi - (pStart->lo>pEnd->lo);
 
-	SysClock2USec(&Diff, (u32 *)&iSec, (u32 *)&iUSec);
+	SysClock2USec(&Diff, &iSec, &iUSec);
 	iDiff=(iSec*1000)+(iUSec/1000);
 
 	return((iDiff!=0)?iDiff:1);
@@ -332,7 +332,6 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 void sys_sem_signal(sys_sem_t *sem)
 {
 	dbgprintf("sys_sem_signal: Sema: %d (TID: %d)\n", *sem, GetThreadId());
-
 	SignalSema(*sem);
 }
 
@@ -368,7 +367,7 @@ void sys_arch_unprotect(sys_prot_t Flags)
 	CpuResumeIntr(Flags);
 }
 
-void *malloc(int size){
+void *malloc(unsigned int size){
 	int flags;
 	void *ptr;
 
