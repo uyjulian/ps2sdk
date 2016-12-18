@@ -47,7 +47,7 @@ EE_CFLAGS += -DPS2IP_DNS
 endif
 
 EE_INCS += -I$(LWIP)/src/include -I$(LWIP)/src/include/ipv4 -Isrc/include
-EE_CFLAGS += -Wall -fno-builtin -DLWIP_NOASSERT -DLWIP_COMPAT_MUTEX $(DEBUG_FLAGS) -mno-gpopt -O2 -G0 -mno-check-zero-division -Wno-attributes -Wno-unused-but-set-variable
+EE_CFLAGS += -Wall -fno-builtin -DLWIP_NOASSERT -DLWIP_COMPAT_MUTEX $(DEBUG_FLAGS) -mno-gpopt -Os -G0 -mno-check-zero-division -Wno-attributes -Wno-unused-but-set-variable
 
 EE_LIB = $(EE_LIB_DIR)libps2ip.a
 EE_OBJS  = ps2ip.o sys_arch.o $(ps2ip_OBJECTS) erl-support.o

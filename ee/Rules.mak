@@ -18,9 +18,9 @@ DEFINES_debug   := DEBUG=1 $(DEFINES_debug)
 DEFINES_release := NDEBUG=1 $(DEFINES_release)
 
 CFLAGS_debug     := -g -O0 $(CFLAGS_debug)
-CFLAGS_release   := -O2 -ffast-math $(CFLAGS_release)
+CFLAGS_release   := -Os -ffast-math $(CFLAGS_release)
 CXXFLAGS_debug   := -g -O0 $(CXXFLAGS_debug)
-CXXFLAGS_release := -O2 -ffast-math $(CXXFLAGS_release)
+CXXFLAGS_release := -Os -ffast-math $(CXXFLAGS_release)
 
 # EE-specific #defines, include paths, compiler flags, and linker flags
 #

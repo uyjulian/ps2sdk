@@ -4,7 +4,7 @@ include $(PS2SDKUJ)/Defs.make
 IRX_NAME = hello
 IOP_TARGET = $(IRX_NAME).irx
 
-IOP_CPPFLAGS = -miop -O2 -G0 -I$(PS2SDKUJ)/iop/include -I$(PS2SDKUJ)/common/include -I./include -I./src -Wall -fno-builtin-printf -DIRX_NAME=$(IRX_NAME)
+IOP_CPPFLAGS = -miop -Os -G0 -I$(PS2SDKUJ)/iop/include -I$(PS2SDKUJ)/common/include -I./include -I./src -Wall -fno-builtin-printf -DIRX_NAME=$(IRX_NAME)
 
 IOP_OBJS = hello_main.o hello_exports.o
 IOP_OBJS := $(IOP_OBJS:%=objs/%)

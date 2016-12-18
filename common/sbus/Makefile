@@ -17,7 +17,7 @@ LIB_DIR=lib
 IOP_OBJ_DIR=iop_obj
 IRX_NAME = sbus
 IOP_BIN = bin/$(IRX_NAME).irx
-IOP_CPPFLAGS = -D_IOP -O2 -G0 -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -I./include -I./src -Wall -fno-builtin-printf -DIRX_NAME=$(IRX_NAME)
+IOP_CPPFLAGS = -D_IOP -Os -G0 -I$(PS2SDKSRC)/iop/kernel/include -I$(PS2SDKSRC)/common/include -I./include -I./src -Wall -fno-builtin-printf -DIRX_NAME=$(IRX_NAME)
 IOP_OBJS = ps2_sbus.o iop_sbus.o ps2_sif.o iop_sif2.o sif2cmd.o imports.o exports.o
 IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJ_DIR)/%)
 
@@ -25,7 +25,7 @@ IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJ_DIR)/%)
 EE_OBJS = ps2_sbus.o ee_sbus.o ps2_sif.o ee_sif2.o sif2cmd.o ee_low.o
 EE_OBJS := $(EE_OBJS:%=obj/%)
 EE_LIB = $(LIB_DIR)/libsbus.a
-EE_CFLAGS = -D_EE -O2 -G0 -fno-builtin-printf
+EE_CFLAGS = -D_EE -Os -G0 -fno-builtin-printf
 EE_INC = -I. -I./include -I $(PS2SDKSRC)/common/include -I $(PS2SDKSRC)/ee/include -I $(PS2SDKSRC)/ee/kernel/include
 
 all: $(IOP_OBJ_DIR) $(OBJ_DIR) $(BIN_DIR) $(LIB_DIR) $(IOP_BIN) $(EE_LIB)

@@ -12,10 +12,10 @@
 EE_INCS := -I. $(EE_INCS)
 
 # C compiler flags
-EE_CFLAGS := -D_EE -O2 -G0 -Wall $(EE_CFLAGS)
+EE_CFLAGS := -D_EE -Os -G0 -Wall $(EE_CFLAGS)
 
 # C++ compiler flags
-EE_CXXFLAGS := -D_EE -O2 -G0 -Wall $(EE_CXXFLAGS)
+EE_CXXFLAGS := -D_EE -Os -G0 -Wall $(EE_CXXFLAGS)
 
 # Linker flags
 EE_LDFLAGS := -nostartfiles -L$(PS2SDKUJ)/ee/lib $(EE_LDFLAGS)

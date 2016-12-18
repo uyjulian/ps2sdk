@@ -10,10 +10,10 @@
 
 
 # C compiler flags
-TOOLS_CFLAGS := -O2 -Wall $(TOOLS_CFLAGS)
+TOOLS_CFLAGS := -Os -Wall $(TOOLS_CFLAGS)
 
 # C++ compiler flags
-TOOLS_CXXFLAGS := -O2 -Wall $(TOOLS_CXXFLAGS)
+TOOLS_CXXFLAGS := -Os -Wall $(TOOLS_CXXFLAGS)
 
 # Linker flags
 #TOOLS_LDFLAGS := $(TOOLS_LDFLAGS)
