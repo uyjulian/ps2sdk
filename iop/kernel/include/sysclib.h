@@ -29,10 +29,12 @@ typedef void (*print_callback_t)(char **string, int c);
 char _toupper(char c);
 char _tolower(char c);
 
+#undef toupper
 #ifndef toupper
 #define toupper(c) _toupper(c)
 #endif
 
+#undef tolower
 #ifndef tolower
 #define tolower(c) _tolower(c)
 #endif

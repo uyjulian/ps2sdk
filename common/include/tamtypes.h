@@ -28,7 +28,7 @@ typedef volatile u16 vu16;
 
 #ifdef _EE
 typedef unsigned int u32;
-typedef unsigned long u64;
+typedef unsigned long long u64;
 typedef unsigned int u128 __attribute__(( mode(TI) ));
 
 typedef volatile u32 vu32;
@@ -52,7 +52,7 @@ typedef volatile s16 vs16;
 
 #ifdef _EE
 typedef signed int s32;
-typedef signed long s64;
+typedef signed long long s64;
 typedef signed int s128 __attribute__(( mode(TI) ));
 
 typedef volatile s32 vs32;
