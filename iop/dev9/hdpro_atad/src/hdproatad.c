@@ -24,8 +24,8 @@
 
 #include <atahw.h>
 
-#define MODNAME "atad"
-IRX_ID(MODNAME, 2, 4);
+#define MODNAME "hdcombo_driver"
+IRX_ID(MODNAME, 1, 1);
 
 #define M_PRINTF(format, args...)	\
 	printf(MODNAME ": " format, ## args)
@@ -68,6 +68,7 @@ IRX_ID(MODNAME, 2, 4);
 #define ATAreg_HCYL_WR		0xb2
 #define ATAreg_DATA_WR		0x12
 
+static int ata_devinfo_init = 0;
 static int ata_evflg = -1;
 
 /* Local device info kept for drives 0 and 1.  */
@@ -75,7 +76,7 @@ static ata_devinfo_t atad_devinfo[2];
 
 /* Data returned from DEVICE IDENTIFY is kept here.  Also, this is used by the
    security commands to set and unlock the password.  */
-static unsigned short int ata_param[256];
+static u16 ata_param[256];
 
 /* ATA command info.  */
 typedef struct _ata_cmd_info {
@@ -83,17 +84,16 @@ typedef struct _ata_cmd_info {
 	u8 type;
 } ata_cmd_info_t;
 
+//DMA commands have been removed, since there is no support for DMA.
 static const ata_cmd_info_t ata_cmd_table[] = {
 	{ATA_C_NOP,1},
 	{ATA_C_CFA_REQUEST_EXTENDED_ERROR_CODE,1},
 	{ATA_C_DEVICE_RESET,5},
 	{ATA_C_READ_SECTOR,2},
-	{ATA_C_READ_SECTOR_EXT,0x83},
-	{ATA_C_READ_DMA_EXT,0x84},
+	{ATA_C_READ_SECTOR_EXT,0x82},
 	{ATA_C_WRITE_SECTOR,3},
 	{ATA_C_WRITE_LONG,8},
 	{ATA_C_WRITE_SECTOR_EXT,0x83},
-	{ATA_C_WRITE_DMA_EXT,0x84},
 	{ATA_C_CFA_WRITE_SECTORS_WITHOUT_ERASE,3},
 	{ATA_C_READ_VERIFY_SECTOR,1},
 	{ATA_C_READ_VERIFY_SECTOR_EXT,0x81},
@@ -109,8 +109,6 @@ static const ata_cmd_info_t ata_cmd_table[] = {
 	{ATA_C_READ_MULTIPLE,2},
 	{ATA_C_WRITE_MULTIPLE,3},
 	{ATA_C_SET_MULTIPLE_MODE,1},
-	{ATA_C_READ_DMA,4},
-	{ATA_C_WRITE_DMA,4},
 	{ATA_C_CFA_WRITE_MULTIPLE_WITHOUT_ERASE,3},
 	{ATA_C_GET_MEDIA_STATUS,1},
 	{ATA_C_MEDIA_LOCK,1},
@@ -161,7 +159,6 @@ typedef struct _ata_cmd_state {
 		u16	*buf16;
 	};
 	u32	blkcount;	/* The number of 512-byte blocks (sectors) to transfer.  */
-	s32	dir;		/* DMA direction: 0 - to RAM, 1 - from RAM.  */
 } ata_cmd_state_t;
 
 static ata_cmd_state_t atad_cmd_state;
@@ -174,11 +171,9 @@ static int hdpro_io_start(void);
 static int hdpro_io_finish(void);
 static void hdpro_io_write(unsigned char cmd, unsigned short int val);
 static int hdpro_io_read(unsigned char cmd);
-static int hdpro_io_init(void);
+static int ata_bus_reset(void);
 static int ata_init_devices(ata_devinfo_t *devinfo);
 static int gen_ata_wait_busy(int bits);
-int ata_io_finish(void);
-int ata_device_flush_cache(int device);
 
 extern struct irx_export_table _exp_atad;
 
@@ -220,26 +215,15 @@ int _start(int argc, char *argv[])
 
 	printf(BANNER, VERSION);
 
-	if ((ata_evflg = ata_create_event_flag()) < 0) {
-		M_PRINTF("Couldn't create event flag, exiting.\n");
-		goto out;
-	}
-
 	if (!hdpro_io_start()) {
 		M_PRINTF("Failed to detect HD Pro, exiting.\n");
 		goto out;
 	}
 
-	HDPROreg_IO8 = 0xe3;
-	CDVDreg_STATUS = 0;
+	hdpro_io_finish();
 
-	if (hdpro_io_init() != 0) {
-		M_PRINTF("Failed to init HD Pro, exiting.\n");
-		goto out;
-	}
-
-	if (ata_init_devices(atad_devinfo) != 0) {
-		M_PRINTF("Failed to init device, exiting.\n");
+	if ((ata_evflg = ata_create_event_flag()) < 0) {
+		M_PRINTF("Couldn't create event flag, exiting.\n");
 		goto out;
 	}
 
@@ -252,15 +236,11 @@ int _start(int argc, char *argv[])
 	M_PRINTF("Driver loaded.\n");
 
 out:
-	hdpro_io_finish();
 	return res;
 }
 
 int shutdown(void)
 {
-	ata_device_flush_cache(0);
-	hdpro_io_finish();
-
 	return 0;
 }
 
@@ -287,11 +267,14 @@ static int gen_ata_wait_busy(int bits)
 
 		hdpro_io_start();
 
-		unsigned short int r_control = hdpro_io_read(ATAreg_CONTROL_RD);
+		u16 r_control = hdpro_io_read(ATAreg_CONTROL_RD);
 
 		hdpro_io_finish();
 
-		if (!((r_control & 0xffff) & bits))
+		if (r_control == 0xffff)	//Differs from the normal ATAD here.
+			return ATA_RES_ERR_TIMEOUT;
+
+		if (!(r_control & bits))
 			goto out;
 
 		didx = i / 10;
@@ -327,6 +310,7 @@ out:
 	return res;
 }
 
+//Must be called before any I/O is done with HDPro
 static int hdpro_io_start(void)
 {
 	if (hdpro_io_active)
@@ -355,6 +339,7 @@ static int hdpro_io_start(void)
 	return hdpro_io_active;
 }
 
+//Must be called after I/O is done with HDPro
 static int hdpro_io_finish(void)
 {
 	if (!hdpro_io_active)
@@ -409,7 +394,8 @@ static int hdpro_io_read(u8 cmd)
 	return res0 & 0xffff;
 }
 
-static int hdpro_io_init(void)
+/* Reset the ATA controller/bus.  */
+static int ata_bus_reset(void)
 {
 	suspend_intr();
 
@@ -520,10 +506,6 @@ int ata_io_start(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector, 
 		case 6:
 			using_timeout = 1;
 			break;
-		case 4:
-			atad_cmd_state.dir = (command != ATA_C_READ_DMA && command != ATA_C_READ_DMA_EXT);
-			using_timeout = 1;
-			break;
 	}
 
 	if (using_timeout) {
@@ -546,7 +528,7 @@ int ata_io_start(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector, 
 	/* Finally!  We send off the ATA command with arguments.  */
 	hdpro_io_write(ATAreg_CONTROL_WR, (using_timeout == 0) << 1);
 
-	if(type&0x80){	//For the sake of achieving  (greatly) improved performance, write the registers twice only if required!
+	if(type&0x80){	//For the sake of achieving improved performance, write the registers twice only if required!
 		/* 48-bit LBA requires writing to the address registers twice,
 		   24 bits of the LBA address is written each time.
 		   Writing to registers twice does not affect 28-bit LBA since
@@ -606,7 +588,7 @@ static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 
 		u16 out = hdpro_io_read(ATAreg_DATA_RD) & 0xffff;
 		if (out != (chk & 0xffff))
-			return ATA_RES_ERR_NODATA;
+			return ATA_RES_ERR_IO;
 
 		if (cmd_state->type == 8) {
 			buf8 = cmd_state->buf8;
@@ -648,7 +630,7 @@ static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 
 		u16 r_data = hdpro_io_read(ATAreg_DATA_RD) & 0xffff;
 		if (r_data != (chk & 0xffff))
-			return ATA_RES_ERR_NODATA;
+			return ATA_RES_ERR_IO;
 	}
 
 	return res;
@@ -687,8 +669,9 @@ static void ata_device_probe(ata_devinfo_t *devinfo)
 	hcyl = hdpro_io_read(ATAreg_HCYL_RD) & 0xff;
 	select = hdpro_io_read(ATAreg_SELECT_RD) & 0xff;
 
-	if (nsector != 1)
+	if (nsector != 1)	//Original did not check sector, although it checked nsector.
 		return;
+	devinfo->exists = 1;
 
 	if ((lcyl == 0x00) && (hcyl == 0x00))
 		devinfo->has_packet = 0;
@@ -751,6 +734,15 @@ static int ata_device_identify(int device, void *info)
 	return ata_io_finish();
 }
 
+static int ata_device_smart_enable(int device)
+{
+	int res;
+
+	if(!(res = ata_io_start(NULL, 1, ATA_S_SMART_ENABLE_OPERATIONS, 0, 0, 0x4f, 0xc2, (device << 4) & 0xffff, ATA_C_SMART))) res=ata_io_finish();
+
+	return res;
+}
+
 static int ata_init_devices(ata_devinfo_t *devinfo)
 {
 	int i, res;
@@ -782,7 +774,18 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
 		if (!devinfo[i].has_packet) {
 			res = ata_device_identify(i, ata_param);
 			devinfo[i].exists = (res == 0);
+		} else if (devinfo[i].has_packet == 1) {
+			/* If it's a packet device, send the IDENTIFY PACKET
+			   DEVICE command.  */
+			/*	Packet devices are not supported:
+
+				The original HDPro driver issues the IDENTIFY PACKET DEVICE command,
+				but does not export ata_io_start and ata_io_finish.
+				This makes packet device support impossible. */
+			res = -1;
+			devinfo[i].exists = (res == 0);
 		}
+		/* Otherwise, do nothing if has_packet = 2. */
 
 		/* This next section is HDD-specific: if no device or it's a
 		   packet (ATAPI) device, we're done.  */
@@ -811,6 +814,7 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
 
 		/* PIO mode 0 (flow control).  */
 		ata_device_set_transfer_mode(i, ATA_XFER_MODE_PIO, 0);
+		ata_device_smart_enable(i);
 		/* Disable idle timeout.  */
 		ata_device_idle(i, 0);
 	}
@@ -827,30 +831,36 @@ int ata_io_finish(void)
 
 	if (type == 1 || type == 6) {	/* Non-data commands.  */
 
-retry:
-		suspend_intr();
+		while(1)
+		{	//Unlike ATAD, poll until either the operation is done or a timeout occurs.
+			suspend_intr();
 
-		HDPROreg_IO8 = 0x21;
-		CDVDreg_STATUS = 0;
-		unsigned int ret = HDPROreg_IO8;
-		CDVDreg_STATUS = 0;
+			HDPROreg_IO8 = 0x21;
+			CDVDreg_STATUS = 0;
+			unsigned int ret = HDPROreg_IO8;
+			CDVDreg_STATUS = 0;
 
-		resume_intr();
+			resume_intr();
 
-		if (((ret & 0xff) & 1) == 0) {
-			WaitEventFlag(ata_evflg, ATA_EV_TIMEOUT | ATA_EV_COMPLETE, WEF_CLEAR|WEF_OR, &bits);
-			if (bits & ATA_EV_TIMEOUT) {	/* Timeout.  */
-				M_PRINTF("Error: ATA timeout on a non-data command.\n");
-				return ATA_RES_ERR_TIMEOUT;
+			if (((ret & 0xff) & 1) != 0) {
+				//Command completed.
+				break;
+			}
+
+			//PollEventFlag is used instead of WaitEventFlag, as there is no hardware interrupt.
+			if(PollEventFlag(ata_evflg, ATA_EV_TIMEOUT | ATA_EV_COMPLETE, WEF_CLEAR|WEF_OR, &bits) == 0)
+			{
+				if (bits & ATA_EV_TIMEOUT) {	/* Timeout.  */
+					M_PRINTF("Error: ATA timeout on a non-data command.\n");
+					return ATA_RES_ERR_TIMEOUT;
+				}
 			}
 
 			DelayThread(500);
-			goto retry;
 		}
 
-	} else if (type == 4) {		/* DMA.  */
-			M_PRINTF("Error: DMA mode not implemented.\n");
-			res = ATA_RES_ERR_TIMEOUT;
+	/*	Support for DMA commands (type = 4) is removed because HDPro cannot support DMA.
+		The original would return ATA_RES_ERR_TIMEOUT for type = 4. */
 	} else {			/* PIO transfers.  */
 		stat = hdpro_io_read(ATAreg_CONTROL_RD);
 		if ((res = ata_wait_busy()) < 0)
@@ -934,5 +944,18 @@ int ata_device_sector_io(int device, void *buf, u32 lba, u32 nsectors, int dir)
 /* Export 4 */
 ata_devinfo_t * ata_get_devinfo(int device)
 {
+	if(!ata_devinfo_init){
+		ata_devinfo_init = 1;
+
+		if (!hdpro_io_start())
+			return NULL;
+
+		HDPROreg_IO8 = 0xe3;
+		CDVDreg_STATUS = 0;
+
+		if ((ata_bus_reset() != 0) || (ata_init_devices(atad_devinfo) != 0) || (!hdpro_io_finish()))
+			return NULL;
+	}
+
 	return &atad_devinfo[device];
 }
