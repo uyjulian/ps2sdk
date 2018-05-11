@@ -20,8 +20,44 @@
 #include "main.h"
 
 #include "xfer.h"
+#include "udpbd.h"
 
 extern struct SmapDriverData SmapDriverData;
+
+
+static void Dev9PreDmaCbHandler(int bcr, int dir){
+	volatile u8 *smap_regbase;
+	u16 SliceCount;
+
+	smap_regbase=SmapDriverData.smap_regbase;
+	SliceCount=bcr>>16;
+	if(dir!=DMAC_TO_MEM){
+		SMAP_REG16(SMAP_R_TXFIFO_SIZE)=SliceCount;
+		SMAP_REG8(SMAP_R_TXFIFO_CTRL)=SMAP_TXFIFO_DMAEN;
+	}
+	else{
+		SMAP_REG16(SMAP_R_RXFIFO_SIZE)=SliceCount;
+		SMAP_REG8(SMAP_R_RXFIFO_CTRL)=SMAP_RXFIFO_DMAEN;
+	}
+}
+
+static void Dev9PostDmaCbHandler(int bcr, int dir){
+	volatile u8 *smap_regbase;
+
+	smap_regbase=SmapDriverData.smap_regbase;
+	if(dir!=DMAC_TO_MEM){
+		while(SMAP_REG8(SMAP_R_TXFIFO_CTRL)&SMAP_TXFIFO_DMAEN){};
+	}
+	else{
+		while(SMAP_REG8(SMAP_R_RXFIFO_CTRL)&SMAP_RXFIFO_DMAEN){};
+	}
+}
+
+void xfer_init(void)
+{
+	dev9RegisterPreDmaCb(1, &Dev9PreDmaCbHandler);
+	dev9RegisterPostDmaCb(1, &Dev9PostDmaCbHandler);
+}
 
 static int SmapDmaTransfer(volatile u8 *smap_regbase, void *buffer, unsigned int size, int direction){
 	unsigned int NumBlocks;
@@ -103,16 +139,37 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData){
 				SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = pointer + LengthRounded;
 			}
 			else{
-				if((pbuf=NetManNetProtStackAllocRxPacket(LengthRounded, &payload))!=NULL){
-					CopyFromFIFO(SmapDrivPrivData->smap_regbase, payload, length, pointer);
-					NetManNetProtStackEnQRxPacket(pbuf);
-					NumPacketsReceived++;
+#ifndef NO_BDM
+				u32 data;
+				// Filter out BDFS packages:
+				// - NOTE: must be a multiple of 4, so we're off by 2 bytes!!!
+				// - skip 14 bytes of ethernet
+				// - skip 20 bytes of IP
+				// - skip  8 bytes of UDP
+				// - skip  2 bytes align
+				SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = pointer + 44;
+				data = SMAP_REG32(SMAP_R_RXFIFO_DATA);
+				if (data == UDPBD_HEADER_MAGIC) {
+					udpbd_rx(pointer);
+
+					// Do nothing and drop the frame
+					SmapDrivPrivData->RuntimeStats.RxDroppedFrameCount++;
 				}
 				else {
-					SmapDrivPrivData->RuntimeStats.RxAllocFail++;
-					//Original did this whenever a frame is dropped.
-					SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = pointer + LengthRounded;
+#endif
+					if((pbuf=NetManNetProtStackAllocRxPacket(LengthRounded, &payload))!=NULL){
+						CopyFromFIFO(SmapDrivPrivData->smap_regbase, payload, length, pointer);
+						NetManNetProtStackEnQRxPacket(pbuf);
+						NumPacketsReceived++;
+					}
+					else {
+						SmapDrivPrivData->RuntimeStats.RxAllocFail++;
+						//Original did this whenever a frame is dropped.
+						SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = pointer + LengthRounded;
+					}
+#ifndef NO_BDM
 				}
+#endif
 			}
 
 			SMAP_REG8(SMAP_R_RXFIFO_FRAME_DEC)=0;
@@ -125,6 +182,34 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData){
 	return NumPacketsReceived;
 }
 
+extern void SMAPXmit(void);
+static void *g_buf = NULL;
+static size_t g_bufsize = 0;
+int smap_transmit(void *buf, size_t size)
+{
+    if (g_buf == NULL) {
+        g_buf = buf;
+        g_bufsize = size;
+        SMAPXmit();
+    }
+
+    return 0;
+}
+
+static int smap_tx_get(void ** data, int * netman)
+{
+    if (g_buf != NULL) {
+        *data = g_buf;
+        *netman = 0;
+        g_buf = NULL;
+        return g_bufsize;
+    }
+    else {
+        *netman = 1;
+        return NetManTxPacketNext(data);
+    }
+}
+
 int HandleTxReqs(struct SmapDriverData *SmapDrivPrivData){
 	int result, length;
 	void *data;
@@ -133,10 +218,11 @@ int HandleTxReqs(struct SmapDriverData *SmapDrivPrivData){
 	volatile smap_bd_t *BD_ptr;
 	u16 BD_data_ptr;
 	unsigned int SizeRounded;
+	int nm;
 
 	result=0;
 	while(1){
-		if((length = NetManTxPacketNext(&data)) < 1){
+		if((length = smap_tx_get(&data, &nm)) < 1){
 			return result;
 		}
 		SmapDrivPrivData->packetToSend = data;
@@ -169,7 +255,8 @@ int HandleTxReqs(struct SmapDriverData *SmapDrivPrivData){
 		else return result;	//Queue full
 
 		SmapDrivPrivData->packetToSend = NULL;
-		NetManTxPacketDeQ();
+		if (nm)
+			NetManTxPacketDeQ();
 	}
 }
 

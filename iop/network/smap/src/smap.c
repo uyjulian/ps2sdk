@@ -21,6 +21,7 @@
 
 #include "main.h"
 #include "xfer.h"
+#include "udpbd.h"
 
 /*	There is a difference in how the transmissions are made,
 	between this driver and the SONY original.
@@ -431,6 +432,8 @@ static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
 
 				NetManToggleNetIFLinkState(SmapDrivPrivData->NetIFID, NETMAN_NETIF_ETH_LINK_STATE_UP);
 
+				udpbd_init();
+
 				if(!SmapDrivPrivData->EnableLinkCheckTimer){
 					USec2SysClock(1000000, &SmapDrivPrivData->LinkCheckTimer);
 					SetAlarm(&SmapDrivPrivData->LinkCheckTimer, (void*)&LinkCheckTimerCB, SmapDrivPrivData);
@@ -510,34 +513,6 @@ static int Dev9IntrCb(int flag){
 #endif
 
 	return 0;
-}
-
-static void Dev9PreDmaCbHandler(int bcr, int dir){
-	volatile u8 *smap_regbase;
-	u16 SliceCount;
-
-	smap_regbase=SmapDriverData.smap_regbase;
-	SliceCount=bcr>>16;
-	if(dir!=DMAC_TO_MEM){
-		SMAP_REG16(SMAP_R_TXFIFO_SIZE)=SliceCount;
-		SMAP_REG8(SMAP_R_TXFIFO_CTRL)=SMAP_TXFIFO_DMAEN;
-	}
-	else{
-		SMAP_REG16(SMAP_R_RXFIFO_SIZE)=SliceCount;
-		SMAP_REG8(SMAP_R_RXFIFO_CTRL)=SMAP_RXFIFO_DMAEN;
-	}
-}
-
-static void Dev9PostDmaCbHandler(int bcr, int dir){
-	volatile u8 *smap_regbase;
-
-	smap_regbase=SmapDriverData.smap_regbase;
-	if(dir!=DMAC_TO_MEM){
-		while(SMAP_REG8(SMAP_R_TXFIFO_CTRL)&SMAP_TXFIFO_DMAEN){};
-	}
-	else{
-		while(SMAP_REG8(SMAP_R_RXFIFO_CTRL)&SMAP_RXFIFO_DMAEN){};
-	}
 }
 
 int SMAPStart(void){
@@ -1004,8 +979,7 @@ int smap_init(int argc, char *argv[]){
 	//Register the interrupt handlers for all SMAP events.
 	for(i=2; i<7; i++) dev9RegisterIntrCb(i, &Dev9IntrCb);
 
-	dev9RegisterPreDmaCb(1, &Dev9PreDmaCbHandler);
-	dev9RegisterPostDmaCb(1, &Dev9PostDmaCbHandler);
+	xfer_init();
 
 	return SetupNetDev();
 }
