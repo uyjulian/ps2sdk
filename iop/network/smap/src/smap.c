@@ -58,7 +58,7 @@
 struct SmapDriverData SmapDriverData;
 
 static const char VersionString[]="Version 2.25.0";
-static unsigned int ThreadPriority=0x28;
+static unsigned int ThreadPriority=9;
 static unsigned int ThreadStackSize=0x1000;
 static unsigned int EnableVerboseOutput=0;
 static unsigned int EnableAutoNegotiation=1;
