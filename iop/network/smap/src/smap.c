@@ -388,8 +388,13 @@ static void CheckLinkStatus(struct SmapDriverData *SmapDrivPrivData){
 	}
 }
 
+static unsigned int RxIntrPollingTimerCB(struct SmapDriverData *SmapDrivPrivData){
+	iSetEventFlag(SmapDrivPrivData->Dev9IntrEventFlag, SMAP_EVENT_INTR);
+	return 0;
+}
+
 static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
-	unsigned int ResetCounterFlag, IntrReg;
+	unsigned int PacketCount, IntrReg;
 	u32 EFBits;
 	int result, counter;
 	volatile u8 *smap_regbase, *emac3_regbase;
@@ -443,7 +448,7 @@ static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
 		}
 
 		if(SmapDrivPrivData->SmapIsInitialized){
-			ResetCounterFlag=0;
+			PacketCount=0;
 			if(EFBits&SMAP_EVENT_INTR){
 				if((IntrReg=SPD_REG16(SPD_R_INTR_STAT)&DEV9_SMAP_INTR_MASK)!=0){
 					/*	Original order/priority:
@@ -457,7 +462,7 @@ static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
 					}
 					if(IntrReg&SMAP_INTR_RXEND){
 						SMAP_REG16(SMAP_R_INTR_CLR)=SMAP_INTR_RXEND;
-						ResetCounterFlag=HandleRxIntr(SmapDrivPrivData);
+						PacketCount=HandleRxIntr(SmapDrivPrivData);
 					}
 					if(IntrReg&SMAP_INTR_RXDNV){
 						SMAP_REG16(SMAP_R_INTR_CLR)=SMAP_INTR_RXDNV;
@@ -476,7 +481,21 @@ static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
 			HandleTxIntr(SmapDrivPrivData);
 
 			//TXDNV is not enabled here, but only when frames are transmitted.
-			dev9IntrEnable(DEV9_SMAP_INTR_MASK2);
+			dev9IntrEnable(SMAP_INTR_EMAC3|SMAP_INTR_RXDNV);
+
+			if (PacketCount >= 1) {
+				// Receive packets in polling mode
+
+				// We're receiving packets at a maximum rate of 100 bits/us or 12.5 bytes/us
+				#define ETH_KB_TO_US(B) (B*80)
+
+				USec2SysClock(ETH_KB_TO_US(12), &SmapDrivPrivData->RxIntrPollingTimer);
+				SetAlarm(&SmapDrivPrivData->RxIntrPollingTimer, (void*)&RxIntrPollingTimerCB, SmapDrivPrivData);
+			}
+			else {
+				// Receive packets in interrupt mode
+				dev9IntrEnable(SMAP_INTR_RXEND);
+			}
 
 			//If there are frames to send out, let Tx channel 0 know and enable TXDNV.
 			if(SmapDrivPrivData->NumPacketsInTx>0){
@@ -485,7 +504,7 @@ static void IntrHandlerThread(struct SmapDriverData *SmapDrivPrivData){
 			}
 
 			//Do the link check, only if there has not been any incoming traffic in a while.
-			if(ResetCounterFlag){
+			if(PacketCount){
 				counter=3;
 				continue;
 			}

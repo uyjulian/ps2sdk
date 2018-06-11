@@ -27,6 +27,7 @@ struct SmapDriverData{
 	unsigned char LinkStatus;		//Ethernet link is initialized (hardware)
 	unsigned char LinkMode;
 	iop_sys_clock_t LinkCheckTimer;
+	iop_sys_clock_t RxIntrPollingTimer;
 	struct NetManEthRuntimeStats RuntimeStats;
 	int NetIFID;
 };
