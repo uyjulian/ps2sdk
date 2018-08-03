@@ -52,7 +52,11 @@ IRX_ID(MODNAME, 2, 4);
 static int ata_devinfo_init = 0;
 static int ata_evflg = -1;
 
-static u8 Disable48bitLBA = 0;	//Please read the comments in _start().
+//Workarounds
+static u8 ata_disable_lba48 = 0;	//Please read the comments in _start().
+#ifdef ATA_GAMESTAR_WORKAROUND
+static u8 ata_gamestar_workaround = 0;
+#endif
 
 /* Local device info kept for drives 0 and 1.  */
 static ata_devinfo_t atad_devinfo[2];
@@ -174,19 +178,22 @@ static void ata_ultra_dma_mode(int mode);
 extern struct irx_export_table _exp_atad;
 
 //In v1.04, DMA was enabled in ata_set_dir() instead.
-static void AtadPreDmaCb(int bcr, int dir){
+static void ata_pre_dma_cb(int bcr, int dir)
+{
 	USE_SPD_REGS;
 
 	SPD_REG16(SPD_R_XFR_CTRL)|=0x80;
 }
 
-static void AtadPostDmaCb(int bcr, int dir){
+static void ata_post_dma_cb(int bcr, int dir)
+{
 	USE_SPD_REGS;
 
 	SPD_REG16(SPD_R_XFR_CTRL)&=~0x80;
 }
 
-static int ata_create_event_flag(void) {
+static int ata_create_event_flag(void)
+{
 	iop_event_t event;
 
 	event.attr = EA_SINGLE;	//In v1.04, EA_MULTI was specified.
@@ -217,7 +224,20 @@ int _start(int argc, char *argv[])
 		In the eyes of Sony, there isn't a problem because none of their retail PlayStation 2 software ever supported 48-bit LBA.
 
 		The obvious workaround here would be to disable 48-bit LBA support when ATAD is loaded on a PSX. */
-	Disable48bitLBA = (SPD_REG16(SPD_R_REV_3) & SPD_CAPS_DVR)?1:0;
+	ata_disable_lba48 = (SPD_REG16(SPD_R_REV_3) & SPD_CAPS_DVR)?1:0;
+
+#ifdef ATA_GAMESTAR_WORKAROUND
+	/*	Some compatible adaptors may malfunction if transfers are not done according to the old ps2atad design.
+		Official adaptors appear to have a 0x0001 set for this register, but not compatibles.
+		While official I/O to this register are 8-bit, some compatibles have a 0x01 for the lower 8-bits,
+		but the upper 8-bits contain some random value. Hence perform a 16-bit read instead. */
+	if(SPD_REG16(0x20) != 1) {
+		ata_gamestar_workaround = 1;
+		M_PRINTF("Compatible adaptor detected.\n");
+	} else {
+		ata_gamestar_workaround = 0;
+	}   
+#endif
 
 	if ((ata_evflg = ata_create_event_flag()) < 0) {
 		M_PRINTF("Couldn't create event flag, exiting.\n");
@@ -228,8 +248,14 @@ int _start(int argc, char *argv[])
 	/* In v1.04, PIO mode 0 was set here. In late versions, it is set in ata_init_devices(). */
 	dev9RegisterIntrCb(1, &ata_intr_cb);
 	dev9RegisterIntrCb(0, &ata_intr_cb);
-	dev9RegisterPreDmaCb(0, &AtadPreDmaCb);
-	dev9RegisterPostDmaCb(0, &AtadPostDmaCb);
+#ifdef ATA_GAMESTAR_WORKAROUND
+	if (!ata_gamestar_workaround) {
+#endif
+	dev9RegisterPreDmaCb(0, &ata_pre_dma_cb);
+	dev9RegisterPostDmaCb(0, &ata_post_dma_cb);
+#ifdef ATA_GAMESTAR_WORKAROUND
+	}
+#endif
 
 	if ((res = RegisterLibraryEntries(&_exp_atad)) != 0) {
 		M_PRINTF("Library is already registered, exiting.\n");
@@ -799,10 +825,8 @@ int ata_device_sector_io(int device, void *buf, u32 lba, u32 nsectors, int dir)
 		hcyl = (lba >> 16) & 0xff;
 
 		if (atad_devinfo[device].lba48) {
-			/* Setup for 48-bit LBA.
-			   While ATA-6 allows for the transfer of up to 65536 sectors,
-			   the DMAC allows only up to 65536 x 128 / 512 = 16384 sectors. */
-			len = (nsectors > 16384) ? 16384 : nsectors;
+			/* Setup for 48-bit LBA.  */
+			len = (nsectors > 65536) ? 65536 : nsectors;
 
 			/* Combine bits 24-31 and bits 0-7 of lba into sector.  */
 			sector = ((lba >> 16) & 0xff00) | (lba & 0xff);
@@ -819,11 +843,22 @@ int ata_device_sector_io(int device, void *buf, u32 lba, u32 nsectors, int dir)
 		}
 
 		for(retries = 3; retries > 0; retries--) {
+#ifdef ATA_GAMESTAR_WORKAROUND
+			/* Due to the retry loop, put this call (for the GameStar workaround) here instead of the old location. */
+			if (ata_gamestar_workaround)
+				ata_set_dir(dir);
+#endif
+
 			if ((res = ata_io_start(buf, len, 0, len, sector, lcyl, hcyl, select, command)) != 0)
 				break;
 
+#ifdef ATA_GAMESTAR_WORKAROUND
+			if (!ata_gamestar_workaround)
+				ata_set_dir(dir);
+#else
 			/* Set up (part of) the transfer here. In v1.04, this was called at the top of the outer loop. */
 			ata_set_dir(dir);
+#endif
 
 			res = ata_io_finish();
 
@@ -1002,7 +1037,7 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
 		/* This section is to detect whether the HDD supports 48-bit LBA
 		   (IDENITFY DEVICE bit 10 word 83) and get the total sectors from
 		   either words(61:60) for 28-bit or words(103:100) for 48-bit.  */
-		if (!Disable48bitLBA && (ata_param[ATA_ID_COMMAND_SETS_SUPPORTED] & 0x0400)) {
+		if (!ata_disable_lba48 && (ata_param[ATA_ID_COMMAND_SETS_SUPPORTED] & 0x0400)) {
 			atad_devinfo[i].lba48 = 1;
 			/* I don't think anyone would use a >2TB HDD but just in case.  */
 			if (ata_param[ATA_ID_48BIT_SECTOTAL_HI]) {
@@ -1056,7 +1091,11 @@ static void ata_set_dir(int dir)
 	val = SPD_REG16(SPD_R_IF_CTRL) & 1;
 	val |= (dir == ATA_DIR_WRITE) ? 0x4c : 0x4e;
 	SPD_REG16(SPD_R_IF_CTRL) = val;
+#ifdef ATA_GAMESTAR_WORKAROUND
+	SPD_REG16(SPD_R_XFR_CTRL) = dir | (ata_gamestar_workaround ? 0x86 : 0x6);
+#else
 	SPD_REG16(SPD_R_XFR_CTRL) = dir | 0x6;	//In v1.04, DMA was enabled here (0x86 instead of 0x6)
+#endif
 }
 
 static void ata_pio_mode(int mode)

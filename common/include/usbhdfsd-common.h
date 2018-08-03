@@ -22,6 +22,8 @@
 #define USBMASS_IOCTL_GET_CLUSTER	0x0001
 /** Returns the absolute LBA of the opened file. */
 #define USBMASS_IOCTL_GET_LBA		0x0002
+/** Returns the block device driver name */
+#define USBMASS_IOCTL_GET_DRIVERNAME	0x0003
 
 //Device status bits.
 /** CONNected */
@@ -30,5 +32,11 @@
 #define USBMASS_DEV_STAT_CONF	0x02
 /** ERRor */
 #define USBMASS_DEV_STAT_ERR	0x80
+
+//Device events
+enum USBMASS_DEV_EV{
+	USBMASS_DEV_EV_CONN	= 0,
+	USBMASS_DEV_EV_DISCONN
+};
 
 #endif /* __USBHDFSD_COMMON_H__ */

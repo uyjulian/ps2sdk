@@ -18,6 +18,7 @@
 #include "mem.h"
 #include "hub.h"
 
+#include "defs.h"
 #include "stdio.h"
 #include "sysclib.h"
 #include "thbase.h"
@@ -25,17 +26,20 @@
 #include "intrman.h"
 
 sceUsbdLddOps *drvListStart = NULL, *drvListEnd = NULL;
+sceUsbdLddOps *drvAutoLoader = NULL;
 IoRequest *cbListStart = NULL, *cbListEnd = NULL;
 
 int callbackEvent;
+int callbackTid = -1;
 
 int callUsbDriverFunc(int (*func)(int devId), int devId, void *gp) {
 	int res;
+
 	if (func) {
-	    usbdUnlock();
-		// move gp..
+		usbdUnlock();
+		ChangeGP(gp);
 		res = func(devId);
-		// restore gp...
+		SetGP(&_gp);
 		usbdLock();
 		return res;
 	} else
@@ -95,6 +99,27 @@ int doRegisterDriver(sceUsbdLddOps *drv, void *drvGpSeg) {
 	return 0;
 }
 
+int doRegisterAutoLoader(sceUsbdLddOps *drv, void *drvGpSeg) {
+	if (drv->next || drv->prev)
+		return USB_RC_BADDRIVER;
+	if (!drv->name)
+		return USB_RC_BADDRIVER;
+	if (drv->reserved1 || drv->reserved2)
+		return USB_RC_BADDRIVER;
+
+	if (drvAutoLoader != NULL)
+		return USB_RC_BUSY;
+
+	drv->gp = drvGpSeg;
+
+	drvAutoLoader = drv;
+
+	if (drv->probe)
+		probeDeviceConnectList(drv);
+
+	return 0;
+}
+
 void disconnectDriver(Device *tree, sceUsbdLddOps *drv) {
 	Endpoint *ep, *nextEp;
 	if (tree->devDriver == drv) {
@@ -113,6 +138,11 @@ void disconnectDriver(Device *tree, sceUsbdLddOps *drv) {
 
 	for (tree = tree->childListStart; tree != NULL; tree = tree->next)
 		disconnectDriver(tree, drv);
+}
+
+int doUnregisterAutoLoader(void) {
+	drvAutoLoader = NULL;
+	return 0;
 }
 
 int doUnregisterDriver(sceUsbdLddOps *drv) {
@@ -145,8 +175,20 @@ void connectNewDevice(Device *dev) {
 			callUsbDriverFunc(drv->connect, dev->id, drv->gp);
 			return;
 		}
+
+	// No driver found yet. Call autoloader.
+	if(drvAutoLoader != NULL) {
+		drv = drvAutoLoader;
+
+		if(callUsbDriverFunc(drv->probe, dev->id, drv->gp) != 0) {
+			dev->devDriver = drv;
+			dbg_printf("(autoloader) Driver found (%s)\n", drv->name);
+			callUsbDriverFunc(drv->connect, dev->id, drv->gp);
+			return;
+		}
+	}
+
 	dbg_printf("no driver found\n");
-	// todo: call autoloader here
 }
 
 void signalCallbackThreadFunc(IoRequest *req) {
@@ -172,6 +214,7 @@ void callbackThreadFunc(void *arg) {
 	int intrStat;
 	IoRequest *req;
 	IoRequest reqCopy;
+
 	while (1) {
 		WaitEventFlag(callbackEvent, 1, WEF_CLEAR | WEF_OR, &eventRes);
 		do {
@@ -197,9 +240,12 @@ void callbackThreadFunc(void *arg) {
 				freeIoRequest(req);
 				usbdUnlock();
 
-				// add GP stuff
 				if (reqCopy.userCallbackProc)
+				{
+					SetGP(req->gpSeg);
 					reqCopy.userCallbackProc(reqCopy.resultCode, reqCopy.transferedBytes, reqCopy.userCallbackArg);
+					SetGP(&_gp);
+				}
 			}
 		} while (req);
 	}
@@ -208,7 +254,6 @@ void callbackThreadFunc(void *arg) {
 int initCallbackThread(void) {
 	iop_event_t event;
 	iop_thread_t thread;
-	int callbackTid;
 
 	event.attr = event.option = event.bits = 0;
 	callbackEvent = CreateEventFlag(&event);

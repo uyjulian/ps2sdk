@@ -40,12 +40,12 @@
 /*
  * Pad states
  */
-#define PAD_STATE_DISCONN     	0x00
+#define PAD_STATE_DISCONN       0x00
 #define PAD_STATE_FINDPAD       0x01
 #define PAD_STATE_FINDCTP1      0x02
 #define PAD_STATE_EXECCMD       0x05
 #define PAD_STATE_STABLE        0x06
-#define PAD_STATE_ERROR      	0x07
+#define PAD_STATE_ERROR         0x07
 
 /*
  * Pad request states
@@ -57,22 +57,22 @@
 /*
  * Connected pad type
  */
-#define PAD_TYPE_NEJICON	0x2
+#define PAD_TYPE_NEJICON    0x2
 #define PAD_TYPE_KONAMIGUN  0x3
 #define PAD_TYPE_DIGITAL    0x4
-#define PAD_TYPE_ANALOG	    0x5
+#define PAD_TYPE_ANALOG     0x5
 #define PAD_TYPE_NAMCOGUN   0x6
-#define PAD_TYPE_DUALSHOCK	0x7
+#define PAD_TYPE_DUALSHOCK  0x7
 #define PAD_TYPE_JOGCON     0xE
 #define PAD_TYPE_EX_TSURICON 0x100
 #define PAD_TYPE_EX_JOGCON  0x300
 /*
  * padInfoMode values
  */
-#define PAD_MODECURID	1
-#define PAD_MODECUREXID	2
-#define PAD_MODECUROFFS	3
-#define PAD_MODETABLE	4
+#define PAD_MODECURID   1
+#define PAD_MODECUREXID 2
+#define PAD_MODECUROFFS 3
+#define PAD_MODETABLE   4
 
 /*
  * padSetMainMode
@@ -86,10 +86,10 @@
 /*
  * padInfoAct cmds
  */
-#define PAD_ACTFUNC		1
-#define PAD_ACTSUB		2
-#define PAD_ACTSIZE		3
-#define PAD_ACTCURR		4
+#define PAD_ACTFUNC     1
+#define PAD_ACTSUB      2
+#define PAD_ACTSIZE     3
+#define PAD_ACTCURR     4
 
 /** Button info */
 struct padButtonStatus
@@ -122,26 +122,55 @@ struct padButtonStatus
 extern "C" {
 #endif
 
-/** Initialise padman
- * @param a 0 should work..
+/** Initialise libpad
+ * @param mode Must be set to 0.
+ * @return == 1 => OK
  */
-int padInit(int a);
+int padInit(int mode);
 
-/** Ends all pad communication */
-int padEnd();
+/** Initialise pad ports. Automatically called by padInit(), there is no need to call this function directly.
+ * @param mode Must be set to 0.
+ * @return == 1 => OK
+ *
+ * Note: PADMAN from release 1.3.4 does not have this function implemented.
+ * As a result, it is impossible to reinitialize libpad after calling padEnd().
+ *
+ * @return == 1 => OK
+ */
+int padPortInit(int mode);
+
+/** Ends all pad communication
+  * Note: PADMAN from release 1.3.4 does not have padPortInit implemented.
+  * As a result, it is impossible to reinitialize libpad after calling padEnd().
+  * This was known as padClose in the really early official SDK releases.
+  *
+  * @return == 1 => OK
+  */
+int padEnd(void);
 
 /**
- * The user should provide a pointer to a 256 byte (2xsizeof(struct pad_data))
- * 64 byte aligned pad data area for each pad port opened
- *
+ * @param port Port to open
+ * @param slot Slot to open
+ * @param padArea The address of the buffer for storing the pad status. Must be a 256-byte region (2xsizeof(struct pad_data).
+ *                Must be a 64-byte aligned address. For the old libpad, at least 16-bytes alignment.
  * @return != 0 => OK
  */
 int padPortOpen(int port, int slot, void *padArea);
 
+/**
+ * Closes an opened port.
+ *
+ * @param port Port to close
+ * @param slot Slot to close
+ * @return != 0 => OK
+ */
 int padPortClose(int port, int slot);
 
 /** Read pad data
+ * @param port Port number of the pad to get the status for.
+ * @param slot Slot number of the pad to get the status for.
  * @param data A pointer to a 32 byte array where the result is stored
+ * @return != 0 => OK
  */
 unsigned char padRead(int port, int slot, struct padButtonStatus *data);
 
@@ -226,20 +255,13 @@ int padSetActAlign(int port, int slot, char act_align[6]);
  */
 int padSetActDirect(int port, int slot, char act_align[6]);
 
-/** Dunno about this one.. always returns 1?
- * I guess it should've returned if the pad was connected.. or?
+/** Returns whether the device at port,slot is connected (1 = connected)
+ * Appears to have been removed very early during the PS2's lifetime.
+ * If possible, use the documented padGetState instead.
  *
  * NOT SUPPORTED with module rom0:padman
  */
 int padGetConnection(int port, int slot);
-
-/** Resets EE library, to be used prior to reinitialization.
- * Does not deinitialize PADMAN (Please use padEnd() before invoking this function).
- * Since padEnd() further below doesn't work right, a pseudo function is needed
- * to allow recovery after IOP reset. This function has nothing to do with the
- * functions of the IOP modules. It merely resets variables for the EE routines.
- */
-int padReset();
 
 #ifdef __cplusplus
 }

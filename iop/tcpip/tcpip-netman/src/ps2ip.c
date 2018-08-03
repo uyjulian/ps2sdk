@@ -39,6 +39,8 @@ typedef struct pbuf	PBuf;
 typedef struct netif	NetIF;
 typedef struct ip4_addr	IPAddr;
 
+static struct pbuf *TxHead, *TxTail;
+
 #define MODNAME	"TCP/IP Stack"
 IRX_ID(MODNAME, 2, 3);
 
@@ -105,9 +107,6 @@ ps2ip_setconfig(const t_ip_info* pInfo)
 	{
 		return	0;
 	}
-	netif_set_ipaddr(pNetIF,(const IPAddr*)&pInfo->ipaddr);
-	netif_set_netmask(pNetIF,(const IPAddr*)&pInfo->netmask);
-	netif_set_gw(pNetIF,(const IPAddr*)&pInfo->gw);
 
 #if	LWIP_DHCP
 	struct dhcp *dhcp = netif_dhcp_data(pNetIF);
@@ -118,7 +117,12 @@ ps2ip_setconfig(const t_ip_info* pInfo)
 	{
 		if ((dhcp == NULL) || (dhcp->state == DHCP_STATE_OFF))
 		{
-			//Start dhcp client
+			//Set initial IP address
+			netif_set_ipaddr(pNetIF,(const IPAddr*)&pInfo->ipaddr);
+			netif_set_netmask(pNetIF,(const IPAddr*)&pInfo->netmask);
+			netif_set_gw(pNetIF,(const IPAddr*)&pInfo->gw);
+
+			//Start DHCP client
 			dhcp_start(pNetIF);
 		}
 	}
@@ -129,11 +133,18 @@ ps2ip_setconfig(const t_ip_info* pInfo)
 			//Release DHCP lease
 			dhcp_release(pNetIF);
 
-			//Stop dhcp client
+			//Stop DHCP client
 			dhcp_stop(pNetIF);
 		}
-	}
 
+		netif_set_ipaddr(pNetIF,(const IPAddr*)&pInfo->ipaddr);
+		netif_set_netmask(pNetIF,(const IPAddr*)&pInfo->netmask);
+		netif_set_gw(pNetIF,(const IPAddr*)&pInfo->gw);
+	}
+#else
+	netif_set_ipaddr(pNetIF,(const IPAddr*)&pInfo->ipaddr);
+	netif_set_netmask(pNetIF,(const IPAddr*)&pInfo->netmask);
+	netif_set_gw(pNetIF,(const IPAddr*)&pInfo->gw);
 #endif
 
 	return	1;
@@ -245,6 +256,67 @@ static void EnQRxPacket(void *packet)
 	ps2ip_input(packet, &NIF);
 }
 
+static int NextTxPacket(void **payload)
+{
+	int len;
+
+	if(TxTail != NULL)
+	{
+		*payload = TxTail->payload;
+		len = TxTail->len;
+	} else
+		len = 0;
+
+	return len;
+}
+
+static void DeQTxPacket(void)
+{
+	struct pbuf *toFree;
+	int OldState;
+
+	toFree = NULL;
+
+	CpuSuspendIntr(&OldState);
+	if(TxTail != NULL)
+	{
+		toFree = TxTail;
+
+		if(TxTail == TxHead) {
+			//Last in queue.
+			TxTail = NULL;
+			TxHead = NULL;
+		} else {
+			TxTail = TxTail->next;
+		}
+	}
+	CpuResumeIntr(OldState);
+
+	if(toFree != NULL)
+	{
+		toFree->next = NULL;
+		pbuf_free(toFree);
+	}
+}
+
+static void EnQTxPacket(struct pbuf *tx)
+{
+	int OldState;
+
+	CpuSuspendIntr(&OldState);
+
+	if(TxHead != NULL)
+		TxHead->next = tx;
+
+	TxHead = tx;
+	tx->next = NULL;
+
+	if(TxTail == NULL)	//Queue empty
+		TxTail = TxHead;
+
+	CpuResumeIntr(OldState);
+}
+
 static err_t
 SMapLowLevelOutput(struct netif *pNetIF, struct pbuf* pOutput)
 {
@@ -256,13 +328,15 @@ SMapLowLevelOutput(struct netif *pNetIF, struct pbuf* pOutput)
 	{
 		pbuf_ref(pOutput);	//Increment reference count because LWIP must free the PBUF, not the driver!
 		if((pbuf = pbuf_coalesce(pOutput, PBUF_RAW)) != pOutput)
-		{
-			NetManNetIFSendPacket(pbuf->payload, pbuf->len);
-			pbuf_free(pbuf);
+		{	//No need to increase reference count because pbuf_coalesce() does it.
+			EnQTxPacket(pbuf);
+			NetManNetIFXmit();
 		} else
 			result = ERR_MEM;
 	} else {
-		NetManNetIFSendPacket(pOutput->payload, pOutput->len);
+		pbuf_ref(pOutput);	//This will be freed later.
+		EnQTxPacket(pOutput);
+		NetManNetIFXmit();
 	}
 
 	return result;
@@ -286,6 +360,9 @@ SMapOutput(struct netif *pNetIF, struct pbuf *pOutput, IPAddr* pIPAddr)
 //Should be called at the beginning of the program to set up the network interface.
 static err_t SMapIFInit(struct netif* pNetIF)
 {
+	TxHead = NULL;
+	TxTail = NULL;
+
 	pNetIF->name[0]='s';
 	pNetIF->name[1]='m';
 #ifdef PRE_LWIP_130_COMPAT
@@ -347,7 +424,11 @@ static inline int InitLWIPStack(IPAddr *IP, IPAddr *NM, IPAddr *GW){
 		&LinkStateDown,
 		&AllocRxPacket,
 		&FreeRxPacket,
-		&EnQRxPacket
+		&EnQRxPacket,
+		&NextTxPacket,
+		&DeQTxPacket,
+		NULL,
+		NULL
 	};
 
 	if((result = InitializeLWIP()) != 0)

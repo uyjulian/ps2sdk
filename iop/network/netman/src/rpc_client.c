@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <intrman.h>
+#include <limits.h>
 #include <sifcmd.h>
 #include <sifman.h>
 #include <sysclib.h>
@@ -25,11 +26,8 @@ static union{
 
 //Data for IOP -> EE transfers
 static unsigned short int EEFrameBufferWrPtr;
-static u8 *EEFrameBuffer = NULL;	/* On the EE side */
 
-static int NetManRxThreadEvfID = -1, NetManRxDoneEvfID = -1, NetManIOSemaID = -1, RxThreadID = -1;
-
-static struct PacketReqs PacketReqs;
+static int NetManIOSemaID = -1;
 
 struct NetManPacketBuffer{
 	void *handle;
@@ -39,56 +37,41 @@ struct NetManPacketBuffer{
 
 //Data for SPEED -> IOP transfers
 static struct NetManPacketBuffer pbufs[NETMAN_RPC_BLOCK_SIZE];
-static int DMATransferID[NETMAN_RPC_BLOCK_SIZE];
 static u8 *FrameBuffer = NULL;
-
-static void EERxThread(void *arg);
+static struct NetManBD *FrameBufferStatus = NULL;
+static struct NetManBD *EEFrameBufferStatus = NULL;
 
 int NetManInitRPCClient(void)
 {
-	iop_event_t event;
+	static const char NetManID[] = "NetMan";
 	iop_sema_t sema;
-	iop_thread_t thread;
-	int result;
+	int result, i;
 
-	memset(&PacketReqs, 0, sizeof(PacketReqs));
-	memset(DMATransferID, 0, sizeof(DMATransferID));
-	if(FrameBuffer == NULL) FrameBuffer = malloc(NETMAN_RPC_BLOCK_SIZE*NETMAN_MAX_FRAME_SIZE);
+	if(FrameBuffer == NULL) FrameBuffer = malloc(NETMAN_RPC_BLOCK_SIZE * NETMAN_MAX_FRAME_SIZE);
+	if(FrameBufferStatus == NULL) FrameBufferStatus = malloc(NETMAN_RPC_BLOCK_SIZE * sizeof(struct NetManBD));
 
-	if(FrameBuffer != NULL)
+	if(FrameBuffer != NULL && FrameBufferStatus != NULL)
 	{
+		memset(FrameBuffer, 0, NETMAN_RPC_BLOCK_SIZE * NETMAN_MAX_FRAME_SIZE);
+		memset(FrameBufferStatus, 0, NETMAN_RPC_BLOCK_SIZE * sizeof(struct NetManBD));
+		EEFrameBufferWrPtr = 0;
+
+		for(i = 0; i < NETMAN_RPC_BLOCK_SIZE; i++)	//Mark all descriptors as "in-use", until the EE-side allocates buffers.
+			FrameBufferStatus[i].length = USHRT_MAX;
+
 		while((result=sceSifBindRpc(&EEClient, NETMAN_RPC_NUMBER, 0))<0 || EEClient.server==NULL) DelayThread(500);
 
-		if((result=sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_INIT, 0, NULL, 0, &SifRpcRxBuffer, sizeof(struct NetManEEInitResult), NULL, NULL))>=0)
+		if((result=sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_INIT, 0, &FrameBufferStatus, 4, &SifRpcRxBuffer, sizeof(struct NetManEEInitResult), NULL, NULL))>=0)
 		{
 			if((result=SifRpcRxBuffer.EEInitResult.result) == 0)
 			{
-				EEFrameBuffer=SifRpcRxBuffer.EEInitResult.FrameBuffer;
-				EEFrameBufferWrPtr = 0;
-
-				event.attr = EA_SINGLE;
-				event.option = 0;
-				event.bits = 0;
-				NetManRxDoneEvfID = CreateEventFlag(&event);
+				EEFrameBufferStatus = SifRpcRxBuffer.EEInitResult.FrameBufferStatus;
 
 				sema.attr = 0;
-				sema.option = 0;
+				sema.option = (u32)NetManID;
 				sema.initial = 1;
 				sema.max = 1;
 				NetManIOSemaID = CreateSema(&sema);
-
-				event.attr = EA_SINGLE;
-				event.option = 0;
-				event.bits = 0;
-				NetManRxThreadEvfID = CreateEventFlag(&event);
-
-				thread.attr = TH_C;
-				thread.option = 0;
-				thread.thread = &EERxThread;
-				thread.stacksize = 0x600;
-				thread.priority = 0x29;	//Should have a lower priority than the driver thread, so that frames can be received without stalling the driver thread.
-				RxThreadID = CreateThread(&thread);
-				StartThread(RxThreadID, NULL);
 			}
 		}
 	}else result = -ENOMEM;
@@ -103,25 +86,15 @@ void NetManDeinitRPCClient(void)
 		free(FrameBuffer);
 		FrameBuffer = NULL;
 	}
+	if(FrameBufferStatus != NULL)
+	{
+		free(FrameBufferStatus);
+		FrameBufferStatus = NULL;
+	}
 	if(NetManIOSemaID >= 0)
 	{
 		DeleteSema(NetManIOSemaID);
 		NetManIOSemaID = -1;
-	}
-	if(NetManRxDoneEvfID >= 0)
-	{
-		DeleteEventFlag(NetManRxDoneEvfID);
-		NetManRxDoneEvfID = -1;
-	}
-	if(RxThreadID >= 0)
-	{
-		TerminateThread(RxThreadID);
-		DeleteThread(RxThreadID);
-	}
-	if(NetManRxThreadEvfID >= 0)
-	{
-		DeleteEventFlag(NetManRxThreadEvfID);
-		NetManRxThreadEvfID = -1;
 	}
 
 	memset(&EEClient, 0, sizeof(EEClient));
@@ -139,27 +112,18 @@ void NetManRpcToggleGlobalNetIFLinkState(int state)
 void *NetManRpcNetProtStackAllocRxPacket(unsigned int length, void **payload)
 {
 	struct NetManPacketBuffer *result;
+	volatile const struct NetManBD *bd = &FrameBufferStatus[EEFrameBufferWrPtr];
 
 	//Wait for a free spot to appear in the ring buffer.
-	while(PacketReqs.count + 1 >= NETMAN_RPC_BLOCK_SIZE)
-	{
-		SetEventFlag(NetManRxThreadEvfID, 1);
-		WaitEventFlag(NetManRxDoneEvfID, 1, WEF_CLEAR|WEF_AND, NULL);
-	}
+	while(bd->length != 0) { }
 
 	//Allocation of PBUF descriptors is tied with the allocation of frame slots in the ring buffer by EnQ.
 	result = &pbufs[EEFrameBufferWrPtr];
-	result->handle = &PacketReqs.length[EEFrameBufferWrPtr];
+	result->handle = (void*)bd;
 	result->payload = &FrameBuffer[EEFrameBufferWrPtr * NETMAN_MAX_FRAME_SIZE];
 	result->length = length;
 
-	//PacketReqs.count and the write pointer is not incremented here because the interface driver might discard the frame and free this allocated buffer.
-
-	if(DMATransferID[EEFrameBufferWrPtr] != 0)
-	{	//If this buffer had a DMA transfer initiated, check that it has completely been transferred out before allowing it to be overwritten.
-		while(sceSifDmaStat(DMATransferID[EEFrameBufferWrPtr]) >= 0){};
-		DMATransferID[EEFrameBufferWrPtr] = 0;
-	}
+	//The write pointer is not incremented here because the interface driver might discard the frame and free this allocated buffer.
 
 	*payload = result->payload;
 
@@ -171,65 +135,44 @@ void NetManRpcNetProtStackFreeRxPacket(void *packet)
 	((struct NetManPacketBuffer*)packet)->handle = NULL;
 }
 
-static void EERxEnd(void *end_param)
-{
-	PacketReqs.count -= SifRpcRxBuffer.result;
-	iSetEventFlag(NetManRxDoneEvfID, 1);
-}
-
-static void EERxThread(void *arg)
-{
-	while(1)
-	{
-		//Unlike the EE-side implementation, do not use SleepThread because the old IOP kernel still puts the thread to SLEEP within sceSifCallRpc.
-		WaitEventFlag(NetManRxThreadEvfID, 1, WEF_CLEAR|WEF_AND, NULL);
-
-		if(PacketReqs.count > 0)
-		{
-			while(PacketReqs.count > 0)
-			{
-				WaitSema(NetManIOSemaID);
-				while(sceSifCallRpc(&EEClient, NETMAN_EE_RPC_FUNC_HANDLE_PACKETS, 0, &PacketReqs, sizeof(PacketReqs), &SifRpcRxBuffer, sizeof(SifRpcRxBuffer.result), &EERxEnd, NULL) < 0){};
-				SignalSema(NetManIOSemaID);
-			}
-		} else
-			SetEventFlag(NetManRxDoneEvfID, 1);
-	}
-}
-
 //Only one thread can enter this critical section!
 static void EnQFrame(const void *frame, unsigned int length)
 {
-	SifDmaTransfer_t dmat;
-	int dmat_id, OldState;
+	SifDmaTransfer_t dmat[2];
+	struct NetManBD *bd;
+	int OldState, res;
 
 	//No need to wait for a free spot to appear, as Alloc already took care of that.
-
-	//Transfer the frame over to the EE
-	dmat.src = (void*)frame;
-	dmat.dest = &EEFrameBuffer[EEFrameBufferWrPtr * NETMAN_MAX_FRAME_SIZE];
-	dmat.size = length;
-	dmat.attr = 0;
-	do{
-		CpuSuspendIntr(&OldState);
-		dmat_id = sceSifSetDma(&dmat, 1);
-		CpuResumeIntr(OldState);
-	}while(dmat_id == 0);
-	DMATransferID[EEFrameBufferWrPtr] = dmat_id;
+	bd = &FrameBufferStatus[EEFrameBufferWrPtr];
 
 	//Record the frame length.
-	PacketReqs.length[EEFrameBufferWrPtr] = length;
+	bd->length = length;
 
-	CpuSuspendIntr(&OldState);
-	//Increase the frame count.
-	PacketReqs.count++;
-	CpuResumeIntr(OldState);
+	//Prepare DMA transfer.
+	dmat[0].src = (void*)frame;
+	dmat[0].dest = bd->payload;
+	dmat[0].size = (length + 3) & ~3;
+	dmat[0].attr = 0;
+
+	dmat[1].src = bd;
+	dmat[1].dest = &EEFrameBufferStatus[EEFrameBufferWrPtr];
+	dmat[1].size = sizeof(struct NetManBD);
+	if(!(sceSifGetSMFlag() & NETMAN_SBUS_BITS))
+	{
+		dmat[1].attr = SIF_DMA_INT_O;	//Notify the receive thread of the incoming frame, if it's sleeping. This will stall SIF0.
+		sceSifSetSMFlag(NETMAN_SBUS_BITS);
+	} else
+		dmat[1].attr = 0;
+
+	//Transfer the frame over to the EE
+	do{
+		CpuSuspendIntr(&OldState);
+		res = sceSifSetDma(dmat, 2);
+		CpuResumeIntr(OldState);
+	}while(res == 0);
 
 	//Increase the write (IOP -> EE) pointer by one place.
 	EEFrameBufferWrPtr = (EEFrameBufferWrPtr + 1) % NETMAN_RPC_BLOCK_SIZE;
-
-	//Notify the receive thread of the incoming frame.
-	SetEventFlag(NetManRxThreadEvfID, 1);
 }
 
 //Frames will be enqueued in the order that they were allocated.

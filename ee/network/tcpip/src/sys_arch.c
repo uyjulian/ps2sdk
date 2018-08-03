@@ -32,7 +32,6 @@ static inline arch_message *alloc_msg(void);
 static void free_msg(arch_message *msg);
 
 static int MsgCountSema;
-static int ProtLevel;
 
 extern void *_gp;
 
@@ -132,6 +131,7 @@ err_t sys_mbox_new(sys_mbox_t *mbox, int size)
 
 	if((MBox=malloc(sizeof(struct MboxData)))!=NULL)
 	{
+		//Last = first, empty mbox.
 		MBox->LastMessage=MBox->FirstMessage=NULL;
 
 		sema.attr = 0;
@@ -200,11 +200,16 @@ static void RetrieveMbxInternal(sys_mbox_t mBox, arch_message **message)
 
 	DI();
 
-	*message=mBox->FirstMessage;
+	*message=mBox->FirstMessage;	//Take first message in mbox
+
+	//The next message is next. If there is no next message, NULL is assigned,
 	NextMessage=(unsigned int)(*message)->next!=0xFFFFFFFF?(*message)->next:NULL;
-	if(mBox->FirstMessage==mBox->LastMessage)
-		mBox->LastMessage=NextMessage;
-	mBox->FirstMessage=NextMessage;
+
+	//if the mbox only had one message, then update LastMessage as well.
+	if(mBox->FirstMessage == mBox->LastMessage)
+		mBox->LastMessage = NULL;
+
+	mBox->FirstMessage = NextMessage;	//The next message becomes the first message. Or NULL, if there are no next messages.
 
 	EI();
 }
@@ -252,10 +257,10 @@ static u32_t sys_arch_mbox_fetch_internal(sys_mbox_t pMBox, void** ppvMSG, u32_t
 
 	TimeElasped=0;
 	if(block){
-		start=clock()/(CLOCKS_PER_SEC*1000);
+		start=clock()/(CLOCKS_PER_SEC/1000);
 
 		if((result=ReceiveMbx(&pmsg, pMBox, u32Timeout))==0){
-			TimeElasped = ComputeTimeDiff(start, clock()/(CLOCKS_PER_SEC*1000));
+			TimeElasped = ComputeTimeDiff(start, clock()/(CLOCKS_PER_SEC/1000));
 		}
 		else{
 			return SYS_ARCH_TIMEOUT;
@@ -289,9 +294,10 @@ static void SendMbx(sys_mbox_t *mbox, arch_message *msg, void *sys_msg){
 
 	/* Store the message and update the message chain for this message box. */
 	msg->sys_msg = sys_msg;
-	if((*mbox)->FirstMessage==NULL) (*mbox)->FirstMessage=msg;
-	if((*mbox)->LastMessage!=NULL) (*mbox)->LastMessage->next=msg;
-	(*mbox)->LastMessage=msg;
+	msg->next = NULL;
+	if((*mbox)->FirstMessage==NULL) (*mbox)->FirstMessage=msg;	//If this is the first message, it goes at the front.
+	if((*mbox)->LastMessage!=NULL) (*mbox)->LastMessage->next=msg;	//Otherwise, it becomes the next message of the last message.
+	(*mbox)->LastMessage=msg;					//The message becomes the new message at the end of the queue.
 
 	EI();
 	SignalSema((*mbox)->MessageCountSema);
@@ -361,14 +367,14 @@ u32_t sys_arch_sem_wait(sys_sem_t *Sema, u32_t u32Timeout)
 		int	AlarmID;
 		u32_t	WaitTime;
 
-		start=clock()/(CLOCKS_PER_SEC*1000);
+		start=clock()/(CLOCKS_PER_SEC/1000);
 		AlarmID=SetAlarm(mSec2HSyncTicks(u32Timeout), &TimeoutHandler, (void*)GetThreadId());
 
 		if(WaitSema(*Sema)==*Sema)
 		{
 			ReleaseAlarm(AlarmID);
 
-			WaitTime=ComputeTimeDiff(start, clock()/(CLOCKS_PER_SEC*1000));
+			WaitTime=ComputeTimeDiff(start, clock()/(CLOCKS_PER_SEC/1000));
 			result=(WaitTime<=u32Timeout?WaitTime:u32Timeout);
 		}
 		else result=SYS_ARCH_TIMEOUT;
@@ -419,32 +425,22 @@ void sys_init(void)
 
 	//NULL-terminate free message list
 	prev->next = NULL;
-
-	ProtLevel = 0;
 }
 
 u32_t sys_now(void)
 {
-	return(clock()/(CLOCKS_PER_SEC*1000));
+	return(clock()/(CLOCKS_PER_SEC/1000));
 }
 
 sys_prot_t sys_arch_protect(void)
 {
-	sys_prot_t OldLevel;
-
-	DI();
-
-	OldLevel = ProtLevel;
-	ProtLevel++;
-
-	return OldLevel;
+	return DIntr();
 }
 
 void sys_arch_unprotect(sys_prot_t level)
 {
-	ProtLevel = level;
-	if(ProtLevel == 0)
-		EI();
+	if(level)
+		EIntr();
 }
 
 void *ps2ip_calloc64(size_t n, size_t size)

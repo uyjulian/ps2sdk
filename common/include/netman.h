@@ -8,6 +8,7 @@
 
 //Common structures
 #define NETMAN_NETIF_NAME_MAX_LEN	4
+#define NETMAN_NETIF_FRAME_SIZE		1514
 
 struct NetManNetProtStack{
 	void (*LinkStateUp)(void);
@@ -15,6 +16,10 @@ struct NetManNetProtStack{
 	void *(*AllocRxPacket)(unsigned int size, void **payload);
 	void (*FreeRxPacket)(void *packet);
 	void (*EnQRxPacket)(void *packet);
+	int (*NextTxPacket)(void **payload);
+	void (*DeQTxPacket)(void);
+	int (*AfterTxPacket)(void **payload);				//For EE only, peek at the packet after the current packet.
+	void (*ReallocRxPacket)(void *packet, unsigned int size);	//For EE only, update the size of the Rx packet (size will be always smaller than NETMAN_NETIF_FRAME_SIZE).
 };
 
 /** Flow-control */
@@ -93,12 +98,17 @@ int NetManIoctl(unsigned int command, void *args, unsigned int args_len, void *o
 int NetManSetLinkMode(int mode);
 
 /* Network Interface (IF) management functions. Used by the protocol stack. */
-int NetManNetIFSendPacket(const void *packet, unsigned int length);
+void NetManNetIFXmit(void);	//Notify the interface of available packets. May be called from the interrupt context.
 
 /* Network protocol stack management functions. Used by the Network InterFace (IF) driver. */
 void *NetManNetProtStackAllocRxPacket(unsigned int length, void **payload);
 void NetManNetProtStackFreeRxPacket(void *packet);
 void NetManNetProtStackEnQRxPacket(void *packet);
+int NetManTxPacketNext(void **payload);
+void NetManTxPacketDeQ(void);
+
+int NetManTxPacketAfter(void **payload);					//For EE only, for NETMAN's internal use.
+void NetManNetProtStackReallocRxPacket(void *packet, unsigned int length);	//For EE only, for NETMAN's internal use.
 
 /* NETIF flags. */
 /** Set internally by NETMAN. Do not set externally. */
@@ -117,7 +127,7 @@ struct NetManNetIF{
 	short int id;
 	int (*init)(void);
 	void (*deinit)(void);
-	int (*xmit)(const void *packet, unsigned int size);
+	void (*xmit)(void);
 	int (*ioctl)(unsigned int command, void *args, unsigned int args_len, void *output, unsigned int length);
 	int EventFlagID;
 };
@@ -135,13 +145,13 @@ void NetManToggleNetIFLinkState(int NetIFID, unsigned char state);	//Also toggle
 
 #ifdef _IOP
 
-#define netman_IMPORTS_start DECLARE_IMPORT_TABLE(netman, 2, 1)
+#define netman_IMPORTS_start DECLARE_IMPORT_TABLE(netman, 3, 1)
 #define netman_IMPORTS_end END_IMPORT_TABLE
 
 #define I_NetManRegisterNetworkStack DECLARE_IMPORT(4, NetManRegisterNetworkStack)
 #define I_NetManUnregisterNetworkStack DECLARE_IMPORT(5, NetManUnregisterNetworkStack)
 
-#define I_NetManNetIFSendPacket DECLARE_IMPORT(6, NetManNetIFSendPacket)
+#define I_NetManNetIFXmit DECLARE_IMPORT(6, NetManNetIFXmit)
 #define I_NetManIoctl DECLARE_IMPORT(7, NetManIoctl)
 
 #define I_NetManNetProtStackAllocPacket DECLARE_IMPORT(8, NetManNetProtStackAllocRxPacket)
@@ -157,6 +167,9 @@ void NetManToggleNetIFLinkState(int NetIFID, unsigned char state);	//Also toggle
 #define I_NetManQueryMainIF DECLARE_IMPORT(16, NetManQueryMainIF)
 
 #define I_NetManSetLinkMode DECLARE_IMPORT(17, NetManSetLinkMode)
+
+#define I_NetManTxPacketNext DECLARE_IMPORT(18, NetManTxPacketNext)
+#define I_NetManTxPacketDeQ DECLARE_IMPORT(19, NetManTxPacketDeQ)
 
 #endif
 
