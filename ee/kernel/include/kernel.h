@@ -52,23 +52,23 @@
 // GP macros
 static __inline__ void *ChangeGP(void *gp)
 {
-	void *OldGP;
+	// void *OldGP;
 
-	__asm__ volatile(	"move %0, $gp\n"
-				"move $gp, %1"
-				: "=&r"(OldGP)
-				: "r"(gp)
-				: "gp", "memory");
+	// __asm__ volatile(	"move %0, $gp\n"
+	// 			"move $gp, %1"
+	// 			: "=&r"(OldGP)
+	// 			: "r"(gp)
+	// 			: "gp", "memory");
 
-	return OldGP;
+	return gp;
 }
 
 static __inline__ void SetGP(void *gp)
 {
-	__asm__ volatile(	"move $gp, %0"
-				:
-				: "r"(gp)
-				: "gp", "memory");
+	// __asm__ volatile(	"move $gp, %0"
+	// 			:
+	// 			: "r"(gp)
+	// 			: "gp", "memory");
 }
 
 extern void *_gp;
@@ -76,14 +76,14 @@ extern void *_gp;
 
 static __inline__ void *GetGP(void)
 {
-	void *gp;
+	// void *gp;
 
-	__asm__ volatile(	"move %0, $gp"
-				: "=r"(gp)
-				:
-				: "memory");
+	// __asm__ volatile(	"move %0, $gp"
+	// 			: "=r"(gp)
+	// 			:
+	// 			: "memory");
 
-	return gp;
+	return NULL;
 }
 
 /** Limits */
