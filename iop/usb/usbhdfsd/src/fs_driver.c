@@ -35,6 +35,7 @@
 #include "fat_driver.h"
 #include "fat_write.h"
 #include "fat.h"
+#include "mass_stor.h"
 
 //#define DEBUG  //comment out this line when not debugging
 
@@ -263,13 +264,20 @@ static int fs_open(iop_file_t* fd, const char *name, int flags, int mode) {
 		rec->sfnOffset = 0;
 		ret = fat_createFile(fatd, name, 0, escapeNotExist, &cluster, &rec->sfnSector, &rec->sfnOffset);
 		if (ret < 0) {
+			FLUSH_SECTORS(fatd);
 			_fs_unlock();
 			return ret;
 		}
 		//the file already exist but flags is set to truncate
-		if (ret == 2 && (flags & O_TRUNC)) {
+		if (ret == EEXIST && (flags & O_TRUNC)) {
 			XPRINTF("USBHDFSD: FAT I: O_TRUNC detected!\n");
-			fat_truncateFile(fatd, cluster, rec->sfnSector, rec->sfnOffset);
+			ret = fat_truncateFile(fatd, cluster, rec->sfnSector, rec->sfnOffset);
+			if (ret < 0) {
+				FLUSH_SECTORS(fatd);
+				XPRINTF("USBHDFSD: FAT E: failed to truncate!\n");
+				_fs_unlock();
+				return ret;
+			}
 		}
 
 		//find the file
@@ -761,6 +769,32 @@ int fs_rename(iop_file_t *fd, const char *path, const char *newpath)
 	return ret;
 }
 
+static int fs_devctl(iop_file_t *fd, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen)
+{
+	fat_driver *fatd;
+	int ret;
+
+	_fs_lock();
+
+	switch(cmd)
+	{
+		case USBMASS_DEVCTL_STOP_UNIT:
+			fatd = fat_getData(fd->unit);
+			ret = (fatd != NULL) ? mass_stor_stop_unit(fatd->dev) : -ENODEV;
+			break;
+		case USBMASS_DEVCTL_STOP_ALL:
+			mass_store_stop_all();
+			ret = 0;
+			break;
+		default:
+			ret = -ENXIO;
+	}
+
+	_fs_unlock();
+
+	return ret;
+}
+
 #ifndef WIN32
 static iop_device_ops_t fs_functarray={
 	&fs_init,
@@ -786,7 +820,7 @@ static iop_device_ops_t fs_functarray={
 	(void*)&fs_dummy,
 	(void*)&fs_dummy,
 	(void*)&fs_dummy,
-	(void*)&fs_dummy,
+	&fs_devctl,
 	(void*)&fs_dummy,
 	(void*)&fs_dummy,
 	(void*)&fs_dummy,

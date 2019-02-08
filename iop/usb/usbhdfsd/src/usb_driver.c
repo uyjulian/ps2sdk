@@ -225,7 +225,7 @@ static int usb_bulk_clear_halt(mass_dev* dev, int endpoint) {
 		ret = cb_data.returnCode;
 	}
 	if (ret != USB_RC_OK) {
-		XPRINTF("USBHDFSD: Error - sending clear halt %d\n", ret);
+		printf("USBHDFSD: Error - sending clear halt %d\n", ret);
 	}
 
 	return ret;
@@ -265,7 +265,7 @@ static void usb_bulk_reset(mass_dev* dev, int mode) {
 			ret = usb_bulk_clear_halt(dev, USB_BLK_EP_OUT);
 	}
 	if(ret != USB_RC_OK){
-		XPRINTF("USBHDFSD: Error - sending reset %d to device %d.\n", ret, dev->devId);
+		printf("USBHDFSD: Error - sending reset %d to device %d.\n", ret, dev->devId);
 		dev->status |= USBMASS_DEV_STAT_ERR;
 	}
 }
@@ -293,13 +293,11 @@ static int usb_bulk_status(mass_dev* dev, csw_packet* csw, unsigned int tag) {
 		WaitSema(cb_data.sema);
 		ret = cb_data.returnCode;
 
-#ifdef DEBUG
 		if (cb_data.returnSize != 13)
 			printf("USBHDFSD: bulk csw.status returnSize: %i != 13\n", cb_data.returnSize);
 		if (csw->dataResidue != 0)
 			printf("USBHDFSD: bulk csw.status residue: %i\n", csw->dataResidue);
 		XPRINTF("USBHDFSD: bulk csw result: %d, csw.status: %i\n", ret, csw->status);
-#endif
 	}
 
 	return ret;
@@ -322,7 +320,7 @@ static int usb_bulk_manage_status(mass_dev* dev, unsigned int tag) {
 	if (ret != USB_RC_OK) { /* STALL bulk in  -OR- Bulk error */
 		usb_bulk_clear_halt(dev, USB_BLK_EP_IN); /* clear the stall condition for bulk in */
 
-		XPRINTF("USBHDFSD: usb_bulk_manage_status error %d ...\n", ret);
+		printf("USBHDFSD: usb_bulk_manage_status error %d ...\n", ret);
 		ret = usb_bulk_status(dev, &csw, tag); /* Attempt to read CSW from bulk in endpoint */
 	}
 
@@ -396,7 +394,7 @@ static int usb_bulk_command(mass_dev* dev, cbw_packet* packet ) {
 		ret = cb_data.returnCode;
 	}
 	if (ret != USB_RC_OK) {
-		XPRINTF("USBHDFSD: Error - sending bulk command %d. Calling reset recovery.\n", ret);
+		printf("USBHDFSD: Error - sending bulk command %d. Calling reset recovery.\n", ret);
 		usb_bulk_reset(dev, 3);
 	}
 
@@ -419,14 +417,14 @@ static int usb_bulk_transfer(mass_dev* dev, int direction, void* buffer, unsigne
 	}
 
 	if(ret != USB_RC_OK) {
-		XPRINTF("USBHDFSD: Error - bulk data transfer %d. Clearing HALT state.\n", cb_data.returnCode);
+		printf("USBHDFSD: Error - bulk data transfer %d. Clearing HALT state.\n", cb_data.returnCode);
 		usb_bulk_clear_halt(dev, direction);
 	}
 
 	return ret;
 }
 
-static inline int cbw_scsi_test_unit_ready(mass_dev* dev)
+static int cbw_scsi_test_unit_ready(mass_dev* dev)
 {
 	int result, retries;
 	static cbw_packet cbw={
@@ -465,7 +463,7 @@ static inline int cbw_scsi_test_unit_ready(mass_dev* dev)
 	return result;
 }
 
-static inline int cbw_scsi_request_sense(mass_dev* dev, void *buffer, int size)
+static int cbw_scsi_request_sense(mass_dev* dev, void *buffer, int size)
 {
 	int rcode, result, retries;
 	static cbw_packet cbw={
@@ -510,7 +508,7 @@ static inline int cbw_scsi_request_sense(mass_dev* dev, void *buffer, int size)
 	return -EIO;
 }
 
-static inline int cbw_scsi_inquiry(mass_dev* dev, void *buffer, int size)
+static int cbw_scsi_inquiry(mass_dev* dev, void *buffer, int size)
 {
 	int rcode, result, retries;
 	static cbw_packet cbw={
@@ -555,7 +553,7 @@ static inline int cbw_scsi_inquiry(mass_dev* dev, void *buffer, int size)
 	return -EIO;
 }
 
-static inline int cbw_scsi_start_stop_unit(mass_dev* dev)
+static int cbw_scsi_start_stop_unit(mass_dev* dev, u8 param)
 {
 	int result, retries;
 	static cbw_packet cbw={
@@ -583,7 +581,9 @@ static inline int cbw_scsi_start_stop_unit(mass_dev* dev)
 		}
 	};
 
-	XPRINTF("USBHDFSD: cbw_scsi_start_stop_unit\n");
+	XPRINTF("USBHDFSD: cbw_scsi_start_stop_unit. param: %02x\n", param);
+
+	cbw.comData[4] = param;
 
 	for(result = -EIO, retries = USB_XFER_MAX_RETRIES; retries > 0; retries--){
 		if(usb_bulk_command(dev, &cbw) == USB_RC_OK){
@@ -594,7 +594,7 @@ static inline int cbw_scsi_start_stop_unit(mass_dev* dev)
 	return result;
 }
 
-static inline int cbw_scsi_read_capacity(mass_dev* dev, void *buffer, int size)
+static int cbw_scsi_read_capacity(mass_dev* dev, void *buffer, int size)
 {
 	int rcode, result, retries;
 	static cbw_packet cbw={
@@ -638,7 +638,7 @@ static inline int cbw_scsi_read_capacity(mass_dev* dev, void *buffer, int size)
 	return -EIO;
 }
 
-static inline int cbw_scsi_read_sector(mass_dev* dev, unsigned int lba, void* buffer, unsigned short int sectorCount)
+static int cbw_scsi_read_sector(mass_dev* dev, unsigned int lba, void* buffer, unsigned short int sectorCount)
 {
 	int rcode, result;
 	static cbw_packet cbw={
@@ -688,7 +688,7 @@ static inline int cbw_scsi_read_sector(mass_dev* dev, unsigned int lba, void* bu
 	return result;
 }
 
-static inline int cbw_scsi_write_sector(mass_dev* dev, unsigned int lba, const void* buffer, unsigned short int sectorCount)
+static int cbw_scsi_write_sector(mass_dev* dev, unsigned int lba, const void* buffer, unsigned short int sectorCount)
 {
 	int rcode, result;
 	static cbw_packet cbw={
@@ -818,17 +818,17 @@ int mass_stor_probe(int devId)
 
 	mass_dev* mass_device = mass_stor_findDevice(devId, 0);
 
-	/* only one device supported */
+	/* Check that a device descriptor was successfully allocated and the device was not already connected. */
 	if ((mass_device != NULL) && (mass_device->status & USBMASS_DEV_STAT_CONN))
 	{
-		printf("USBHDFSD: Error - only one mass storage device allowed ! \n");
+		printf("USBHDFSD: Error - no free device descriptors!\n");
 		return 0;
 	}
 
 	/* get device descriptor */
 	device = (UsbDeviceDescriptor*)sceUsbdScanStaticDescriptor(devId, NULL, USB_DT_DEVICE);
 	if (device == NULL)  {
-		XPRINTF("USBHDFSD: Error - Couldn't get device descriptor\n");
+		printf("USBHDFSD: Error - Couldn't get device descriptor\n");
 		return 0;
 	}
 
@@ -838,14 +838,14 @@ int mass_stor_probe(int devId)
 	/* read configuration */
 	config = (UsbConfigDescriptor*)sceUsbdScanStaticDescriptor(devId, device, USB_DT_CONFIG);
 	if (config == NULL) {
-	    XPRINTF("USBHDFSD: Error - Couldn't get configuration descriptor\n");
+	    printf("USBHDFSD: Error - Couldn't get configuration descriptor\n");
 	    return 0;
 	}
 	/* check that at least one interface exists */
 	XPRINTF("USBHDFSD: bNumInterfaces %d\n", config->bNumInterfaces);
 	if ((config->bNumInterfaces < 1) ||
 		(config->wTotalLength < (sizeof(UsbConfigDescriptor) + sizeof(UsbInterfaceDescriptor)))) {
-			XPRINTF("USBHDFSD: Error - No interfaces available\n");
+			printf("USBHDFSD: Error - No interfaces available\n");
 			return 0;
 	}
         /* get interface */
@@ -857,8 +857,8 @@ int mass_stor_probe(int devId)
 		(intf->bInterfaceSubClass	!= USB_SUBCLASS_MASS_SCSI  &&
 		 intf->bInterfaceSubClass	!= USB_SUBCLASS_MASS_SFF_8070I) ||
 		(intf->bInterfaceProtocol	!= USB_PROTOCOL_MASS_BULK_ONLY) ||
-		(intf->bNumEndpoints < 2))    { //one bulk endpoint is not enough because
-			return 0;		//we send the CBW to te bulk out endpoint
+		(intf->bNumEndpoints < 2))    { //4.3: There shall be at least 2 endpoints, for bulk in and bulk out.
+			return 0;
 	}
 	return 1;
 }
@@ -878,13 +878,13 @@ int mass_stor_connect(int devId)
 	dev = mass_stor_findDevice(devId, 1);
 
 	if (dev == NULL) {
-		printf("USBHDFSD: Error - unable to allocate space!\n");
+		printf("USBHDFSD: Error - no free device descriptors!\n");
 		return 1;
 	}
 
-	/* only one mass device allowed */
+	/* Device cannot be registered twice. */
 	if (dev->devId != -1) {
-		printf("USBHDFSD: Error - only one mass storage device allowed !\n");
+		printf("USBHDFSD: Error - device descriptor in use!\n");
 		return 1;
 	}
 
@@ -1005,7 +1005,7 @@ static int mass_stor_warmup(mass_dev *dev) {
 	}
 
 	stat = usb_bulk_get_max_lun(dev);
-	XPRINTF("USBHDFSD: usb_bulk_get_max_lun %d\n", stat);
+	printf("USBHDFSD: usb_bulk_get_max_lun %d\n", stat);
 
 	memset(&id, 0, sizeof(inquiry_data));
 	if ((stat = cbw_scsi_inquiry(dev, &id, sizeof(inquiry_data))) < 0) {
@@ -1013,13 +1013,13 @@ static int mass_stor_warmup(mass_dev *dev) {
 		return -1;
 	}
 
-	printf("USBHDFSD: Vendor: %.8s\n", id.vendor);
-	printf("USBHDFSD: Product: %.16s\n", id.product);
-	printf("USBHDFSD: Revision: %.4s\n", id.revision);
+	printf(	"USBHDFSD:\tVendor: %.8s\n"
+			"\t\tProduct: %.16s\n"
+			"\t\tRevision: %.4s\n", id.vendor, id.product, id.revision);
 
 	while((stat = cbw_scsi_test_unit_ready(dev)) != 0)
 	{
-		printf("USBHDFSD: Error - cbw_scsi_test_unit_ready %d\n", stat);
+		printf("USBHDFSD: cbw_scsi_test_unit_ready %d\n", stat);
 
 		stat = cbw_scsi_request_sense(dev, &sd, sizeof(sense_data));
 		if (stat != 0)
@@ -1032,7 +1032,7 @@ static int mass_stor_warmup(mass_dev *dev) {
 			if ((sd.sense_key == 0x02) && (sd.add_sense_code == 0x04) && (sd.add_sense_qual == 0x02))
 			{
 				printf("USBHDFSD: Error - Additional initalization is required for this device!\n");
-				if ((stat = cbw_scsi_start_stop_unit(dev)) != 0) {
+				if ((stat = cbw_scsi_start_stop_unit(dev, 1)) != 0) {
 					printf("USBHDFSD: Error - cbw_scsi_start_stop_unit %d\n", stat);
 					return -1;
 				}
@@ -1052,6 +1052,30 @@ static int mass_stor_warmup(mass_dev *dev) {
 	return 0;
 }
 
+static int mass_store_configureDevice(mass_dev *dev)
+{
+	int ret;
+	if ((ret = usb_set_configuration(dev, dev->configId)) != USB_RC_OK)
+	{
+		printf("USBHDFSD: Error - sending set_configuration %d\n", ret);
+		return ret;
+	}
+
+	if((ret = usb_set_interface(dev, dev->interfaceNumber, dev->interfaceAlt)) != USB_RC_OK)
+	{
+		printf("USBHDFSD: Error - sending set_interface %d\n", ret);
+		if (ret == USB_RC_STALL)
+		{	/* USB Specification 1.1, section 9.4.10: Devices that only support a default setting for the specified interface may return a STALL.
+			   As with Linux, we shall clear the halt state of the interface's pipes and continue. */
+			usb_bulk_clear_halt(dev, USB_BLK_EP_IN);
+			usb_bulk_clear_halt(dev, USB_BLK_EP_OUT);
+			ret = USB_RC_OK;
+		}
+	}
+
+	return ret;
+}
+
 /*	Do this outside of mass_stor_connect() as callback functions do not work,
 	causing the PS2 to hang while setting configuration (which does control transfer). */
 int mass_stor_configureNextDevice(void)
@@ -1066,16 +1090,9 @@ int mass_stor_configureNextDevice(void)
 		if (dev->devId != -1 && (dev->status & USBMASS_DEV_STAT_CONN) && !(dev->status & USBMASS_DEV_STAT_CONF))
 		{
 			int ret;
-			if ((ret = usb_set_configuration(dev, dev->configId)) != USB_RC_OK)
+			ret = mass_store_configureDevice(dev);
+			if (ret != USB_RC_OK)
 			{
-				printf("USBHDFSD: Error - sending set_configuration %d\n", ret);
-				mass_stor_release(dev);
-				continue;
-			}
-
-			if((ret = usb_set_interface(dev, dev->interfaceNumber, dev->interfaceAlt)) != USB_RC_OK)
-			{
-				printf("USBHDFSD: Error - sending set_interface %d\n", ret);
 				mass_stor_release(dev);
 				continue;
 			}
@@ -1165,3 +1182,35 @@ int UsbMassRegisterCallback(int device, usbmass_cb_t callback)
 
 	return result;
 }
+
+int mass_stor_stop_unit(mass_dev* dev)
+{
+	int stat;
+
+	if ((stat = cbw_scsi_start_stop_unit(dev, 0)) != 0) {
+		printf("USBHDFSD: Error - cbw_scsi_start_stop_unit %d\n", stat);
+	}
+
+	return stat;
+}
+
+void mass_store_stop_all(void)
+{
+	int i;
+
+	for (i = 0; i < NUM_DEVICES; ++i)
+	{
+		mass_dev *dev = &g_mass_device[i];
+		if (dev->devId != -1 && (dev->status & USBMASS_DEV_STAT_CONN))
+		{
+			if(!(dev->status & USBMASS_DEV_STAT_CONF))
+			{	//Configure unconfigured devices, to be able to shut them down.
+				if (mass_store_configureDevice(dev) != USB_RC_OK)
+					continue;
+			}
+
+			mass_stor_stop_unit(dev);
+		}
+	}
+}
+

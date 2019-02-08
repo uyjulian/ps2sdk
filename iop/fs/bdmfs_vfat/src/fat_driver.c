@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include <sysclib.h>
 //#include <sys/stat.h>
@@ -398,8 +399,8 @@ int fat_getDirentry(unsigned char fatType, fat_direntry* dir_entry, fat_direntry
                 dir->name[offset] = 0; //terminate
                 cont              = 0; //stop
             } else {
-                // Handle non-ASCII characters
-                dir->name[offset] = character < 128 ? dir_entry->lfn.name1[i] : '?';
+                // Handle characters that we don't support.
+                dir->name[offset] = character <= UCHAR_MAX ? dir_entry->lfn.name1[i] : '?';
                 offset++;
             }
         }
@@ -411,8 +412,8 @@ int fat_getDirentry(unsigned char fatType, fat_direntry* dir_entry, fat_direntry
                 dir->name[offset] = 0; //terminate
                 cont              = 0; //stop
             } else {
-                // Handle non-ASCII characters
-                dir->name[offset] = character < 128 ? dir_entry->lfn.name2[i] : '?';
+                // Handle characters that we don't support.
+                dir->name[offset] = character <= UCHAR_MAX ? dir_entry->lfn.name2[i] : '?';
                 offset++;
             }
         }
@@ -424,8 +425,8 @@ int fat_getDirentry(unsigned char fatType, fat_direntry* dir_entry, fat_direntry
                 dir->name[offset] = 0; //terminate
                 cont              = 0; //stop
             } else {
-                // Handle non-ASCII characters
-                dir->name[offset] = character < 128 ? dir_entry->lfn.name3[i] : '?';
+                // Handle characters that we don't support.
+                dir->name[offset] = character <= UCHAR_MAX ? dir_entry->lfn.name3[i] : '?';
                 offset++;
             }
         }
@@ -1040,3 +1041,26 @@ fat_driver* fat_getData(int device)
 
     return g_fatd[device];
 }
+
+//---------------------------------------------------------------------------
+int fat_stopUnit(int device)
+{
+    fat_driver *fatd;
+
+    fatd = fat_getData(device);
+    return (fatd != NULL) ? fatd->bd->stop(fatd->bd) : -ENODEV;
+}
+
+void fat_stopAll(void)
+{
+    fat_driver *fatd;
+    int i;
+
+    for (i = 0; i < NUM_DRIVES; i++)
+    {
+        fatd = fat_getData(i);
+        if (fatd != NULL)
+            fatd->bd->stop(fatd->bd);
+    }
+}
+

@@ -103,7 +103,7 @@ typedef struct {
 } FILE;
 #endif
 
-extern FILE __iob[_NFILE];
+extern FILE __iob[_NFILE] __attribute__((section("data")));
 
 #define stdin                          (&__iob[0])
 #define stdout                         (&__iob[1])
@@ -191,6 +191,15 @@ int asprintf(char **strp, const char *format, ...)
 int putchar(int);
 
 int sio_printf(const char *format, ...);
+
+/** Inter-library helpers */
+extern int (*_ps2sdk_close)(int) __attribute__((section("data")));
+extern int (*_ps2sdk_open)(const char*, int, ...) __attribute__((section("data")));
+extern int (*_ps2sdk_read)(int, void*, int) __attribute__((section("data")));
+extern int (*_ps2sdk_lseek)(int, int, int) __attribute__((section("data")));
+extern int (*_ps2sdk_write)(int, const void*, int) __attribute__((section("data")));
+extern int (*_ps2sdk_remove)(const char*) __attribute__((section("data")));
+extern int (*_ps2sdk_rename)(const char*, const char*) __attribute__((section("data")));
 
 #ifdef __cplusplus
 }

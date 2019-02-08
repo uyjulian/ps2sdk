@@ -22,7 +22,8 @@
 extern "C" {
 #endif
 
-int ps2ip_init();
+int ps2ip_init(void);
+void ps2ip_deinit(void);
 int accept(int s, struct sockaddr *addr, int *addrlen);
 int bind(int s, struct sockaddr *name, int namelen);
 int disconnect(int s);
@@ -43,7 +44,7 @@ int getsockopt(int s, int level, int optname, void* optval, socklen_t* optlen);
 int setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen);
 struct hostent *gethostbyname(const char *name);
 void dns_setserver(u8 numdns, ip_addr_t *dnsserver);
-ip_addr_t dns_getserver(u8 numdns);
+const ip_addr_t *dns_getserver(u8 numdns);
 
 #ifdef __cplusplus
 }

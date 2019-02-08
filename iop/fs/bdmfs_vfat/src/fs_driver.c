@@ -277,13 +277,20 @@ static int fs_open(iop_file_t* fd, const char* name, int flags, int mode)
         rec->sfnOffset = 0;
         ret            = fat_createFile(fatd, name, 0, escapeNotExist, &cluster, &rec->sfnSector, &rec->sfnOffset);
         if (ret < 0) {
+            FLUSH_SECTORS(fatd);
             _fs_unlock();
             return ret;
         }
         //the file already exist but flags is set to truncate
-        if (ret == 2 && (flags & O_TRUNC)) {
+        if (ret == EEXIST && (flags & O_TRUNC)) {
             M_DEBUG("FAT I: O_TRUNC detected!\n");
-            fat_truncateFile(fatd, cluster, rec->sfnSector, rec->sfnOffset);
+            ret = fat_truncateFile(fatd, cluster, rec->sfnSector, rec->sfnOffset);
+            if (ret < 0) {
+                FLUSH_SECTORS(fatd);
+                M_DEBUG("FAT E: failed to truncate!\n");
+                _fs_unlock();
+                return ret;
+            }
         }
 
         //find the file
@@ -834,6 +841,30 @@ int fs_rename(iop_file_t *fd, const char *path, const char *newpath)
     return ret;
 }
 
+static int fs_devctl(iop_file_t *fd, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen)
+{
+    int ret;
+
+    _fs_lock();
+
+    switch(cmd)
+    {
+        case USBMASS_DEVCTL_STOP_UNIT:
+            ret = fat_stopUnit(fd->unit);
+            break;
+        case USBMASS_DEVCTL_STOP_ALL:
+            fat_stopAll();
+            ret = 0;
+            break;
+        default:
+            ret = -ENXIO;
+    }
+
+    _fs_unlock();
+
+    return ret;
+}
+
 static iop_device_ops_t fs_functarray = {
     &fs_init,
     (void*)&fs_dummy,
@@ -858,7 +889,7 @@ static iop_device_ops_t fs_functarray = {
     (void*)&fs_dummy,
     (void*)&fs_dummy,
     (void*)&fs_dummy,
-    (void*)&fs_dummy,
+    &fs_devctl,
     (void*)&fs_dummy,
     (void*)&fs_dummy,
     (void*)&fs_dummy,

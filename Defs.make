@@ -40,7 +40,7 @@ IOP_STRIP = $(IOP_TOOL_PREFIX)strip
 # Definitions for the local toolchain
 #
 
-CC = gcc
+CC = cc
 AS = as
 LD = ld
 AR = ar
@@ -54,7 +54,6 @@ STRIP = strip
 MKDIR = mkdir
 RMDIR = rmdir
 ECHO  = echo
-GNUMAKE = make
 
 SYSTEM = $(shell uname)
 
@@ -64,12 +63,6 @@ ifeq ($(findstring Windows, $(SYSTEM)), Windows)
   MKDIR = cyg-mkdir
   RMDIR = cyg-rmdir
   ECHO  = cyg-echo
-  GNUMAKE = make
 endif
 
-ifeq ($(findstring BSD, $(SYSTEM)), BSD)
-  # *BSD needs gnu make
-  GNUMAKE = gmake
-endif
-
-MAKEREC = $(GNUMAKE) -C
+MAKEREC = $(MAKE) -C

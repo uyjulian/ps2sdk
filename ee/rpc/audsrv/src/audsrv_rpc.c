@@ -45,17 +45,22 @@ static void *on_cdda_stop_arg = NULL;
 static audsrv_callback_t on_fillbuf = NULL;
 static void *on_fillbuf_arg = NULL;
 
+static const unsigned short vol_values[26] =
+{
+	0x0000,
+	0x0000, 0x0096, 0x0190, 0x0230, 0x0320,
+	0x042E, 0x0532, 0x05FA, 0x06C2, 0x088E,
+	0x09F6, 0x0BC2, 0x0DC0, 0x0FF0, 0x118A,
+	0x1482, 0x1752, 0x1B4E, 0x1F40, 0x2378,
+	0x28D2, 0x2EFE, 0x34F8, 0x3A5C, 0x3FFF
+};
+
 /** Internal function to set last error
  * @param err
  */
 static void set_error(int err)
 {
 	audsrv_error = err;
-}
-
-static void _audsrv_intr()
-{
-	iSignalSema(completion_sema);
 }
 
 int audsrv_get_error()
@@ -70,13 +75,19 @@ int audsrv_get_error()
 */
 static int call_rpc_1(int func, int arg)
 {
+	int ret;
+
 	WaitSema(completion_sema);
 
 	sbuff[0] = arg;
-	SifCallRpc(&cd0, func, 0, sbuff, 1*4, sbuff, 4, _audsrv_intr, NULL);
+	SifCallRpc(&cd0, func, 0, sbuff, 1*4, sbuff, 4, NULL, NULL);
 
-	set_error(sbuff[0]);
-	return sbuff[0];
+	ret = sbuff[0];
+	SignalSema(completion_sema);
+
+	set_error(ret);
+
+	return ret;
 }
 
 /** Internal function to simplify RPC calling
@@ -87,21 +98,27 @@ static int call_rpc_1(int func, int arg)
 */
 static int call_rpc_2(int func, int arg1, int arg2)
 {
+	int ret;
+
 	WaitSema(completion_sema);
 
 	sbuff[0] = arg1;
 	sbuff[1] = arg2;
-	SifCallRpc(&cd0, func, 0, sbuff, 2*4, sbuff, 4, _audsrv_intr, NULL);
+	SifCallRpc(&cd0, func, 0, sbuff, 2*4, sbuff, 4, NULL, NULL);
 
-	set_error(sbuff[0]);
-	return sbuff[0];
+	ret = sbuff[0];
+	SignalSema(completion_sema);
+
+	set_error(ret);
+
+	return ret;
 }
 
 int audsrv_quit()
 {
 	WaitSema(completion_sema);
 
-	SifCallRpc(&cd0, AUDSRV_QUIT, 0, sbuff, 1*4, sbuff, 4, _audsrv_intr, NULL);
+	SifCallRpc(&cd0, AUDSRV_QUIT, 0, sbuff, 1*4, sbuff, 4, NULL, NULL);
 	set_error(AUDSRV_ERR_NOERROR);
 
 	SifRemoveRpc(&cb_srv, &cb_queue);
@@ -115,14 +132,21 @@ int audsrv_quit()
 
 int audsrv_set_format(struct audsrv_fmt_t *fmt)
 {
+	int ret;
+
 	WaitSema(completion_sema);
 
 	sbuff[0] = fmt->freq;
 	sbuff[1] = fmt->bits;
 	sbuff[2] = fmt->channels;
-	SifCallRpc(&cd0, AUDSRV_SET_FORMAT, 0, sbuff, 3*4, sbuff, 4, _audsrv_intr, NULL);
-	set_error(sbuff[0]);
-	return sbuff[0];
+	SifCallRpc(&cd0, AUDSRV_SET_FORMAT, 0, sbuff, 3*4, sbuff, 4, NULL, NULL);
+
+	ret = sbuff[0];
+	SignalSema(completion_sema);
+
+	set_error(ret);
+
+	return ret;
 }
 
 int audsrv_wait_audio(int bytes)
@@ -132,23 +156,13 @@ int audsrv_wait_audio(int bytes)
 
 int audsrv_set_volume(int volume)
 {
-	unsigned short vol_values[26] =
+	if (volume > MAX_VOLUME)
 	{
-		0x0000,
-		0x0000, 0x0096, 0x0190, 0x0230, 0x0320,
-		0x042E, 0x0532, 0x05FA, 0x06C2, 0x088E,
-		0x09F6, 0x0BC2, 0x0DC0, 0x0FF0, 0x118A,
-		0x1482, 0x1752, 0x1B4E, 0x1F40, 0x2378,
-		0x28D2, 0x2EFE, 0x34F8, 0x3A5C, 0x3FFF
-	};
-
-	if (volume > 100)
-	{
-		volume = 100;
+		volume = MAX_VOLUME;
 	}
-	else if (volume < 0)
+	else if (volume < MIN_VOLUME)
 	{
-		volume = 0;
+		volume = MIN_VOLUME;
 	}
 
 	return call_rpc_1(AUDSRV_SET_VOLUME, vol_values[volume/4]);
@@ -213,7 +227,7 @@ int audsrv_get_cd_status()
 
 int audsrv_play_audio(const char *chunk, int bytes)
 {
-	int copy, maxcopy;
+	int copy, maxcopy, copied;
 	int packet_size;
 	int sent = 0;
 
@@ -227,18 +241,21 @@ int audsrv_play_audio(const char *chunk, int bytes)
 		sbuff[0] = copy;
 		memcpy(&sbuff[1], chunk, copy);
 		packet_size = copy + sizeof(int);
-		SifCallRpc(&cd0, AUDSRV_PLAY_AUDIO, 0, sbuff, packet_size, sbuff, 1*4, _audsrv_intr, NULL);
+		SifCallRpc(&cd0, AUDSRV_PLAY_AUDIO, 0, sbuff, packet_size, sbuff, 1*4, NULL, NULL);
 
-		if (sbuff[0] < 0)
+		copied = sbuff[0];
+		SignalSema(completion_sema);
+
+		if (copied < 0)
 		{
 			/* there was an error */
-			set_error(-sbuff[0]);
+			set_error(-copied);
 			break;
 		}
 
 		chunk = chunk + copy;
 		bytes = bytes - copy;
-		sent = sent + sbuff[0];
+		sent = sent + copied;
 	}
 
 	return sent;
@@ -347,13 +364,25 @@ int audsrv_adpcm_init()
 	return call_rpc_1(AUDSRV_INIT_ADPCM, 0);
 }
 
+int audsrv_adpcm_set_volume(int ch, int volume)
+{
+	if (volume > MAX_VOLUME)
+	{
+		volume = MAX_VOLUME;
+	}
+	else if (volume < MIN_VOLUME)
+	{
+		volume = MIN_VOLUME;
+	}
+
+	return call_rpc_2(AUDSRV_ADPCM_SET_VOLUME, ch, vol_values[volume/4]);
+}
+
 int audsrv_load_adpcm(audsrv_adpcm_t *adpcm, void *buffer, int size)
 {
 	void* iop_addr;
 	SifDmaTransfer_t sifdma;
-	int id;
-
-	WaitSema(completion_sema);
+	int id, ret;
 
 	iop_addr = SifAllocIopHeap(size);
 	if (iop_addr == 0)
@@ -367,20 +396,21 @@ int audsrv_load_adpcm(audsrv_adpcm_t *adpcm, void *buffer, int size)
 	sifdma.attr = 0;
 
 	/* send by dma */
-	id = SifSetDma(&sifdma, 1);
+	while((id = SifSetDma(&sifdma, 1)) == 0);
 	while(SifDmaStat(id) >= 0);
+
+	WaitSema(completion_sema);
 
 	sbuff[0] = (int)iop_addr;
 	sbuff[1] = size;
 	sbuff[2] = (int)adpcm; /* use as id */
 
-	SifCallRpc(&cd0, AUDSRV_LOAD_ADPCM, 0, sbuff, 12, sbuff, 16, _audsrv_intr, NULL);
-	SifFreeIopHeap(iop_addr);
+	SifCallRpc(&cd0, AUDSRV_LOAD_ADPCM, 0, sbuff, 12, sbuff, 16, NULL, NULL);
 
 	if(sbuff[0] != 0)
 	{
 		adpcm->buffer = 0;
-		return sbuff[0];
+		ret = sbuff[0];
 	}
 	else
 	{
@@ -389,14 +419,20 @@ int audsrv_load_adpcm(audsrv_adpcm_t *adpcm, void *buffer, int size)
 		adpcm->pitch = sbuff[1];
 		adpcm->loop = sbuff[2];
 		adpcm->channels = sbuff[3];
-		return AUDSRV_ERR_NOERROR;
+		ret = AUDSRV_ERR_NOERROR;
 	}
+
+	SignalSema(completion_sema);
+
+	SifFreeIopHeap(iop_addr);
+
+	return ret;
 }
 
-int audsrv_play_adpcm(audsrv_adpcm_t *adpcm)
+int audsrv_ch_play_adpcm(int ch, audsrv_adpcm_t *adpcm)
 {
 	/* on iop side, the sample id is like the pointer on ee side */
-	return call_rpc_1(AUDSRV_PLAY_ADPCM, (u32)adpcm);
+	return call_rpc_2(AUDSRV_PLAY_ADPCM, ch, (u32)adpcm);
 }
 
 const char *audsrv_get_error_string()

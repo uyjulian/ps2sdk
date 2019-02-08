@@ -3,6 +3,7 @@
 //---------------------------------------------------------------------------
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 
 #ifdef WIN32
 #include <malloc.h>
@@ -371,8 +372,8 @@ int fat_getDirentry(unsigned char fatType, fat_direntry* dir_entry, fat_direntry
 				dir->name[offset] = 0; //terminate
 				cont = 0; //stop
 			} else {
-				// Handle non-ASCII characters
-				dir->name[offset] = character < 128 ? dir_entry->lfn.name1[i] : '?';
+				// Handle characters that we don't support.
+				dir->name[offset] = character <= UCHAR_MAX ? dir_entry->lfn.name1[i] : '?';
 				offset++;
 			}
 		}
@@ -384,8 +385,8 @@ int fat_getDirentry(unsigned char fatType, fat_direntry* dir_entry, fat_direntry
 				dir->name[offset] = 0; //terminate
 				cont = 0; //stop
 			} else {
-				// Handle non-ASCII characters
-				dir->name[offset] = character < 128 ? dir_entry->lfn.name2[i] : '?';
+				// Handle characters that we don't support.
+				dir->name[offset] = character <= UCHAR_MAX ? dir_entry->lfn.name2[i] : '?';
 				offset++;
 			}
 		}
@@ -397,8 +398,8 @@ int fat_getDirentry(unsigned char fatType, fat_direntry* dir_entry, fat_direntry
 				dir->name[offset] = 0; //terminate
 				cont = 0; //stop
 			} else {
-				// Handle non-ASCII characters
-				dir->name[offset] = character < 128 ? dir_entry->lfn.name3[i] : '?';
+				// Handle characters that we don't support.
+				dir->name[offset] = character <= UCHAR_MAX ? dir_entry->lfn.name3[i] : '?';
 				offset++;
 			}
 		}
@@ -804,9 +805,9 @@ int fat_readFile(fat_driver* fatd, fat_dir* fatDir, unsigned int filePos, unsign
 			startSector = fat_cluster2sector(&fatd->partBpb, fatd->cbuf[i]);
 
 			//Calculate how long we can continuously read for.
-			j = (size + dataSkip) / fatd->partBpb.sectorSize;
+			j = (size + dataSkip) / fatd->partBpb.sectorSize + sectorSkip;
 			toRead = 0;
-			for (; j > 0; i++) {
+			while (1) {
 				if(j >= fatd->partBpb.clusterSize)
 				{
 					toRead += fatd->partBpb.clusterSize;
@@ -821,9 +822,14 @@ int fat_readFile(fat_driver* fatd, fat_dir* fatDir, unsigned int filePos, unsign
 				//Check that the next cluster is adjacent to this one, so we can read across.
 				if ((i >= chainSize - 1) || (fatd->cbuf[i] != (fatd->cbuf[i+1]-1)))
 					break;
+				if (j == 0)
+					break;
+				i++; //Advance to the next cluster.
 			}
 
+			//Consider the number of sectors within the cluster to skip.
 			startSector += sectorSkip;
+			toRead -= sectorSkip;
 
 			//process all sectors of the cluster (and skip leading sectors if needed)
 			if (dataSkip > 0) {
@@ -1044,6 +1050,8 @@ fat_driver * fat_getData(int device)
 	{
 		if (mass_stor_configureNextDevice() <= 0)
 			break;
+		//Do not block USBD by busy-looping here, if the device is not ready. This function call will carry the priority of the calling thread.
+		DelayThread(5000);
 	}
 
 	if (g_fatd[device] == NULL || g_fatd[device]->dev == NULL)
