@@ -7,7 +7,7 @@
 #include "defs.h"
 #include "irx.h"
 #include "intrman.h"
-#include "ioman.h"
+#include "iomanX.h"
 #include "io_common.h"
 #include "sifman.h"
 #include "stdio.h"
@@ -18,7 +18,6 @@
 #include "errno.h"
 #include "ps2smb.h"
 
-#include "ioman_add.h"
 #include "smb_fio.h"
 #include "smb.h"
 #include "auth.h"
@@ -27,44 +26,46 @@
 int smbman_io_sema;
 
 // driver ops func tab
-void *smbman_ops[27] = {
-	(void*)smb_init,
-	(void*)smb_deinit,
-	(void*)smb_dummy,
-	(void*)smb_open,
-	(void*)smb_close,
-	(void*)smb_read,
-	(void*)smb_write,
-	(void*)smb_lseek,
-	(void*)smb_dummy,
-	(void*)smb_remove,
-	(void*)smb_mkdir,
-	(void*)smb_rmdir,
-	(void*)smb_dopen,
-	(void*)smb_dclose,
-	(void*)smb_dread,
-	(void*)smb_getstat,
-	(void*)smb_dummy,
-	(void*)smb_rename,
-	(void*)smb_chdir,
-	(void*)smb_dummy,
-	(void*)smb_dummy,
-	(void*)smb_dummy,
-	(void*)smb_lseek64,
-	(void*)smb_devctl,
-	(void*)smb_dummy,
-	(void*)smb_dummy,
-	(void*)smb_dummy
+static iop_device_ops_t smbman_ops = {
+	&smb_init,
+	&smb_deinit,
+	(void*)&smb_dummy,
+	&smb_open,
+	&smb_close,
+	&smb_read,
+	&smb_write,
+	&smb_lseek,
+	(void*)&smb_dummy,
+	&smb_remove,
+	&smb_mkdir,
+	&smb_rmdir,
+	&smb_dopen,
+	&smb_dclose,
+	&smb_dread,
+	&smb_getstat,
+	(void*)&smb_dummy,
+	&smb_rename,
+	&smb_chdir,
+	(void*)&smb_dummy,
+	(void*)&smb_dummy,
+	(void*)&smb_dummy,
+	&smb_lseek64,
+	&smb_devctl,
+	(void*)&smb_dummy,
+	(void*)&smb_dummy,
+	(void*)&smb_dummy
 };
 
 // driver descriptor
-static iop_ext_device_t smbdev = {
+static iop_device_t smbdev = {
 	"smb",
 	IOP_DT_FS  | IOP_DT_FSEXT,
 	1,
 	"SMB",
-	(struct _iop_ext_device_ops *)&smbman_ops
+	&smbman_ops
 };
+
+#define SMB_NAME_MAX	256
 
 typedef struct {
 	iop_file_t 	*f;
@@ -72,17 +73,20 @@ typedef struct {
 	s64		filesize;
 	s64		position;
 	u32		mode;
-	char		name[256];
+	char		name[SMB_NAME_MAX];
 } FHANDLE;
 
 #define MAX_FDHANDLES		32
 FHANDLE smbman_fdhandles[MAX_FDHANDLES];
 
+#define SMB_SEARCH_BUF_MAX	4096
+#define SMB_PATH_MAX		1024
+
 static ShareEntry_t ShareList;
-static u8 SearchBuf[4096];
-static char smb_curdir[4096];
-static char smb_curpath[4096];
-static char smb_secpath[4096];
+static u8 SearchBuf[SMB_SEARCH_BUF_MAX];
+static char smb_curdir[SMB_PATH_MAX];
+static char smb_curpath[SMB_PATH_MAX];
+static char smb_secpath[SMB_PATH_MAX];
 
 static int keepalive_mutex = -1;
 static int keepalive_inited = 0;
@@ -284,39 +288,40 @@ static FHANDLE *smbman_getfilefreeslot(void)
 }
 
 //--------------------------------------------------------------
-static char *prepare_path(char *path, char *full_path, int max_path)
+static char *prepare_path(const char *path, char *full_path, int max_path)
 {
+	const char *p, *p2;
 	int i;
 
-	char *p = (char *)path;
-	char *p2 = (char *)&path[strlen(path)];
+	//Reserve space for 2 backslashes and a NULL.
+	strncpy(full_path, smb_curdir, max_path - 3);
+	strcat(full_path, "\\");
 
+	//Skip all leading slashes and backslashes.
+	p = path;
 	while ((*p == '\\') || (*p == '/'))
 		p++;
 
+	//Locate the end of the path, ignoring any trailing slashes and backslashes.
+	p2 = &path[strlen(path)];
 	while ((*p2 == '\\') || (*p2 == '/'))
-		*p2-- = 0;
+		p2--;
 
-	for (i=0; i<strlen(p); i++) {
-		if (p[i] == '/')
-			p[i] = '\\';
+	//Copy path. Reserve space for a backslash and a NULL
+	for (i = strlen(full_path); (p <= p2) && (max_path - i - 2 > 0); p++,i++)
+	{	//Convert all slashes along the path to backslashes.
+		full_path[i] = (*p == '/') ? '\\' : *p;
 	}
 
-	if (strlen(p) > 0) {
-		strncpy(full_path, smb_curdir, max_path-1-strlen(p));
-		strcat(full_path, "\\");
-		strcat(full_path, p);
-	}
-	else {
-		strncpy(full_path, smb_curdir, max_path-1);
-		strcat(full_path, "\\");
-	}
+	//Append a backslash and null-terminate.
+	full_path[i] = '\\';
+	full_path[i+1] = '\0';
 
-	return (char *)full_path;
+	return full_path;
 }
 
 //--------------------------------------------------------------
-int smb_open(iop_file_t *f, const char *filename, int mode, int flags)
+int smb_open(iop_file_t *f, const char *filename, int flags, int mode)
 {
 	int r = 0;
 	FHANDLE *fh;
@@ -328,25 +333,25 @@ int smb_open(iop_file_t *f, const char *filename, int mode, int flags)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *path = prepare_path((char *)filename, smb_curpath, 4096);
+	char *path = prepare_path(filename, smb_curpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
 	fh = smbman_getfilefreeslot();
 	if (fh) {
-		r = smb_OpenAndX(UID, TID, path, &filesize, mode);
+		r = smb_OpenAndX(UID, TID, path, &filesize, flags);
 		if (r >= 0) {
 			f->privdata = fh;
 			fh->f = f;
 			fh->smb_fid = r;
-			fh->mode = mode;
+			fh->mode = flags;
 			fh->filesize = filesize;
 			fh->position = 0;
 			if (fh->mode & O_TRUNC)
 				fh->filesize = 0;
 			else if (fh->mode & O_APPEND)
 				fh->position = filesize;
-			strncpy(fh->name, path, 256);
+			strncpy(fh->name, path, SMB_NAME_MAX);
 			r = 0;
 		}
 	}
@@ -401,7 +406,7 @@ void smb_closeAll(void)
 }
 
 //--------------------------------------------------------------
-int smb_lseek(iop_file_t *f, u32 pos, int where)
+int smb_lseek(iop_file_t *f, int pos, int where)
 {
 	return (int)smb_lseek64(f, pos, where);
 }
@@ -410,8 +415,7 @@ int smb_lseek(iop_file_t *f, u32 pos, int where)
 int smb_read(iop_file_t *f, void *buf, int size)
 {
 	FHANDLE *fh = (FHANDLE *)f->privdata;
-	int r, rpos;
-	u32 nbytes;
+	int r;
 
 	if ((UID == -1) || (TID == -1) || (fh->smb_fid == -1))
 		return -EBADF;
@@ -421,35 +425,21 @@ int smb_read(iop_file_t *f, void *buf, int size)
 
 	smb_io_lock();
 
-	rpos = 0;
-
-	while (size) {
-		nbytes = MAX_RD_BUF;
-		if (size < nbytes)
-			nbytes = size;
-
-		r = smb_ReadAndX(UID, TID, fh->smb_fid, fh->position, (void *)(buf + rpos), (u16)nbytes);
-		if (r < 0) {
-   			goto io_unlock;
-		}
-
-		rpos += nbytes;
-		size -= nbytes;
-		fh->position += nbytes;
+	r = smb_ReadFile(UID, TID, fh->smb_fid, fh->position, buf, size);
+	if (r > 0) {
+		fh->position += r;
 	}
 
-io_unlock:
 	smb_io_unlock();
 
-	return rpos;
+	return r;
 }
 
 //--------------------------------------------------------------
 int smb_write(iop_file_t *f, void *buf, int size)
 {
 	FHANDLE *fh = (FHANDLE *)f->privdata;
-	int r, wpos;
-	u32 nbytes;
+	int r;
 
 	if ((UID == -1) || (TID == -1) || (fh->smb_fid == -1))
 		return -EBADF;
@@ -459,29 +449,16 @@ int smb_write(iop_file_t *f, void *buf, int size)
 
 	smb_io_lock();
 
-	wpos = 0;
-
-	while (size) {
-		nbytes = MAX_WR_BUF;
-		if (size < nbytes)
-			nbytes = size;
-
-		r = smb_WriteAndX(UID, TID, fh->smb_fid, fh->position, (void *)(buf + wpos), (u16)nbytes);
-		if (r < 0) {
-   			goto io_unlock;
-		}
-
-		wpos += nbytes;
-		size -= nbytes;
-		fh->position += nbytes;
+	r = smb_WriteFile(UID, TID, fh->smb_fid, fh->position, buf, size);
+	if (r > 0) {
+		fh->position += r;
 		if (fh->position > fh->filesize)
 			fh->filesize += fh->position - fh->filesize;
 	}
 
-io_unlock:
 	smb_io_unlock();
 
-	return wpos;
+	return r;
 }
 
 //--------------------------------------------------------------
@@ -495,7 +472,7 @@ int smb_remove(iop_file_t *f, const char *filename)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *path = prepare_path((char *)filename, smb_curpath, 4096);
+	char *path = prepare_path(filename, smb_curpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
@@ -509,7 +486,7 @@ int smb_remove(iop_file_t *f, const char *filename)
 }
 
 //--------------------------------------------------------------
-int smb_mkdir(iop_file_t *f, const char *dirname)
+int smb_mkdir(iop_file_t *f, const char *dirname, int mode)
 {
 	int r;
 
@@ -519,7 +496,7 @@ int smb_mkdir(iop_file_t *f, const char *dirname)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *path = prepare_path((char *)dirname, smb_curpath, 4096);
+	char *path = prepare_path(dirname, smb_curpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
@@ -542,7 +519,7 @@ int smb_rmdir(iop_file_t *f, const char *dirname)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *path = prepare_path((char *)dirname, smb_curpath, 4096);
+	char *path = prepare_path(dirname, smb_curpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
@@ -647,7 +624,7 @@ int smb_dopen(iop_file_t *f, const char *dirname)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *path = prepare_path((char *)dirname, smb_curpath, 4096);
+	char *path = prepare_path(dirname, smb_curpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
@@ -726,7 +703,7 @@ int smb_dread(iop_file_t *f, iox_dirent_t *dirent)
 
 	if (r == 1) {
 		smb_statFiller(&info->fileInfo, &dirent->stat);
-		strncpy(dirent->name, info->FileName, 256);
+		strncpy(dirent->name, info->FileName, SMB_NAME_MAX);
 	}
 
 io_unlock:
@@ -747,7 +724,7 @@ int smb_getstat(iop_file_t *f, const char *filename, iox_stat_t *stat)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *path = prepare_path((char *)filename, smb_curpath, 4096);
+	char *path = prepare_path(filename, smb_curpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
@@ -777,8 +754,8 @@ int smb_rename(iop_file_t *f, const char *oldname, const char *newname)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *oldpath = prepare_path((char *)oldname, smb_curpath, 4096);
-	char *newpath = prepare_path((char *)newname, smb_secpath, 4096);
+	char *oldpath = prepare_path(oldname, smb_curpath, SMB_PATH_MAX);
+	char *newpath = prepare_path(newname, smb_secpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
@@ -803,7 +780,7 @@ int smb_chdir(iop_file_t *f, const char *dirname)
 	if ((UID == -1) || (TID == -1))
 		return -ENOTCONN;
 
-	char *path = prepare_path((char *)dirname, smb_curpath, 4096);
+	char *path = prepare_path(dirname, smb_curpath, SMB_PATH_MAX);
 
 	smb_io_lock();
 
@@ -969,7 +946,7 @@ static int smb_LogOff(void)
 static int smb_GetShareList(smbGetShareList_in_t *getsharelist)
 {
 	int i, r, sharecount, shareindex;
-	char tree_str[256];
+	char tree_str[64];
 	server_specs_t *specs;
 
 	specs = (server_specs_t *)getServerSpecs();
@@ -1084,7 +1061,7 @@ static int smb_QueryDiskInfo(smbQueryDiskInfo_out_t *querydiskinfo)
 }
 
 //--------------------------------------------------------------
-int smb_devctl(iop_file_t *f, const char *devname, int cmd, void *arg, u32 arglen, void *bufp, u32 buflen)
+int smb_devctl(iop_file_t *f, const char *devname, int cmd, void *arg, unsigned int arglen, void *bufp, unsigned int buflen)
 {
 	int r = 0;
 
