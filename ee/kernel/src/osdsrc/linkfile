@@ -25,7 +25,7 @@ SECTIONS {
 	.reginfo : { *(.reginfo) }
 
 	/* Static data.  */
-	.rodata ALIGN(64): {
+	.rodata ALIGN(128): {
 		*(.rodata)
 		*(.rodata.*)
 		*(.gnu.linkonce.r*)
