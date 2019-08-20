@@ -20,10 +20,6 @@
 extern int      __time_intr_overflow_id;
 extern clock_t  __time_intr_overflow_count;
 
-#ifdef F___time_internals
-int      __time_intr_overflow_id = -1;
-clock_t  __time_intr_overflow_count = 0;
-
 #ifdef TIME_USE_T0
 #define INTC_TIM       INTC_TIM0
 #define T_COUNT        T0_COUNT
@@ -35,6 +31,10 @@ clock_t  __time_intr_overflow_count = 0;
 #define T_MODE         T1_MODE
 #define T_COMP         T1_COMP
 #endif
+
+#ifdef F___time_internals
+int      __time_intr_overflow_id = -1;
+clock_t  __time_intr_overflow_count = 0;
 
 static int intrOverflow(int ca)
 {
