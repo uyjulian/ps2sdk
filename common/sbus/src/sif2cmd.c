@@ -12,7 +12,7 @@ This file contains all common code for both EE and IOP SIF management.
 #include "sbus_priv.h"
 
 #ifdef _EE
-int sio_printf(const char *format, ...);
+#include <stdio.h>
 #include <string.h>
 #else
 #include <sysclib.h>
