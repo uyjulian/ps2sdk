@@ -31,5 +31,6 @@
 #include <thbase.h>
 #include <stdio.h>
 #include <sysclib.h>
+#include <secrman.h>
 
 #endif /* IOP_IRX_IMPORTS_H */

@@ -3,6 +3,7 @@
 #include <iox_stat.h>
 #include <sysclib.h>
 
+#include "allow_dvdv.h"
 #include "cdfs_iop.h"
 
 // 16 sectors worth of toc entry
@@ -428,6 +429,9 @@ static iop_device_ops_t fio_ops = {
 int _start(int argc, char **argv)
 {
     static iop_device_t fio_driver;
+
+    // Load the stub encrypted module to allow reading DVD video discs
+    allow_dvdv();
 
     // Prepare cache and read mode
     cdfs_prepare();

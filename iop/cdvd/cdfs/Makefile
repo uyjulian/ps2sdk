@@ -7,8 +7,9 @@
 # Review ps2sdk README & LICENSE files for further details.
 
 # IOP_CFLAGS += -DSIO_DEBUG -DDEBUG
+IOP_INCS += -I$(PS2SDKSRC)/iop/system/sio2man/include
 
-IOP_OBJS = main.o cdfs_iop.o imports.o
+IOP_OBJS = main.o cdfs_iop.o imports.o allow_dvdv.o
 
 include $(PS2SDKSRC)/Defs.make
 include $(PS2SDKSRC)/iop/Rules.bin.make
