@@ -31,6 +31,9 @@
 
 static __inline__ void *ChangeGP(void *gp)
 {
+#if __GNUC__ > 3
+	return gp;
+#else
 	void *OldGP;
 
 	__asm__ volatile(	"move %0, $gp\n"
@@ -40,14 +43,17 @@ static __inline__ void *ChangeGP(void *gp)
 				: "gp", "memory");
 
 	return OldGP;
+#endif
 }
 
 static __inline__ void SetGP(void *gp)
 {
+#if __GNUC__ <= 3
 	__asm__ volatile(	"move $gp, %0"
 				:
 				: "r"(gp)
 				: "gp", "memory");
+#endif
 }
 
 extern void *_gp;
@@ -55,6 +61,9 @@ extern void *_gp;
 
 static __inline__ void *GetGP(void)
 {
+#if __GNUC__ > 3
+	return NULL;
+#else
 	void *gp;
 
 	__asm__ volatile(	"move %0, $gp"
@@ -63,6 +72,7 @@ static __inline__ void *GetGP(void)
 				: "memory");
 
 	return gp;
+#endif
 }
 
 static inline void *iop_memcpy(void *dest, const void *src, int size)
