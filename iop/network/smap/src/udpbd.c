@@ -147,6 +147,12 @@ static void udpbd_flush(struct block_device* bd)
     // Dummy function
 }
 
+static int udpbd_stop(struct block_device* bd)
+{
+    // Dummy function
+    return 0;
+}
+
 //
 // Public functions
 //
@@ -170,6 +176,7 @@ int udpbd_init(void)
     g_udpbd.read  = udpbd_read;
     g_udpbd.write = udpbd_write;
     g_udpbd.flush = udpbd_flush;
+    g_udpbd.stop  = udpbd_stop;
 
 	// Ethernet
 	g_pkt.eth_addr_dst[0] = 0xff; //0x54;
