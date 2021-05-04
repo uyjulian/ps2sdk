@@ -3,6 +3,7 @@
 
 
 #include <thbase.h>
+#include <netman.h>
 
 
 
