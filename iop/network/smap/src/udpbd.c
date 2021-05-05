@@ -185,13 +185,8 @@ int udpbd_init(void)
 	g_pkt.eth_addr_dst[3] = 0xff; //0x1e;
 	g_pkt.eth_addr_dst[4] = 0xff; //0x28;
 	g_pkt.eth_addr_dst[5] = 0xff; //0xa6;
-	g_pkt.eth_addr_src[0] = 0x00;
-	g_pkt.eth_addr_src[1] = 0x1d;
-	g_pkt.eth_addr_src[2] = 0x0d;
-	g_pkt.eth_addr_src[3] = 0xda;
-	g_pkt.eth_addr_src[4] = 0xbf;
-	g_pkt.eth_addr_src[5] = 0xca;
-	g_pkt.eth_type        = 0x0008; /* Network byte order: 0x800 */
+    SMAPGetMACAddress(g_pkt.eth_addr_src);
+	g_pkt.eth_type        = htons(0x0800); // IPv4
 	// IP
 	g_pkt.ip_hlen         = 0x45;
 	g_pkt.ip_tos          = 0;

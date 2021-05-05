@@ -140,16 +140,13 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData){
 			}
 			else{
 #ifndef NO_BDM
-				u32 data;
-				// Filter out BDFS packages:
-				// - NOTE: must be a multiple of 4, so we're off by 2 bytes!!!
+				// Filter out UDPBD packages:
 				// - skip 14 bytes of ethernet
 				// - skip 20 bytes of IP
 				// - skip  8 bytes of UDP
 				// - skip  2 bytes align
 				SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = pointer + 44;
-				data = SMAP_REG32(SMAP_R_RXFIFO_DATA);
-				if (data == UDPBD_HEADER_MAGIC) {
+				if (SMAP_REG32(SMAP_R_RXFIFO_DATA) == UDPBD_HEADER_MAGIC) {
 					udpbd_rx(pointer);
 
 					// Do nothing and drop the frame

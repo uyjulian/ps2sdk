@@ -69,6 +69,5 @@ typedef struct {
 
 int udpbd_init(void);
 void udpbd_rx(u16 pointer);
-void udpbd_test(void);
 
 #endif
