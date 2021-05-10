@@ -25,13 +25,15 @@ typedef struct {
 	u32 par2;
 } __attribute__((packed)) udpbd_header_t;
 
+#define UDPBD_MAX_PAYLOAD 1454
+
 typedef struct {
 	eth_header_t   eth;   // 14 bytes
 	ip_header_t    ip;    // 20 bytes
 	udp_header_t   udp;   //  8 bytes
 	u16            align; //  2 bytes
 	udpbd_header_t bd;    // 16 bytes
-	/* Data */
+	//char payload[UDPBD_MAX_PAYLOAD];
 } __attribute__((packed)) udpbd_pkt_t;
 
 int udpbd_init(void);

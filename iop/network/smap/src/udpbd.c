@@ -1,15 +1,17 @@
 #include <errno.h>
 #include <bdm.h>
 #include <thevent.h>
+#include <stdio.h>
 #include <smapregs.h>
 #include <dmacman.h>
 #include <dev9.h>
-#include "xfer.h"
-#include "udpbd.h"
 
-//#define M_PRINTF(format, args...) printf("UDPBD: " format, ## args)
-//#define M_DEBUG M_PRINTF
-#define M_DEBUG(...)
+#include "udpbd.h"
+#include "main.h"
+
+#define M_PRINTF(format, args...) printf("UDPBD: " format, ## args)
+#define M_DEBUG M_PRINTF
+//#define M_DEBUG(...)
 
 #define UDPBD_MAX_RETRIES 4
 static struct block_device g_udpbd;
@@ -18,52 +20,64 @@ static u8 g_cmdid = 0;
 static int g_read_done = 0;
 static int g_read_cmdpkt = 0;
 static int bdm_connected = 0;
-
 static void* g_buffer;
 static unsigned int g_read_size;
+static unsigned int g_errno = 0;
 
 
-static inline u16 htons(u16 n)
+static unsigned int _udpbd_read_timeout(void *arg)
 {
-	return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
+    g_read_size = 0;
+    g_errno = 1;
+    iSetEventFlag(g_read_done, 2);
+    return 0;
 }
 
-static u16 checksum(void *buf, size_t size)
+extern struct SmapDriverData SmapDriverData;
+static void debug_smap()
 {
-	u16 *data = (u16 *)buf;
-	u32 csum;
+	USE_SMAP_EMAC3_REGS;
+	USE_SMAP_REGS;
+	USE_SMAP_RX_BD;
+    int i;
+    char bdidx;
 
-	for (csum = 0; size > 1; size -= 2, data++)
-		csum += *data;
+    M_DEBUG("SMAP_R_RXFIFO_CTRL:       0x%x\n", SMAP_REG8(SMAP_R_RXFIFO_CTRL));
+    M_DEBUG("SMAP_R_RXFIFO_RD_PTR:     0x%x\n", SMAP_REG16(SMAP_R_RXFIFO_RD_PTR));
+    //M_DEBUG("SMAP_R_RXFIFO_SIZE:       %d\n", SMAP_REG16(SMAP_R_RXFIFO_SIZE));
+    M_DEBUG("SMAP_R_RXFIFO_FRAME_CNT:  %d\n", SMAP_REG8(SMAP_R_RXFIFO_FRAME_CNT));
+    //M_DEBUG("SMAP_R_RXFIFO_FRAME_DEC:  %d\n", SMAP_REG8(SMAP_R_RXFIFO_FRAME_DEC));
+    M_DEBUG("SMAP_R_EMAC3_RxMODE:      0x%x\n", (unsigned int)SMAP_EMAC3_GET32(SMAP_R_EMAC3_RxMODE));
+    M_DEBUG("SMAP_R_EMAC3_INTR_STAT:   0x%x\n", (unsigned int)SMAP_EMAC3_GET32(SMAP_R_EMAC3_INTR_STAT));
+    M_DEBUG("SMAP_R_EMAC3_INTR_ENABLE: 0x%x\n", (unsigned int)SMAP_EMAC3_GET32(SMAP_R_EMAC3_INTR_ENABLE));
+    bdidx = SmapDriverData.RxBDIndex % SMAP_BD_MAX_ENTRY;
+	for(i=0; i<SMAP_BD_MAX_ENTRY; i++) {
+        if (rx_bd[i].ctrl_stat != SMAP_BD_RX_EMPTY ||
+            rx_bd[i].reserved != 0 ||
+            rx_bd[i].length != 0 ||
+            rx_bd[i].pointer != 0 ||
+            i == bdidx)
+        {
+            if (i == bdidx)
+                M_DEBUG(" - rx_bd[%d]: 0x%x / 0x%x / %d / 0x%x <--\n", i, rx_bd[i].ctrl_stat, rx_bd[i].reserved, rx_bd[i].length, rx_bd[i].pointer);
+            else
+                M_DEBUG(" - rx_bd[%d]: 0x%x / 0x%x / %d / 0x%x\n", i, rx_bd[i].ctrl_stat, rx_bd[i].reserved, rx_bd[i].length, rx_bd[i].pointer);
+        }
+    }
 
-	if (size == 1)
-		csum += htons((u16)((*(u8 *)data) & 0xff) << 8);
-
-	csum = (csum >> 16) + (csum & 0xffff);
-	if (csum & 0xffff0000)
-		csum = (csum >> 16) + (csum & 0xffff);
-
-	return (u16)csum;
-}
-
-static int udpbd_send(udpbd_pkt_t *udp_pkt)
-{
-	size_t size = sizeof(udpbd_header_t)+2;
-	size_t pktsize = sizeof(udpbd_pkt_t);
-	u32 csum;
-
-	M_DEBUG("%s\n", __func__);
-
-	udp_pkt->ip.len = htons(pktsize - 14);	/* Subtract the ethernet header.  */
-	udp_pkt->ip.csum = 0;
-	csum = checksum(&udp_pkt->ip.hlen, 20);	/* Checksum the IP header (20 bytes).  */
-	while (csum >> 16)
-		csum = (csum & 0xffff) + (csum >> 16);
-	udp_pkt->ip.csum = ~(csum & 0xffff);
-	udp_pkt->udp.len = htons(size + 8);
-	udp_pkt->udp.csum = 0;			/* Don't bother.  */
-
-	return smap_transmit(udp_pkt, pktsize);
+    M_DEBUG("RxDroppedFrameCount:      %d\n", (int)SmapDriverData.RuntimeStats.RxDroppedFrameCount);
+    M_DEBUG("RxErrorCount:             %d\n", (int)SmapDriverData.RuntimeStats.RxErrorCount);
+    M_DEBUG("RxFrameOverrunCount:      %d\n", SmapDriverData.RuntimeStats.RxFrameOverrunCount);
+    M_DEBUG("RxFrameBadLengthCount:    %d\n", SmapDriverData.RuntimeStats.RxFrameBadLengthCount);
+    M_DEBUG("RxFrameBadFCSCount:       %d\n", SmapDriverData.RuntimeStats.RxFrameBadFCSCount);
+    M_DEBUG("RxFrameBadAlignmentCount: %d\n", SmapDriverData.RuntimeStats.RxFrameBadAlignmentCount);
+    M_DEBUG("TxDroppedFrameCount:      %d\n", (int)SmapDriverData.RuntimeStats.TxDroppedFrameCount);
+    M_DEBUG("TxErrorCount:             %d\n", (int)SmapDriverData.RuntimeStats.TxErrorCount);
+    M_DEBUG("TxFrameLOSSCRCount:       %d\n", SmapDriverData.RuntimeStats.TxFrameLOSSCRCount);
+    M_DEBUG("TxFrameEDEFERCount:       %d\n", SmapDriverData.RuntimeStats.TxFrameEDEFERCount);
+    M_DEBUG("TxFrameCollisionCount:    %d\n", SmapDriverData.RuntimeStats.TxFrameCollisionCount);
+    M_DEBUG("TxFrameUnderrunCount:     %d\n", SmapDriverData.RuntimeStats.TxFrameUnderrunCount);
+    M_DEBUG("RxAllocFail:              %d\n", SmapDriverData.RuntimeStats.RxAllocFail);
 }
 
 //
@@ -72,6 +86,9 @@ static int udpbd_send(udpbd_pkt_t *udp_pkt)
 static int _udpbd_read(struct block_device* bd, u32 sector, void* buffer, u16 count)
 {
 	u32 EFBits;
+    iop_sys_clock_t clock;
+	USE_SMAP_EMAC3_REGS;
+	USE_SMAP_REGS;
 
 	//M_DEBUG("%s: sector=%d, count=%d\n", __func__, sector, count);
 
@@ -88,10 +105,17 @@ static int _udpbd_read(struct block_device* bd, u32 sector, void* buffer, u16 co
     g_pkt.bd.par1   = sector;
     g_pkt.bd.par2   = 0;
 
-    udpbd_send(&g_pkt);
+    udp_packet_send((udp_packet_t *)&g_pkt, sizeof(udpbd_header_t) + 2);
+
+    // Set alarm in case somthing hangs
+    USec2SysClock((count+2) * 1000, &clock);
+    SetAlarm(&clock, _udpbd_read_timeout, NULL);
 
     //wait for data...
     WaitEventFlag(g_read_done, 2|1, WEF_OR|WEF_CLEAR, &EFBits);
+
+    // Cancel alarm
+    CancelAlarm(_udpbd_read_timeout, NULL);
 
     g_buffer = NULL;
     g_read_size = 0;
@@ -101,6 +125,23 @@ static int _udpbd_read(struct block_device* bd, u32 sector, void* buffer, u16 co
         return count;
     }
 
+	M_DEBUG("%s: sector=%d, count=%d ERROR=%d\n", __func__, (int)sector, count, g_errno);
+    g_errno = 0;
+    debug_smap();
+
+    SMAP_REG16(SMAP_R_INTR_CLR)=SMAP_INTR_EMAC3;
+    SMAP_EMAC3_SET32(SMAP_R_EMAC3_INTR_STAT, SMAP_E3_INTR_TX_ERR_0|SMAP_E3_INTR_SQE_ERR_0|SMAP_E3_INTR_DEAD_0);
+    SMAP_REG16(SMAP_R_INTR_CLR)=SMAP_INTR_RXEND;
+    SMAP_REG16(SMAP_R_INTR_CLR)=SMAP_INTR_RXDNV;
+    SMAP_REG16(SMAP_R_INTR_CLR)=SMAP_INTR_TXDNV;
+
+	SMAP_EMAC3_SET32(SMAP_R_EMAC3_MODE0, SMAP_E3_TXMAC_ENABLE);
+	SMAP_EMAC3_SET32(SMAP_R_EMAC3_MODE0, SMAP_E3_TXMAC_ENABLE|SMAP_E3_RXMAC_ENABLE);
+
+    SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = 0;
+
+    DelayThread(10000);
+
 	return -EIO;
 }
 
@@ -109,7 +150,7 @@ static int udpbd_read(struct block_device* bd, u32 sector, void* buffer, u16 cou
 	int retries;
 	u16 count_left = count;
 
-	M_DEBUG("%s: sector=%d, count=%d\n", __func__, sector, count);
+	//M_DEBUG("%s: sector=%d, count=%d\n", __func__, sector, count);
 
 	if (bdm_connected == 0)
         return -EIO;
@@ -123,6 +164,7 @@ static int udpbd_read(struct block_device* bd, u32 sector, void* buffer, u16 cou
         }
 
         if (retries == UDPBD_MAX_RETRIES) {
+        	M_DEBUG("%s: too many errors, disconnecting\n", __func__);
 #ifndef NO_BDM
             bdm_disconnect_bd(&g_udpbd);
 #endif
@@ -178,38 +220,7 @@ int udpbd_init(void)
     g_udpbd.flush = udpbd_flush;
     g_udpbd.stop  = udpbd_stop;
 
-	// Ethernet
-	g_pkt.eth.addr_dst[0] = 0xff; //0x54;
-	g_pkt.eth.addr_dst[1] = 0xff; //0x9f;
-	g_pkt.eth.addr_dst[2] = 0xff; //0x35;
-	g_pkt.eth.addr_dst[3] = 0xff; //0x1e;
-	g_pkt.eth.addr_dst[4] = 0xff; //0x28;
-	g_pkt.eth.addr_dst[5] = 0xff; //0xa6;
-    SMAPGetMACAddress(g_pkt.eth.addr_src);
-	g_pkt.eth.type        = htons(0x0800); // IPv4
-	// IP
-	g_pkt.ip.hlen         = 0x45;
-	g_pkt.ip.tos          = 0;
-	//g_pkt.ip_len          = ;
-	g_pkt.ip.id           = 0;
-	g_pkt.ip.flags        = 0;
-	g_pkt.ip.frag_offset  = 0;
-	g_pkt.ip.ttl          = 64;
-	g_pkt.ip.proto        = 0x11;
-	//g_pkt.ip_csum         = ;
-	g_pkt.ip.addr_src.addr[0] = 192;
-	g_pkt.ip.addr_src.addr[1] = 168;
-	g_pkt.ip.addr_src.addr[2] = 1;
-	g_pkt.ip.addr_src.addr[3] = 10;
-	g_pkt.ip.addr_dst.addr[0] = 255; //192;
-	g_pkt.ip.addr_dst.addr[1] = 255; //168;
-	g_pkt.ip.addr_dst.addr[2] = 255; //1;
-	g_pkt.ip.addr_dst.addr[3] = 255; //198;
-	// UDP
-	g_pkt.udp.port_src    = IP_PORT(UDPBD_PORT);
-	g_pkt.udp.port_dst    = IP_PORT(UDPBD_PORT);
-	//g_pkt.udp.len         = ;
-	//g_pkt.udp.csum        = ;
+    udp_packet_init((udp_packet_t *)&g_pkt, UDPBD_PORT);
 
     // Broadcast request for block device information
     g_pkt.bd.magic  = UDPBD_HEADER_MAGIC;
@@ -219,12 +230,11 @@ int udpbd_init(void)
     g_pkt.bd.count  = 0;
     g_pkt.bd.par1   = 0;
     g_pkt.bd.par2   = 0;
-    udpbd_send(&g_pkt);
+    udp_packet_send((udp_packet_t *)&g_pkt, sizeof(udpbd_header_t) + 2);
 
 	return 0;
 }
 
-extern struct SmapDriverData SmapDriverData;
 void udpbd_rx(u16 pointer)
 {
 	USE_SMAP_REGS;
@@ -243,6 +253,7 @@ void udpbd_rx(u16 pointer)
                 g_udpbd.sectorCount = hdr.par2;
 #ifndef NO_BDM
                 bdm_connect_bd(&g_udpbd);
+                debug_smap();
 #endif
                 bdm_connected = 1;
             }
@@ -254,6 +265,7 @@ void udpbd_rx(u16 pointer)
 					SmapDriverData.RuntimeStats.RxFrameOverrunCount++;
 					// Error, wakeup caller
 					g_read_size = 0;
+                    g_errno = 2;
 					SetEventFlag(g_read_done, 2);
 					break;
 				}
@@ -264,6 +276,7 @@ void udpbd_rx(u16 pointer)
 					SmapDriverData.RuntimeStats.RxFrameBadLengthCount++;
 					// Error, wakeup caller
 					g_read_size = 0;
+                    g_errno = 3;
 					SetEventFlag(g_read_done, 2);
 					break;
 				}

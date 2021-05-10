@@ -148,9 +148,6 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData){
 				SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = pointer + 44;
 				if (SMAP_REG32(SMAP_R_RXFIFO_DATA) == UDPBD_HEADER_MAGIC) {
 					udpbd_rx(pointer);
-
-					// Do nothing and drop the frame
-					SmapDrivPrivData->RuntimeStats.RxDroppedFrameCount++;
 				}
 				else {
 #endif
@@ -171,6 +168,9 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData){
 
 			SMAP_REG8(SMAP_R_RXFIFO_FRAME_DEC)=0;
 			PktBdPtr->ctrl_stat=SMAP_BD_RX_EMPTY;
+			//PktBdPtr->reserved=0;
+			//PktBdPtr->length=0;
+			//PktBdPtr->pointer=0;
 			SmapDrivPrivData->RxBDIndex++;
 		}
 		else break;

@@ -10,6 +10,11 @@
 				((b & 0xff) << 8) | ((a & 0xff)))
 #define IP_PORT(port)	(((port & 0xff00) >> 8) | ((port & 0xff) << 8))
 
+static inline u16 htons(u16 n)
+{
+	return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
+}
+
 typedef struct {
 	u8 addr[4];
 } __attribute__((packed)) ip_addr_t;
@@ -44,12 +49,38 @@ typedef struct {
 	u16	csum;
 } __attribute__((packed)) udp_header_t;
 
+#define ETH_MAX_PAYLOAD 1500
+#define IP_MAX_PAYLOAD  1480
+#define UDP_MAX_PAYLOAD 1472
+
 typedef struct {
-	eth_header_t	eth; // 14 bytes
-	ip_header_t	ip;  // 20 bytes
-	udp_header_t	udp; //  8 bytes
-	char payload[1472]; // maximum payload
+	eth_header_t eth;   // 14 bytes
+	char payload[ETH_MAX_PAYLOAD];
+} __attribute__((packed)) eth_packet_t;
+
+typedef struct {
+	eth_header_t eth;   // 14 bytes
+	ip_header_t  ip;    // 20 bytes
+	char payload[IP_MAX_PAYLOAD];
+} __attribute__((packed)) ip_packet_t;
+
+typedef struct {
+	eth_header_t eth;   // 14 bytes
+	ip_header_t  ip;    // 20 bytes
+	udp_header_t udp;   //  8 bytes
+	char payload[UDP_MAX_PAYLOAD];
 } __attribute__((packed)) udp_packet_t;
+
+#define ETH_TYPE_IPV4 0x0800
+
+void eth_packet_init(eth_packet_t *pkt, u16 type);
+int eth_packet_send(eth_packet_t *pkt, u16 size);
+
+void ip_packet_init(ip_packet_t *pkt);
+int ip_packet_send(ip_packet_t *pkt, u16 size);
+
+void udp_packet_init(udp_packet_t *pkt, u16 port);
+int udp_packet_send(udp_packet_t *pkt, u16 size);
 
 
 #endif

@@ -20,7 +20,7 @@ endif
 
 IOP_INCS = -I$(PS2SDKSRC)/iop/dev9/dev9/include -I$(PS2SDKSRC)/iop/fs/bdm/include
 
-IOP_OBJS = main.o smap.o xfer.o udpbd.o imports.o exports.o
+IOP_OBJS = main.o smap.o xfer.o ministack.o udpbd.o imports.o exports.o
 
 include $(PS2SDKSRC)/Defs.make
 include $(PS2SDKSRC)/iop/Rules.bin.make
