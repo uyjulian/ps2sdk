@@ -48,20 +48,20 @@ static u16 checksum(void *buf, size_t size)
 
 static int udpbd_send(udpbd_pkt_t *udp_pkt)
 {
-	size_t size = 16+2; /* Size of data inside UDP packet */
+	size_t size = sizeof(udpbd_header_t)+2;
 	size_t pktsize = sizeof(udpbd_pkt_t);
 	u32 csum;
 
 	M_DEBUG("%s\n", __func__);
 
-	udp_pkt->ip_len = htons(pktsize - 14);	/* Subtract the ethernet header.  */
-	udp_pkt->ip_csum = 0;
-	csum = checksum(&udp_pkt->ip_hlen, 20);	/* Checksum the IP header (20 bytes).  */
+	udp_pkt->ip.len = htons(pktsize - 14);	/* Subtract the ethernet header.  */
+	udp_pkt->ip.csum = 0;
+	csum = checksum(&udp_pkt->ip.hlen, 20);	/* Checksum the IP header (20 bytes).  */
 	while (csum >> 16)
 		csum = (csum & 0xffff) + (csum >> 16);
-	udp_pkt->ip_csum = ~(csum & 0xffff);
-	udp_pkt->udp_len = htons(size + 8);
-	udp_pkt->udp_csum = 0;			/* Don't bother.  */
+	udp_pkt->ip.csum = ~(csum & 0xffff);
+	udp_pkt->udp.len = htons(size + 8);
+	udp_pkt->udp.csum = 0;			/* Don't bother.  */
 
 	return smap_transmit(udp_pkt, pktsize);
 }
@@ -179,37 +179,37 @@ int udpbd_init(void)
     g_udpbd.stop  = udpbd_stop;
 
 	// Ethernet
-	g_pkt.eth_addr_dst[0] = 0xff; //0x54;
-	g_pkt.eth_addr_dst[1] = 0xff; //0x9f;
-	g_pkt.eth_addr_dst[2] = 0xff; //0x35;
-	g_pkt.eth_addr_dst[3] = 0xff; //0x1e;
-	g_pkt.eth_addr_dst[4] = 0xff; //0x28;
-	g_pkt.eth_addr_dst[5] = 0xff; //0xa6;
-    SMAPGetMACAddress(g_pkt.eth_addr_src);
-	g_pkt.eth_type        = htons(0x0800); // IPv4
+	g_pkt.eth.addr_dst[0] = 0xff; //0x54;
+	g_pkt.eth.addr_dst[1] = 0xff; //0x9f;
+	g_pkt.eth.addr_dst[2] = 0xff; //0x35;
+	g_pkt.eth.addr_dst[3] = 0xff; //0x1e;
+	g_pkt.eth.addr_dst[4] = 0xff; //0x28;
+	g_pkt.eth.addr_dst[5] = 0xff; //0xa6;
+    SMAPGetMACAddress(g_pkt.eth.addr_src);
+	g_pkt.eth.type        = htons(0x0800); // IPv4
 	// IP
-	g_pkt.ip_hlen         = 0x45;
-	g_pkt.ip_tos          = 0;
+	g_pkt.ip.hlen         = 0x45;
+	g_pkt.ip.tos          = 0;
 	//g_pkt.ip_len          = ;
-	g_pkt.ip_id           = 0;
-	g_pkt.ip_flags        = 0;
-	g_pkt.ip_frag_offset  = 0;
-	g_pkt.ip_ttl          = 64;
-	g_pkt.ip_proto        = 0x11;
+	g_pkt.ip.id           = 0;
+	g_pkt.ip.flags        = 0;
+	g_pkt.ip.frag_offset  = 0;
+	g_pkt.ip.ttl          = 64;
+	g_pkt.ip.proto        = 0x11;
 	//g_pkt.ip_csum         = ;
-	g_pkt.ip_addr_src.addr[0] = 192;
-	g_pkt.ip_addr_src.addr[1] = 168;
-	g_pkt.ip_addr_src.addr[2] = 1;
-	g_pkt.ip_addr_src.addr[3] = 10;
-	g_pkt.ip_addr_dst.addr[0] = 255; //192;
-	g_pkt.ip_addr_dst.addr[1] = 255; //168;
-	g_pkt.ip_addr_dst.addr[2] = 255; //1;
-	g_pkt.ip_addr_dst.addr[3] = 255; //198;
+	g_pkt.ip.addr_src.addr[0] = 192;
+	g_pkt.ip.addr_src.addr[1] = 168;
+	g_pkt.ip.addr_src.addr[2] = 1;
+	g_pkt.ip.addr_src.addr[3] = 10;
+	g_pkt.ip.addr_dst.addr[0] = 255; //192;
+	g_pkt.ip.addr_dst.addr[1] = 255; //168;
+	g_pkt.ip.addr_dst.addr[2] = 255; //1;
+	g_pkt.ip.addr_dst.addr[3] = 255; //198;
 	// UDP
-	g_pkt.udp_port_src    = IP_PORT(UDPBD_PORT);
-	g_pkt.udp_port_dst    = IP_PORT(UDPBD_PORT);
-	//g_pkt.udp_len         = ;
-	//g_pkt.udp_csum        = ;
+	g_pkt.udp.port_src    = IP_PORT(UDPBD_PORT);
+	g_pkt.udp.port_dst    = IP_PORT(UDPBD_PORT);
+	//g_pkt.udp.len         = ;
+	//g_pkt.udp.csum        = ;
 
     // Broadcast request for block device information
     g_pkt.bd.magic  = UDPBD_HEADER_MAGIC;
