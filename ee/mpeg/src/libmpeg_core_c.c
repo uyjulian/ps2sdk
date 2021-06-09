@@ -765,89 +765,959 @@ void _MPEG_add_block_frfl ( _MPEGMotions* arg0 )
 	);
 }
 
-#if 0
+// TODO: verify delay slots
 void _MPEG_do_mc ( _MPEGMotion* arg0 )
 {
-	// TODO
+	unsigned char* arg1 = arg0->m_pSrc;
+	short* arg2 = arg0->m_pDstY;
+	int arg3 = arg0->m_X;
+	int tmp0 = arg0->m_Y;
+	int tmp1 = arg0->m_H;
+	int tmp2 = arg0->m_fInt;
+	int tmp4 = arg0->m_Field;
+	tmp0 -= tmp4;
+	tmp4 <<= 4;
+	arg1 += tmp4;
+	int var1 = 16 - tmp0;
+	int tmp3 = 16 << tmp2;
+	var1 <<= tmp2;
+	int tmpa = tmp0 << 4;
+	arg1 += tmpa;
+	arg0->MC_Luma(arg1, arg2, arg3, tmp3);
+	tmpa = tmp1 - var1;
+	arg1 = arg0->m_pSrc;
+	arg2 = arg0->m_pDstCbCr;
+	arg1 += 256;
+	tmp4 >>= 1;
+	arg3 >>= 1;
+	tmp0 >>= 1;
+	tmp1 >>= 1;
+	tmp0 >>= tmp2;
+	arg1 += tmp4;
+	tmp0 <<= tmp2;
+	var1 = 8 - tmp0;
+	tmp3 = 8 << tmp2;
+	var1 >>= tmp2;
+	tmpa = tmp0 << 3;
+	arg1 += tmpa;
+	tmpa = tmp1 - var1;
+	arg0->MC_Chroma(arg1, arg2, arg3, tmp3);
 }
 
-void _MPEG_put_luma ( int arg0, void* arg1, void* arg2, u8 arg3 )
+
+void _MPEG_put_luma ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp5], %[tmp6], %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp5]\n"
+		"pextub  %[tmp5], $zero, %[tmp5]\n"
+		"sq      %[tmp6],  0(%[arg2])\n"
+		"sq      %[tmp5], 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_put_chroma ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_put_chroma ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp6],  64(%[arg1])\n"
+		"ld      %[tmp7], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"pcpyld  %[tmp5], %[tmp7], %[tmp5]\n"
+		"pcpyld  %[tmp6], %[tmp8], %[tmp6]\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp6], %[tmp6], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"sq      %[tmp5],   0(%[arg2])\n"
+		"sq      %[tmp6], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_put_luma_X ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_put_luma_X ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"pnor    $v0, $zero, $zero\n"
+		"psrlh   $v0, $v0, 15\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"mtsab   %[arg3], 0\n"
+		"qfsrv   %[tmp7], %[tmp6], %[tmp5]\n"
+		"qfsrv   %[tmp8], %[tmp5], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp7]\n"
+		"pextub  %[tmp6], $zero, %[tmp7]\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"mtsab   $zero, 1\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp8], %[tmp8], %[tmp7]\n"
+		"pextlb  %[tmp7], $zero, %[tmp8]\n"
+		"pextub  %[tmp8], $zero, %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp7]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], $v0\n"
+		"paddh   %[tmp6], %[tmp6], $v0\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"sq      %[tmp5],  0(%[arg2])\n"
+		"sq      %[tmp6], 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_put_chroma_X ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_put_chroma_X ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"pnor    $v0, $zero, $zero\n"
+		"psrlh   $v0, $v0, 15\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp6],  64(%[arg1])\n"
+		"ld      %[tmp7], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"pcpyld  %[tmp5], %[tmp7], %[tmp5]\n"
+		"pcpyld  %[tmp6], %[tmp8], %[tmp6]\n"
+		"mtsab   %[arg3], 0\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp6], %[tmp6], %[tmp6]\n"
+		"addiu   %[tmp9], $zero, 1\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"mtsab   %[tmp9], 0\n"
+		"qfsrv   %[tmp1], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp2], %[tmp6], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"pextlb  %[tmp1], $zero, %[tmp1]\n"
+		"pextlb  %[tmp2], $zero, %[tmp2]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp1]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp2]\n"
+		"paddh   %[tmp5], %[tmp5], $v0\n"
+		"paddh   %[tmp6], %[tmp6], $v0\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"sq      %[tmp5],   0(%[arg2])\n"
+		"sq      %[tmp6], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_put_luma_Y ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_put_luma_Y ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"lq      %[tmp7],   0(%[arg1])\n"
+		"lq      %[tmp8], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp7], %[tmp8], %[tmp7]\n"
+		"pextub  %[tmp8], $zero, %[tmp7]\n"
+		"pextlb  %[tmp7], $zero, %[tmp7]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp5], %[tmp6], %[tmp5]\n"
+		"pextub  %[tmp6], $zero, %[tmp5]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"paddh   $v0, %[tmp6], %[tmp8]\n"
+		"pnor    %[tmp8], $zero, $zero\n"
+		"paddh   %[tmp9], %[tmp5], %[tmp7]\n"
+		"psrlh   %[tmp8], %[tmp8], 15\n"
+		"por     %[tmp7], $zero, %[tmp5]\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp8]\n"
+		"paddh   $v0, $v0, %[tmp8]\n"
+		"por     %[tmp8], $zero, %[tmp6]\n"
+		"psrlh   %[tmp9], %[tmp9], 1\n"
+		"psrlh   $v0, $v0, 1\n"
+		"sq      %[tmp9],  0(%[arg2])\n"
+		"sq      $v0, 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_put_chroma_Y ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_put_chroma_Y ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"ld      %[tmp3],   0(%[arg1])\n"
+		"ld      %[tmp4],  64(%[arg1])\n"
+		"ld      %[tmp0], 384(%[arg1])\n"
+		"ld      %[tmp1], 448(%[arg1])\n"
+		"pnor    $v0, $zero, $zero\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"psrlh   $v0, $v0, 15\n"
+		"pcpyld  %[tmp3], %[tmp0], %[tmp3]\n"
+		"pcpyld  %[tmp4], %[tmp1], %[tmp4]\n"
+		"qfsrv   %[tmp3], %[tmp3], %[tmp3]\n"
+		"qfsrv   %[tmp4], %[tmp4], %[tmp4]\n"
+		"pextlb  %[tmp3], $zero, %[tmp3]\n"
+		"pextlb  %[tmp4], $zero, %[tmp4]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp6],  64(%[arg1])\n"
+		"ld      %[tmp7], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"pcpyld  %[tmp5], %[tmp7], %[tmp5]\n"
+		"pcpyld  %[tmp6], %[tmp8], %[tmp6]\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp6], %[tmp6], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"paddh   %[tmp1], %[tmp5], %[tmp3]\n"
+		"paddh   %[tmp2], %[tmp6], %[tmp4]\n"
+		"por     %[tmp3], $zero, %[tmp5]\n"
+		"por     %[tmp4], $zero, %[tmp6]\n"
+		"paddh   %[tmp1], %[tmp1], $v0\n"
+		"paddh   %[tmp2], %[tmp2], $v0\n"
+		"psrlh   %[tmp1], %[tmp1], 1\n"
+		"psrlh   %[tmp2], %[tmp2], 1\n"
+		"sq      %[tmp1],   0(%[arg2])\n"
+		"sq      %[tmp2], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_put_luma_XY ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_put_luma_XY ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"lq      $v0,   0(%[arg1])\n"
+		"lq      %[tmp7], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"qfsrv   %[tmp8], %[tmp7], $v0\n"
+		"qfsrv   %[tmp9], $v0, %[tmp7]\n"
+		"addiu   $v1, $v1, -1\n"
+		"pextlb  $v0, $zero, %[tmp8]\n"
+		"pextub  %[tmp7], $zero, %[tmp8]\n"
+		"mtsab   $zero, 1\n"
+		"qfsrv   %[tmp9], %[tmp9], %[tmp8]\n"
+		"pextlb  %[tmp8], $zero, %[tmp9]\n"
+		"pextub  %[tmp9], $zero, %[tmp9]\n"
+		"paddh   $v0, $v0, %[tmp8]\n"
+		"paddh   %[tmp7], %[tmp7], %[tmp9]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"mtsab   %[arg3], 0\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"qfsrv   %[tmp8], %[tmp6], %[tmp5]\n"
+		"qfsrv   %[tmp9], %[tmp5], %[tmp6]\n"
+		"addiu   $v1, $v1, -1\n"
+		"pextlb  %[tmp5], $zero, %[tmp8]\n"
+		"pextub  %[tmp6], $zero, %[tmp8]\n"
+		"mtsab   $zero, 1\n"
+		"qfsrv   %[tmp9], %[tmp9], %[tmp8]\n"
+		"pextlb  %[tmp8], $zero, %[tmp9]\n"
+		"pextub  %[tmp9], $zero, %[tmp9]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp8]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp9]\n"
+		"paddh   %[tmp8], $v0, %[tmp5]\n"
+		"paddh   %[tmp9], %[tmp7], %[tmp6]\n"
+		"por     $v0, $zero, %[tmp5]\n"
+		"pnor    %[tmp5], $zero, $zero\n"
+		"por     %[tmp7], $zero, %[tmp6]\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psllh   %[tmp5], %[tmp5],  1\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp5]\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp5]\n"
+		"psrlh   %[tmp8], %[tmp8], 2\n"
+		"psrlh   %[tmp9], %[tmp9], 2\n"
+		"sq      %[tmp8],  0(%[arg2])\n"
+		"sq      %[tmp9], 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_put_chroma_XY ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_put_chroma_XY ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"pnor    %[tmp9], $zero, $zero\n"
+		"ld      %[tmp3],   0(%[arg1])\n"
+		"ld      $v0,  64(%[arg1])\n"
+		"mtsab   $zero, 1\n"
+		"ld      %[tmp0], 384(%[arg1])\n"
+		"ld      %[tmp1], 448(%[arg1])\n"
+		"pcpyld  %[tmp3], %[tmp0], %[tmp3]\n"
+		"pcpyld  $v0, %[tmp1], $v0\n"
+		"qfsrv   %[tmp3], %[tmp3], %[tmp3]\n"
+		"qfsrv   $v0, $v0, $v0\n"
+		"psrlh   %[tmp9], %[tmp9], 15\n"
+		"psllh   %[tmp9], %[tmp9], 1\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp0], %[tmp3], %[tmp3]\n"
+		"qfsrv   %[tmp1], $v0, $v0\n"
+		"pextlb  %[tmp3], $zero, %[tmp3]\n"
+		"pextlb  $v0, $zero, $v0\n"
+		"pextlb  %[tmp0], $zero, %[tmp0]\n"
+		"pextlb  %[tmp1], $zero, %[tmp1]\n"
+		"paddh   %[tmp3], %[tmp3], %[tmp0]\n"
+		"paddh   %[tmp0], $v0, %[tmp1]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp7],  64(%[arg1])\n"
+		"mtsab   %[arg3], 0\n"
+		"ld      %[tmp6], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"pcpyld  %[tmp5], %[tmp6], %[tmp5]\n"
+		"pcpyld  %[tmp7], %[tmp8], %[tmp7]\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp7], %[tmp7], %[tmp7]\n"
+		"addiu   $v0, $zero, 1\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"mtsab   $v0, 0\n"
+		"qfsrv   %[tmp6], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp8], %[tmp7], %[tmp7]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp7], $zero, %[tmp7]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"pextlb  %[tmp8], $zero, %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp6], %[tmp7], %[tmp8]\n"
+		"paddh   %[tmp7], %[tmp3], %[tmp5]\n"
+		"paddh   %[tmp8], %[tmp0], %[tmp6]\n"
+		"por     %[tmp3], $zero, %[tmp5]\n"
+		"por     %[tmp0], $zero, %[tmp6]\n"
+		"paddh   %[tmp7], %[tmp7], %[tmp9]\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp9]\n"
+		"psrlh   %[tmp7], %[tmp7], 2\n"
+		"psrlh   %[tmp8], %[tmp8], 2\n"
+		"sq      %[tmp7],   0(%[arg2])\n"
+		"sq      %[tmp8], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_luma ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_luma ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp5], %[tmp6], %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp5]\n"
+		"pextub  %[tmp5], $zero, %[tmp5]\n"
+		"lq      %[tmp8],  0(%[arg2])\n"
+		"lq      %[tmp9], 16(%[arg2])\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp9]\n"
+		"pcgth   %[tmp8], %[tmp6], $zero\n"
+		"pcgth   %[tmp9], %[tmp5], $zero\n"
+		"pceqh   $v0, %[tmp6], $zero\n"
+		"pceqh   %[tmp7], %[tmp5], $zero\n"
+		"psrlh   %[tmp8], %[tmp8], 15\n"
+		"psrlh   %[tmp9], %[tmp9], 15\n"
+		"psrlh   $v0, $v0, 15\n"
+		"psrlh   %[tmp7], %[tmp7], 15\n"
+		"por     %[tmp8], %[tmp8], $v0\n"
+		"por     %[tmp9], %[tmp9], %[tmp7]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp9]\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"sq      %[tmp6],  0(%[arg2])\n"
+		"sq      %[tmp5], 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_chroma ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_chroma ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp6],  64(%[arg1])\n"
+		"addiu   $v1, $v1, -1\n"
+		"ld      %[tmp7], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"pcpyld  %[tmp5], %[tmp7], %[tmp5]\n"
+		"pcpyld  %[tmp6], %[tmp8], %[tmp6]\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp6], %[tmp6], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"lq      %[tmp0],   0(%[arg2])\n"
+		"lq      %[tmp1], 128(%[arg2])\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp0]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp1]\n"
+		"pcgth   %[tmp0], %[tmp5], $zero\n"
+		"pcgth   %[tmp1], %[tmp6], $zero\n"
+		"pceqh   $v0, %[tmp5], $zero\n"
+		"pceqh   %[tmp9], %[tmp6], $zero\n"
+		"psrlh   %[tmp0], %[tmp0], 15\n"
+		"psrlh   %[tmp1], %[tmp1], 15\n"
+		"psrlh   $v0, $v0, 15\n"
+		"psrlh   %[tmp9], %[tmp9], 15\n"
+		"por     %[tmp0], %[tmp0], $v0\n"
+		"por     %[tmp1], %[tmp1], %[tmp9]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp0]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp1]\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"sq      %[tmp5],   0(%[arg2])\n"
+		"sq      %[tmp6], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_luma_X ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_luma_X ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"pnor    $v0, $zero, $zero\n"
+		"psrlh   $v0, $v0, 15\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"mtsab   %[arg3], 0\n"
+		"qfsrv   %[tmp7], %[tmp6], %[tmp5]\n"
+		"qfsrv   %[tmp8], %[tmp5], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp7]\n"
+		"pextub  %[tmp6], $zero, %[tmp7]\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"mtsab   $zero, 1\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp8], %[tmp8], %[tmp7]\n"
+		"pextlb  %[tmp7], $zero, %[tmp8]\n"
+		"pextub  %[tmp8], $zero, %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp7]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], $v0\n"
+		"paddh   %[tmp6], %[tmp6], $v0\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"lq      %[tmp8],  0(%[arg2])\n"
+		"lq      %[tmp9], 16(%[arg2])\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp8]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp9]\n"
+		"pcgth   %[tmp8], %[tmp5], $zero\n"
+		"pceqh   %[tmp9], %[tmp5], $zero\n"
+		"psrlh   %[tmp8], %[tmp8], 15\n"
+		"psrlh   %[tmp9], %[tmp9], 15\n"
+		"por     %[tmp8], %[tmp8], %[tmp9]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp8]\n"
+		"pcgth   %[tmp8], %[tmp6], $zero\n"
+		"pceqh   %[tmp9], %[tmp6], $zero\n"
+		"psrlh   %[tmp8], %[tmp8], 15\n"
+		"psrlh   %[tmp9], %[tmp9], 15\n"
+		"por     %[tmp8], %[tmp8], %[tmp9]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp8]\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"sq      %[tmp5],  0(%[arg2])\n"
+		"sq      %[tmp6], 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_chroma_X ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_chroma_X ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"pnor    $v0, $zero, $zero\n"
+		"psrlh   $v0, $v0, 15\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp6],  64(%[arg1])\n"
+		"mtsab   %[arg3], 0\n"
+		"ld      %[tmp7], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"pcpyld  %[tmp5], %[tmp7], %[tmp5]\n"
+		"pcpyld  %[tmp6], %[tmp8], %[tmp6]\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp6], %[tmp6], %[tmp6]\n"
+		"addiu   %[tmp9], $zero, 1\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"mtsab   %[tmp9], 0\n"
+		"qfsrv   %[tmp1], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp2], %[tmp6], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"pextlb  %[tmp1], $zero, %[tmp1]\n"
+		"pextlb  %[tmp2], $zero, %[tmp2]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp1]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp2]\n"
+		"paddh   %[tmp5], %[tmp5], $v0\n"
+		"paddh   %[tmp6], %[tmp6], $v0\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"lq      %[tmp1],   0(%[arg2])\n"
+		"lq      %[tmp2], 128(%[arg2])\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp1]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp2]\n"
+		"pcgth   %[tmp1], %[tmp5], $zero\n"
+		"pcgth   %[tmp2], %[tmp6], $zero\n"
+		"pceqh   %[tmp9], %[tmp5], $zero\n"
+		"pceqh   %[tmp3], %[tmp6], $zero\n"
+		"psrlh   %[tmp1], %[tmp1], 15\n"
+		"psrlh   %[tmp2], %[tmp2], 15\n"
+		"psrlh   %[tmp9], %[tmp9], 15\n"
+		"psrlh   %[tmp3], %[tmp3], 15\n"
+		"por     %[tmp1], %[tmp1], %[tmp9]\n"
+		"por     %[tmp2], %[tmp2], %[tmp3]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp1]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp2]\n"
+		"psrlh   %[tmp5], %[tmp5], 1\n"
+		"psrlh   %[tmp6], %[tmp6], 1\n"
+		"sq      %[tmp5],   0(%[arg2])\n"
+		"sq      %[tmp6], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_luma_Y ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_luma_Y ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"lq      %[tmp7],   0(%[arg1])\n"
+		"lq      %[tmp8], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp7], %[tmp8], %[tmp7]\n"
+		"pextub  %[tmp8], $zero, %[tmp7]\n"
+		"pextlb  %[tmp7], $zero, %[tmp7]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp5], %[tmp6], %[tmp5]\n"
+		"pextub  %[tmp6], $zero, %[tmp5]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"paddh   $v0, %[tmp6], %[tmp8]\n"
+		"pnor    %[tmp8], $zero, $zero\n"
+		"paddh   %[tmp9], %[tmp5], %[tmp7]\n"
+		"psrlh   %[tmp8], %[tmp8], 15\n"
+		"por     %[tmp7], $zero, %[tmp5]\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp8]\n"
+		"paddh   $v0, $v0, %[tmp8]\n"
+		"por     %[tmp8], $zero, %[tmp6]\n"
+		"psrlh   %[tmp9], %[tmp9], 1\n"
+		"psrlh   $v0, $v0, 1\n"
+		"lq      %[tmp5],  0(%[arg2])\n"
+		"lq      %[tmp6], 16(%[arg2])\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp5]\n"
+		"paddh   $v0, $v0, %[tmp6]\n"
+		"pcgth   %[tmp5], %[tmp9], $zero\n"
+		"pceqh   %[tmp6], %[tmp9], $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp5]\n"
+		"pcgth   %[tmp5], $v0, $zero\n"
+		"pceqh   %[tmp6], $v0, $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   $v0, $v0, %[tmp5]\n"
+		"psrlh   %[tmp9], %[tmp9], 1\n"
+		"psrlh   $v0, $v0, 1\n"
+		"sq      %[tmp9],  0(%[arg2])\n"
+		"sq      $v0, 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_chroma_Y ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_chroma_Y ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"ld      %[tmp3],   0(%[arg1])\n"
+		"ld      %[tmp4],  64(%[arg1])\n"
+		"ld      %[tmp0], 384(%[arg1])\n"
+		"ld      %[tmp1], 448(%[arg1])\n"
+		"pnor    $v0, $zero, $zero\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"psrlh   $v0, $v0, 15\n"
+		"pcpyld  %[tmp3], %[tmp0], %[tmp3]\n"
+		"pcpyld  %[tmp4], %[tmp1], %[tmp4]\n"
+		"qfsrv   %[tmp3], %[tmp3], %[tmp3]\n"
+		"qfsrv   %[tmp4], %[tmp4], %[tmp4]\n"
+		"pextlb  %[tmp3], $zero, %[tmp3]\n"
+		"pextlb  %[tmp4], $zero, %[tmp4]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp6],  64(%[arg1])\n"
+		"addiu   $v1, $v1, -1\n"
+		"ld      %[tmp7], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"pcpyld  %[tmp5], %[tmp7], %[tmp5]\n"
+		"pcpyld  %[tmp6], %[tmp8], %[tmp6]\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp6], %[tmp6], %[tmp6]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"paddh   %[tmp1], %[tmp5], %[tmp3]\n"
+		"paddh   %[tmp2], %[tmp6], %[tmp4]\n"
+		"por     %[tmp3], $zero, %[tmp5]\n"
+		"por     %[tmp4], $zero, %[tmp6]\n"
+		"paddh   %[tmp1], %[tmp1], $v0\n"
+		"paddh   %[tmp2], %[tmp2], $v0\n"
+		"psrlh   %[tmp1], %[tmp1], 1\n"
+		"psrlh   %[tmp2], %[tmp2], 1\n"
+		"lq      %[tmp5],   0(%[arg2])\n"
+		"lq      %[tmp6], 128(%[arg2])\n"
+		"paddh   %[tmp1], %[tmp1], %[tmp5]\n"
+		"paddh   %[tmp2], %[tmp2], %[tmp6]\n"
+		"pcgth   %[tmp5], %[tmp1], $zero\n"
+		"pceqh   %[tmp6], %[tmp1], $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp1], %[tmp1], %[tmp5]\n"
+		"pcgth   %[tmp5], %[tmp2], $zero\n"
+		"pceqh   %[tmp6], %[tmp2], $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp2], %[tmp2], %[tmp5]\n"
+		"psrlh   %[tmp1], %[tmp1], 1\n"
+		"psrlh   %[tmp2], %[tmp2], 1\n"
+		"sq      %[tmp1],   0(%[arg2])\n"
+		"sq      %[tmp2], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_luma_XY ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_luma_XY ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"lq      $v0,   0(%[arg1])\n"
+		"lq      %[tmp7], 384(%[arg1])\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"qfsrv   %[tmp8], %[tmp7], $v0\n"
+		"qfsrv   %[tmp9], $v0, %[tmp7]\n"
+		"addiu   $v1, $v1, -1\n"
+		"pextlb  $v0, $zero, %[tmp8]\n"
+		"pextub  %[tmp7], $zero, %[tmp8]\n"
+		"mtsab   $zero, 1\n"
+		"qfsrv   %[tmp9], %[tmp9], %[tmp8]\n"
+		"pextlb  %[tmp8], $zero, %[tmp9]\n"
+		"pextub  %[tmp9], $zero, %[tmp9]\n"
+		"paddh   $v0, $v0, %[tmp8]\n"
+		"paddh   %[tmp7], %[tmp7], %[tmp9]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"lq      %[tmp5],   0(%[arg1])\n"
+		"lq      %[tmp6], 384(%[arg1])\n"
+		"mtsab   %[arg3], 0\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"qfsrv   %[tmp8], %[tmp6], %[tmp5]\n"
+		"qfsrv   %[tmp9], %[tmp5], %[tmp6]\n"
+		"addiu   $v1, $v1, -1\n"
+		"pextlb  %[tmp5], $zero, %[tmp8]\n"
+		"pextub  %[tmp6], $zero, %[tmp8]\n"
+		"mtsab   $zero, 1\n"
+		"qfsrv   %[tmp9], %[tmp9], %[tmp8]\n"
+		"pextlb  %[tmp8], $zero, %[tmp9]\n"
+		"pextub  %[tmp9], $zero, %[tmp9]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp8]\n"
+		"paddh   %[tmp6], %[tmp6], %[tmp9]\n"
+		"paddh   %[tmp8], $v0, %[tmp5]\n"
+		"paddh   %[tmp9], %[tmp7], %[tmp6]\n"
+		"por     $v0, $zero, %[tmp5]\n"
+		"pnor    %[tmp5], $zero, $zero\n"
+		"por     %[tmp7], $zero, %[tmp6]\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psllh   %[tmp5], %[tmp5],  1\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp5]\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp5]\n"
+		"psrlh   %[tmp8], %[tmp8], 2\n"
+		"psrlh   %[tmp9], %[tmp9], 2\n"
+		"lq      %[tmp5],  0(%[arg2])\n"
+		"lq      %[tmp6], 16(%[arg2])\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp5]\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp6]\n"
+		"pcgth   %[tmp5], %[tmp8], $zero\n"
+		"pceqh   %[tmp6], %[tmp8], $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp5]\n"
+		"pcgth   %[tmp5], %[tmp9], $zero\n"
+		"pceqh   %[tmp6], %[tmp9], $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp9], %[tmp9], %[tmp5]\n"
+		"psrlh   %[tmp8], %[tmp8], 1\n"
+		"psrlh   %[tmp9], %[tmp9], 1\n"
+		"sq      %[tmp8],  0(%[arg2])\n"
+		"sq      %[tmp9], 16(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 32\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 512\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
 
-void _MPEG_avg_chroma_XY ( int arg0, void* arg1, void* arg2, u8 arg3 )
+void _MPEG_avg_chroma_XY ( unsigned char* arg1, short* arg2, int arg3, int arg4 )
 {
-	// TODO
+	u128 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10;
+	asm __volatile__(
+		"mtsab   %[arg3], 0\n"
+		"pnor    %[tmp9], $zero, $zero\n"
+		"ld      %[tmp3],   0(%[arg1])\n"
+		"ld      $v0,  64(%[arg1])\n"
+		"mtsab   $zero, 1\n"
+		"ld      %[tmp0], 384(%[arg1])\n"
+		"ld      %[tmp1], 448(%[arg1])\n"
+		"pcpyld  %[tmp3], %[tmp0], %[tmp3]\n"
+		"pcpyld  $v0, %[tmp1], $v0\n"
+		"qfsrv   %[tmp3], %[tmp3], %[tmp3]\n"
+		"qfsrv   $v0, $v0, $v0\n"
+		"psrlh   %[tmp9], %[tmp9], 15\n"
+		"psllh   %[tmp9], %[tmp9],  1\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"qfsrv   %[tmp0], %[tmp3], %[tmp3]\n"
+		"qfsrv   %[tmp1], $v0, $v0\n"
+		"pextlb  %[tmp3], $zero, %[tmp3]\n"
+		"pextlb  $v0, $zero, $v0\n"
+		"pextlb  %[tmp0], $zero, %[tmp0]\n"
+		"pextlb  %[tmp1], $zero, %[tmp1]\n"
+		"paddh   %[tmp3], %[tmp3], %[tmp0]\n"
+		"paddh   %[tmp0], $v0, %[tmp1]\n"
+		"beq     $v1, $zero, 2f\n"
+		"addiu   %[tmp10], %[tmp10], 1\n"
+	"1:\n"
+		"ld      %[tmp5],   0(%[arg1])\n"
+		"ld      %[tmp7],  64(%[arg1])\n"
+		"mtsab   %[arg3], 0\n"
+		"ld      %[tmp6], 384(%[arg1])\n"
+		"ld      %[tmp8], 448(%[arg1])\n"
+		"pcpyld  %[tmp5], %[tmp6], %[tmp5]\n"
+		"pcpyld  %[tmp7], %[tmp8], %[tmp7]\n"
+		"qfsrv   %[tmp5], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp7], %[tmp7], %[tmp7]\n"
+		"addiu   $v0, $zero, 1\n"
+		"addu    %[arg1], %[arg1], %[arg4]\n"
+		"addiu   $v1, $v1, -1\n"
+		"mtsab   $v0, 0\n"
+		"qfsrv   %[tmp6], %[tmp5], %[tmp5]\n"
+		"qfsrv   %[tmp8], %[tmp7], %[tmp7]\n"
+		"pextlb  %[tmp5], $zero, %[tmp5]\n"
+		"pextlb  %[tmp7], $zero, %[tmp7]\n"
+		"pextlb  %[tmp6], $zero, %[tmp6]\n"
+		"pextlb  %[tmp8], $zero, %[tmp8]\n"
+		"paddh   %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp6], %[tmp7], %[tmp8]\n"
+		"paddh   %[tmp7], %[tmp3], %[tmp5]\n"
+		"paddh   %[tmp8], %[tmp0], %[tmp6]\n"
+		"por     %[tmp3], $zero, %[tmp5]\n"
+		"por     %[tmp0], $zero, %[tmp6]\n"
+		"paddh   %[tmp7], %[tmp7], %[tmp9]\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp9]\n"
+		"psrlh   %[tmp7], %[tmp7], 2\n"
+		"psrlh   %[tmp8], %[tmp8], 2\n"
+		"lq      %[tmp5],   0(%[arg2])\n"
+		"lq      %[tmp6], 128(%[arg2])\n"
+		"paddh   %[tmp7], %[tmp7], %[tmp5]\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp6]\n"
+		"pcgth   %[tmp5], %[tmp7], $zero\n"
+		"pceqh   %[tmp6], %[tmp7], $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp7], %[tmp7], %[tmp5]\n"
+		"pcgth   %[tmp5], %[tmp8], $zero\n"
+		"pceqh   %[tmp6], %[tmp8], $zero\n"
+		"psrlh   %[tmp5], %[tmp5], 15\n"
+		"psrlh   %[tmp6], %[tmp6], 15\n"
+		"por     %[tmp5], %[tmp5], %[tmp6]\n"
+		"paddh   %[tmp8], %[tmp8], %[tmp5]\n"
+		"psrlh   %[tmp7], %[tmp7], 1\n"
+		"psrlh   %[tmp8], %[tmp8], 1\n"
+		"sq      %[tmp7],   0(%[arg2])\n"
+		"sq      %[tmp8], 128(%[arg2])\n"
+		"bgtz    $v1, 1b\n"
+		"addiu   %[arg2], %[arg2], 16\n"
+	"2:\n"
+		"addu    $v1, $zero, %[tmp10]\n"
+		"addiu   %[arg1], %[arg1], 704\n"
+		"bgtzl   $v1, 1b\n"
+		"addu    %[tmp10], $zero, $zero\n"
+	: [arg1] "+r"(arg1), [arg2] "+r"(arg2), [tmp0] "=r"(tmp0), [tmp1] "=r"(tmp1), [tmp2] "=r"(tmp2), [tmp3] "=r"(tmp3), [tmp4] "=r"(tmp4), [tmp5] "=r"(tmp5), [tmp6] "=r"(tmp6), [tmp7] "=r"(tmp7), [tmp8] "=r"(tmp8), [tmp9] "=r"(tmp9), [tmp10] "=r"(tmp10)
+	: [arg3] "r"(arg3), [arg4] "r"(arg4)
+	: "v0", "v1", "memory"
+	);
 }
-#endif
+

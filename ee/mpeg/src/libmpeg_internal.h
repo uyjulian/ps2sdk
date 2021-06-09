@@ -88,8 +88,8 @@ typedef struct _MPEGMotion {
  int            m_fInt;
  int            m_Field;
 
- void ( *MC_Luma   ) ( int arg0, void* arg1, void* arg2, u8 arg3 );
- void ( *MC_Chroma ) ( int arg0, void* arg1, void* arg2, u8 arg3 );
+ void ( *MC_Luma   ) ( unsigned char* arg1, short* arg2, int arg3, int arg4 );
+ void ( *MC_Chroma ) ( unsigned char* arg1, short* arg2, int arg3, int arg4 );
 
 } _MPEGMotion;
 
@@ -169,22 +169,22 @@ void         _MPEG_BDEC           ( int, int, int, int, void*                   
 int          _MPEG_WaitBDEC       ( void                                              );
 void         _MPEG_dma_ref_image  ( _MPEGMacroBlock8*, _MPEGMotion*, int, int         );
 void         _MPEG_do_mc          ( _MPEGMotion*                                      );
-void         _MPEG_put_luma       ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_put_luma_X     ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_put_luma_Y     ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_put_luma_XY    ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_put_chroma     ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_put_chroma_X   ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_put_chroma_Y   ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_put_chroma_XY  ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_luma       ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_luma_X     ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_luma_Y     ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_luma_XY    ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_chroma     ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_chroma_X   ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_chroma_Y   ( int arg0, void* arg1, void* arg2, u8 arg3         );
-void         _MPEG_avg_chroma_XY  ( int arg0, void* arg1, void* arg2, u8 arg3         );
+void         _MPEG_put_luma       ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_put_luma_X     ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_put_luma_Y     ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_put_luma_XY    ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_put_chroma     ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_put_chroma_X   ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_put_chroma_Y   ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_put_chroma_XY  ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_luma       ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_luma_X     ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_luma_Y     ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_luma_XY    ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_chroma     ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_chroma_X   ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_chroma_Y   ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
+void         _MPEG_avg_chroma_XY  ( unsigned char* arg1, short* arg2, int arg3, int arg4         );
 void         _MPEG_put_block_fr   ( _MPEGMotions*                                     );
 void         _MPEG_put_block_fl   ( _MPEGMotions*                                     );
 void         _MPEG_put_block_il   ( _MPEGMotions*                                     );
