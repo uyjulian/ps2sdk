@@ -83,12 +83,12 @@ _MPEG_Initialize:
     sw      $zero, -19424($v0)
     sw      $zero, 0($a3)
     sw      $zero, 12($sp)
-    addiu   $v1, $zero, 64
+    addiu   $v1, $zero, 64 # __NR_CreateSema
     addu    $a0, $sp, 4
     syscall
     sw      $v0, s_Sema
     addiu   $a0, $zero,  3
-    addiu   $v1, $zero, 18
+    addiu   $v1, $zero, 18 # __NR_AddDmacHandler
     lui     $a1, %hi( _mpeg_dmac_handler )
     la      $a3, s_CSCParam
     xor     $a2, $a2, $a2
@@ -106,9 +106,9 @@ _MPEG_Destroy:
     bne     $v1, $zero, 1b
     lw      $a1, s_CSCID
     addiu   $a0, $zero, 3
-    addiu   $v1, $zero, 19
+    addiu   $v1, $zero, 19 # __NR_RemoveDmacHandler
     syscall
-    addiu   $v1, $zero, 65
+    addiu   $v1, $zero, 65 # __NR_DeleteSema
     lw      $a0, s_Sema
     syscall
     jr      $ra
@@ -224,7 +224,7 @@ _ipu_resume:
 _mpeg_dmac_handler:
     lw      $at, 8($a1)
     beql    $at, $zero, 1f
-    addiu   $v1, $zero, -29
+    addiu   $v1, $zero, -29 # __NR__iDisableDmac
     lw      $a0, 0($a1)
     lw      $a2, 4($a1)
     addiu   $a3, $zero, 1023
@@ -259,7 +259,7 @@ _mpeg_dmac_handler:
     addiu   $a0, $zero, 3
     syscall
     lw      $a0, s_Sema
-    addiu   $v1, $zero, -67
+    addiu   $v1, $zero, -67 # __NR_iSignalSema
     syscall
     sb      $zero, s_CSCFlag
     jr      $ra
@@ -276,7 +276,7 @@ _MPEG_CSCImage:
     addiu   $t0, $zero, 1023
     addiu   $v0, $zero,    8
     addiu   $a0, $zero,    3
-    addiu   $v1, $zero,   22
+    addiu   $v1, $zero,   22 # __NR__EnableDmac
     lw      $a2, 12($sp)
     addiu   $t3, $zero,  384
     sw      $v0, -8176($a1)
@@ -310,7 +310,7 @@ _MPEG_CSCImage:
     sw      $v0, 0x2000($a0)
     sw      $v1, -20480($at)
     lw      $a0, s_Sema
-    addiu   $v1, $zero, 68
+    addiu   $v1, $zero, 68 # __NR_WaitSema
     sb      $v1, s_CSCFlag
     syscall
     lw      $ra, 0($sp)
