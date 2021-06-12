@@ -17,8 +17,8 @@ void _ipu_suspend(void)
   uVar1 = read_volatile_4(REG_DMAC_ENABLER);
   write_volatile_4(REG_DMAC_ENABLEW,uVar1 & 0xfffeffff);
   EI();
-  s_IPUState + 4 = read_volatile_4(REG_DMAC_4_IPU_TO_MADR);
-  s_IPUState + 8 = read_volatile_4(REG_DMAC_4_IPU_TO_QWC);
+  s_IPUState[1] = read_volatile_4(REG_DMAC_4_IPU_TO_MADR);
+  s_IPUState[2] = read_volatile_4(REG_DMAC_4_IPU_TO_QWC);
   do {
     uVar1 = read_volatile_4(REG_IPU_CTRL);
   } while ((uVar1 & 0xf0) != 0);
@@ -33,12 +33,12 @@ void _ipu_suspend(void)
   uVar3 = read_volatile_4(REG_DMAC_ENABLER);
   write_volatile_4(REG_DMAC_ENABLEW,uVar3 & 0xfffeffff);
   EI();
-  s_IPUState + 16 = read_volatile_4(REG_DMAC_3_IPU_FROM_MADR);
-  s_IPUState + 20 = read_volatile_4(REG_DMAC_3_IPU_FROM_QWC);
-  s_IPUState + 24 = read_volatile_4(REG_IPU_CTRL);
-  s_IPUState + 28 = read_volatile_4(REG_IPU_BP);
-  s_IPUState + 0 = uVar2 & 0xfffffeff;
-  s_IPUState + 12 = uVar1 & 0xfffffeff;
+  s_IPUState[4] = read_volatile_4(REG_DMAC_3_IPU_FROM_MADR);
+  s_IPUState[5] = read_volatile_4(REG_DMAC_3_IPU_FROM_QWC);
+  s_IPUState[6] = read_volatile_4(REG_IPU_CTRL);
+  s_IPUState[7] = read_volatile_4(REG_IPU_BP);
+  s_IPUState[0] = uVar2 & 0xfffffeff;
+  s_IPUState[3] = uVar1 & 0xfffffeff;
   return;
 }
 
@@ -74,8 +74,8 @@ LAB_0001041c:
       register0x000001d0 = (BADSPACEBASE *)((int)register0x000001d0 + 0x10000);
       if (lVar2 == 0) {
         *s_pEOF = 0x20;
-        s_DataBuf = 0x20;
-        s_DataBuf + 4 = 0x1b7;
+        s_DataBuf[0] = 0x20;
+        s_DataBuf[1] = 0x1b7;
         return;
       }
       in_at_lo = 0x10000000;
@@ -191,11 +191,11 @@ int _MPEG_CSCImage(void *param_1,void *param_2,int param_3)
   if (0x3fe < param_3) {
     uVar1 = 0x3ff;
   }
-  s_CSCParam + 8 = param_3 - uVar1;
+  s_CSCParam[2] = param_3 - uVar1;
   *(void **)(extraout_a1_lo + -0x4ff0) = param_2;
   *(void **)(extraout_a1_lo + -0x4bf0) = param_1;
-  s_CSCParam + 0 = (void *)((int)param_1 + uVar1 * 0x180);
-  s_CSCParam + 4 = (void *)((int)param_2 + uVar1 * 0x400);
+  s_CSCParam[0] = (void *)((int)param_1 + uVar1 * 0x180);
+  s_CSCParam[1] = (void *)((int)param_2 + uVar1 * 0x400);
   *(uint *)(extraout_a1_lo + -0x4be0) = uVar1 * 0x180 >> 4;
   *(uint *)(extraout_a1_lo + -0x4fe0) = uVar1 * 0x400 >> 4;
   syscall(0);
@@ -276,16 +276,16 @@ uint _MPEG_GetBits(uint param_1)
     iVar2 = 0x10000000;
     _ipu_sync(uVar3);
   }
-  if (s_DataBuf + 0 < (int)param_1) {
+  if (s_DataBuf[0] < (int)param_1) {
     iVar2 = 0x10000000;
     write_volatile_4(REG_IPU_CMD,0x40000000);
-    s_DataBuf + 4 = _ipu_sync_data();
-    s_DataBuf + 0 = 0x20;
+    s_DataBuf[1] = _ipu_sync_data();
+    s_DataBuf[0] = 0x20;
   }
   *(uint *)(iVar2 + 0x2000) = param_1 | 0x40000000;
-  uVar3 = s_DataBuf + 4 >> (-param_1 & 0x1f);
-  s_DataBuf + 0 = s_DataBuf + 0 - param_1;
-  s_DataBuf + 4 = s_DataBuf + 4 << (param_1 & 0x1f);
+  uVar3 = s_DataBuf[1] >> (-param_1 & 0x1f);
+  s_DataBuf[0] = s_DataBuf[0] - param_1;
+  s_DataBuf[1] = s_DataBuf[1] << (param_1 & 0x1f);
   return uVar3;
 }
 
@@ -307,8 +307,8 @@ int _MPEG_GetDMVector(void)
   }
   *(undefined4 *)(iVar3 + 0x2000) = 0x3c000000;
   lVar4 = _ipu_sync_data();
-  s_DataBuf + 0 = 0x20;
-  s_DataBuf + 4 = (int)*(undefined8 *)(iVar3 + 0x2030);
+  s_DataBuf[0] = 0x20;
+  s_DataBuf[1] = (int)*(undefined8 *)(iVar3 + 0x2030);
   return (int)((lVar4 << 0x30) >> 0x30);
 }
 
@@ -341,8 +341,8 @@ int _MPEG_GetMBAI(void)
       iVar5 = iVar5 + 0x21;
     }
   }
-  s_DataBuf + 0 = 0x20;
-  s_DataBuf + 4 = (int)*(undefined8 *)((int)uVar3 + 0x2030);
+  s_DataBuf[0] = 0x20;
+  s_DataBuf[1] = (int)*(undefined8 *)((int)uVar3 + 0x2030);
   return iVar5 + (int)uVar4;
 }
 
@@ -366,8 +366,8 @@ int _MPEG_GetMBType(void)
   uVar4 = _ipu_sync_data();
   if (uVar4 != 0) {
     uVar4 = uVar4 & 0xffff;
-    s_DataBuf + 0 = 0x20;
-    s_DataBuf + 4 = (undefined4)*(undefined8 *)(iVar3 + 0x2030);
+    s_DataBuf[0] = 0x20;
+    s_DataBuf[1] = (undefined4)*(undefined8 *)(iVar3 + 0x2030);
   }
   return (int)uVar4;
 }
@@ -395,8 +395,8 @@ int _MPEG_GetMotionCode(void)
   }
   else {
     uVar4 = uVar4 & 0xffff;
-    s_DataBuf + 0 = 0x20;
-    s_DataBuf + 4 = (undefined4)*(undefined8 *)(iVar3 + 0x2030);
+    s_DataBuf[0] = 0x20;
+    s_DataBuf[1] = (undefined4)*(undefined8 *)(iVar3 + 0x2030);
   }
   return (int)((long)(uVar4 << 0x30) >> 0x30);
 }
@@ -422,7 +422,7 @@ void _MPEG_Initialize(_MPEGContext *param_1,int *param_2,void *param_3,int *para
   *param_4 = 0;
   syscall(0);
   syscall(0);
-  s_DataBuf + 0 = 0;
+  s_DataBuf[0] = 0;
   s_SetDMA + 0 = param_2;
   s_SetDMA + 4 = param_3;
   s_pEOF + 0 = param_4;
@@ -455,22 +455,22 @@ void _MPEG_Resume(void)
   int iVar2;
   int iVar3;
   
-  if (iGpffffc0a4 != 0) {
-    write_volatile_4(REG_DMAC_3_IPU_FROM_MADR,s_IPUState + 16);
-    write_volatile_4(REG_DMAC_3_IPU_FROM_QWC,iGpffffc0a4);
-    write_volatile_4(REG_DMAC_3_IPU_FROM_CHCR,s_IPUState + 12 | 0x100);
+  if (s_IPUState[5] != 0) {
+    write_volatile_4(REG_DMAC_3_IPU_FROM_MADR,s_IPUState[4]);
+    write_volatile_4(REG_DMAC_3_IPU_FROM_QWC,s_IPUState[5]);
+    write_volatile_4(REG_DMAC_3_IPU_FROM_CHCR,s_IPUState[3] | 0x100);
   }
-  iVar2 = (s_IPUState + 28 >> 0x10 & 3) + (s_IPUState + 28 >> 8 & 0xf);
-  iVar3 = iGpffffc098 + iVar2;
+  iVar2 = (s_IPUState[7] >> 0x10 & 3) + (s_IPUState[7] >> 8 & 0xf);
+  iVar3 = (s_IPUState[2]) + iVar2;
   if (iVar3 != 0) {
-    write_volatile_4(REG_IPU_CMD,s_IPUState + 28 & 0x7f);
+    write_volatile_4(REG_IPU_CMD,(s_IPUState[7]) & 0x7f);
     do {
       iVar1 = read_volatile_4(REG_IPU_CTRL);
     } while (iVar1 < 0);
-    write_volatile_4(REG_IPU_CTRL,s_IPUState + 24);
-    write_volatile_4(REG_DMAC_4_IPU_TO_MADR,iGpffffc094 + iVar2 * -0x10);
+    write_volatile_4(REG_IPU_CTRL,s_IPUState[6]);
+    write_volatile_4(REG_DMAC_4_IPU_TO_MADR,(s_IPUState[1]) + iVar2 * -0x10);
     write_volatile_4(REG_DMAC_4_IPU_TO_QWC,iVar3);
-    write_volatile_4(REG_DMAC_4_IPU_TO_CHCR,s_IPUState + 0 | 0x100);
+    write_volatile_4(REG_DMAC_4_IPU_TO_CHCR,s_IPUState[0] | 0x100);
   }
   return;
 }
@@ -582,8 +582,8 @@ LAB_0001041c:
       puVar5 = puVar5 + 0x10000;
       if (lVar2 == 0) {
         *s_pEOF + 0 = 0x20;
-        s_DataBuf + 0 = 0x20;
-        s_DataBuf + 4 = 0x1b7;
+        s_DataBuf[0] = 0x20;
+        s_DataBuf[1] = 0x1b7;
         return;
       }
       goto LAB_0001041c;
@@ -609,7 +609,7 @@ void _MPEG_SetQM(int param_1)
     _ipu_sync(uVar2);
   }
   *(uint *)(iVar3 + 0x2000) = param_1 << 0x1b | 0x50000000;
-  s_DataBuf = 0;
+  s_DataBuf[0] = 0;
   return;
 }
 
@@ -637,17 +637,17 @@ uint _MPEG_ShowBits(uint param_1)
   int iVar1;
   uint uVar2;
   
-  if (s_DataBuf + 0 < (int)param_1) {
+  if (s_DataBuf[0] < (int)param_1) {
     iVar1 = read_volatile_4(REG_IPU_CTRL);
     if (iVar1 < 0) {
       uVar2 = read_volatile_4(REG_IPU_BP);
       _ipu_sync(uVar2);
     }
     write_volatile_4(REG_IPU_CMD,0x40000000);
-    s_DataBuf + 4 = _ipu_sync_data();
-    s_DataBuf + 0 = 0x20;
+    s_DataBuf[1] = _ipu_sync_data();
+    s_DataBuf[0] = 0x20;
   }
-  return s_DataBuf + 4 >> (-param_1 & 0x1f);
+  return s_DataBuf[1] >> (-param_1 & 0x1f);
 }
 
 
@@ -671,8 +671,8 @@ void _MPEG_Suspend(void)
   uVar1 = read_volatile_4(REG_DMAC_ENABLER);
   write_volatile_4(REG_DMAC_ENABLEW,uVar1 & 0xfffeffff);
   EI();
-  s_IPUState + 4 = read_volatile_4(REG_DMAC_4_IPU_TO_MADR);
-  s_IPUState + 8 = read_volatile_4(REG_DMAC_4_IPU_TO_QWC);
+  s_IPUState[1] = read_volatile_4(REG_DMAC_4_IPU_TO_MADR);
+  s_IPUState[2] = read_volatile_4(REG_DMAC_4_IPU_TO_QWC);
   do {
     uVar1 = read_volatile_4(REG_IPU_CTRL);
   } while ((uVar1 & 0xf0) != 0);
@@ -687,12 +687,12 @@ void _MPEG_Suspend(void)
   uVar3 = read_volatile_4(REG_DMAC_ENABLER);
   write_volatile_4(REG_DMAC_ENABLEW,uVar3 & 0xfffeffff);
   EI();
-  s_IPUState + 16 = read_volatile_4(REG_DMAC_3_IPU_FROM_MADR);
-  s_IPUState + 20 = read_volatile_4(REG_DMAC_3_IPU_FROM_QWC);
-  s_IPUState + 24 = read_volatile_4(REG_IPU_CTRL);
-  s_IPUState + 28 = read_volatile_4(REG_IPU_BP);
-  s_IPUState + 0 = uVar2 & 0xfffffeff;
-  s_IPUState + 12 = uVar1 & 0xfffffeff;
+  s_IPUState[4] = read_volatile_4(REG_DMAC_3_IPU_FROM_MADR);
+  s_IPUState[5] = read_volatile_4(REG_DMAC_3_IPU_FROM_QWC);
+  s_IPUState[6] = read_volatile_4(REG_IPU_CTRL);
+  s_IPUState[7] = read_volatile_4(REG_IPU_BP);
+  s_IPUState[0] = uVar2 & 0xfffffeff;
+  s_IPUState[3] = uVar1 & 0xfffffeff;
   return;
 }
 
@@ -718,7 +718,7 @@ int _MPEG_WaitBDEC(void)
        (iVar1 = read_volatile_4(REG_DMAC_3_IPU_FROM_QWC), (*(uint *)(iVar2 + 0x2010) & 0x4000) != 0)
        ) break;
     if (iVar1 == 0) {
-      s_DataBuf = CONCAT44((int)*(undefined8 *)(iVar2 + 0x2030),0x20);
+      s_DataBuf[0] = CONCAT44((int)*(undefined8 *)(iVar2 + 0x2030),0x20);
       return 1;
     }
     iVar2 = *(int *)(iVar2 + 0x2010);
@@ -735,7 +735,7 @@ int _MPEG_WaitBDEC(void)
   *(uint *)(extraout_a0_lo + -0xa70) = *(uint *)(extraout_a0_lo + -0xae0) & 0xfffeffff;
   EI();
   *(undefined4 *)(extraout_a0_lo + -0x4fe0) = 0;
-  s_DataBuf = 0;
+  s_DataBuf[0] = 0;
   return 0;
 }
 
@@ -750,3 +750,31 @@ undefined _MPEG_Destroy(void)
   return 0;
 }
 
+undefined8 _mpeg_dmac_handler(undefined8 param_1,int *param_2)
+{
+  uint uVar1;
+  uint uVar2;
+  
+  uVar1 = param_2[2];
+  if (uVar1 == 0) {
+    syscall(0);
+    syscall(0);
+    uGpffffc0c8 = 0;
+    return 0xffffffffffffffff;
+  }
+  uVar2 = uVar1;
+  if (0x3fe < (int)uVar1) {
+    uVar2 = 0x3ff;
+  }
+  write_volatile_4(REG_DMAC_3_IPU_FROM_MADR,param_2[1]);
+  write_volatile_4(REG_DMAC_4_IPU_TO_MADR,*param_2);
+  *param_2 = *param_2 + uVar2 * 0x180;
+  param_2[1] = param_2[1] + uVar2 * 0x400;
+  param_2[2] = uVar1 - uVar2;
+  write_volatile_4(REG_DMAC_3_IPU_FROM_QWC,uVar2 * 0x400 >> 4);
+  write_volatile_4(REG_DMAC_4_IPU_TO_QWC,uVar2 * 0x180 >> 4);
+  write_volatile_4(REG_DMAC_4_IPU_TO_CHCR,0x101);
+  write_volatile_4(REG_IPU_CMD,uVar2 | 0x70000000);
+  write_volatile_4(REG_DMAC_3_IPU_FROM_CHCR,0x100);
+  return 0xffffffffffffffff;
+}

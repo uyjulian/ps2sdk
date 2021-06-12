@@ -62,25 +62,25 @@ _MPEG_Initialize:
     lui     $v0, 0x1000
     lui     $v1, 0x4000
     sw      $a1, s_SetDMA + 0
-    sw      $v1, 0x2010($v0)
+    sw      $v1, 0x2010($v0) # 0x10002010
     sw      $a2, s_SetDMA + 4
     sw      $a3, s_pEOF
 1:
-    lw      $v1, 0x2010($v0)
+    lw      $v1, 0x2010($v0) # 0x10002010
     bltz    $v1, 1b
     nop
-    sw      $zero, 0x2000($v0)
+    sw      $zero, 0x2000($v0) # 0x10002000
 1:
-    lw      $v1, 0x2010($v0)
+    lw      $v1, 0x2010($v0) # 0x40002010
     bltz    $v1, 1b
     nop
     lui     $at, 0x0080
     sw      $ra, 0($sp)
-    or      $v1, $v1, $at
-    sw      $v1, 0x2010($v0)
+    or      $v1, $v1, $at # v1 |= 0x00800000
+    sw      $v1, 0x2010($v0) # 0x10002010
     lui     $v0, 0x1001
-    sw      $zero, -20448($v0)
-    sw      $zero, -19424($v0)
+    sw      $zero, -0x4FE0($v0) # 0x1000B020
+    sw      $zero, -0x4BE0($v0) # 0x1000B420
     sw      $zero, 0($a3)
     sw      $zero, 12($sp)
     addiu   $v1, $zero, 64 # __NR_CreateSema
@@ -127,22 +127,22 @@ _ipu_suspend:
     and     $at, $at, $v0
     bne     $at, $zero, 1b
     lui     $v0, 0x0001
-    lw      $a2, -2784($a1)
+    lw      $a2, -0xAE0($a1)
     nor     $v1, $v0, $zero
     or      $a2, $a2, $v0
-    sw      $a2, -2672($a1)
-    lw      $at, -19456($a1)
+    sw      $a2, -0xA70($a1)
+    lw      $at, -0x4C00($a1)
     sra     $a3, $v1, 8
     subu    $t1, $a1, $v0
     and     $at, $at, $a3
-    sw      $at, -19456($a1)
-    lw      $a2, -2784($a1)
+    sw      $at, -0x4C00($a1)
+    lw      $a2, -0xAE0($a1)
     sw      $at, s_IPUState + 0
     and     $a2, $a2, $v1
-    sw      $a2, -2672($a1)
+    sw      $a2, -0xA70($a1)
     ei
-    lw      $at, -19440($a1)
-    lw      $a2, -19424($a1)
+    lw      $at, -0x4BF0($a1)
+    lw      $a2, -0x4BE0($a1)
     sw      $at, s_IPUState + 4
     sw      $a2, s_IPUState + 8
 1:
@@ -157,19 +157,19 @@ _ipu_suspend:
     and     $at, $at, $v0
     bne     $at, $zero, 1b
     nop
-    lw      $a2, -2784($a1)
+    lw      $a2, -0xAE0($a1)
     or      $a2, $a2, $v0
-    sw      $a2, -2672($a1)
-    lw      $at, -20480($a1)
+    sw      $a2, -0xA70($a1)
+    lw      $at, -0x5000($a1)
     and     $at, $at, $a3
-    sw      $at, -20480($a1)
-    lw      $a2, -2784($a1)
+    sw      $at, -0x5000($a1)
+    lw      $a2, -0xAE0($a1)
     sw      $at, s_IPUState + 12
     and     $a2, $a2, $v1
-    sw      $a2, -2672($a1)
+    sw      $a2, -0xA70($a1)
     ei
-    lw      $at, -20464($a1)
-    lw      $a2, -20448($a1)
+    lw      $at, -0x4FF0($a1)
+    lw      $a2, -0x4FE0($a1)
     sw      $at, s_IPUState + 16
     sw      $a2, s_IPUState + 20
     lw      $at, 0x2010($t1)
@@ -188,10 +188,10 @@ _ipu_resume:
     lw      $at, s_IPUState + 28
     lw      $a3, s_IPUState + 12
     lw      $v0, s_IPUState + 16
-    sw      $v0, -20464($a0)
+    sw      $v0, -0x4FF0($a0)
     or      $a3, $a3, $a2
-    sw      $v1, -20448($a0)
-    sw      $a3, -20480($a0)
+    sw      $v1, -0x4FE0($a0)
+    sw      $a3, -0x5000($a0)
 1:
     lw      $a3, s_IPUState + 8
     andi    $v0, $at, 0x007F
@@ -214,9 +214,9 @@ _ipu_resume:
     lw      $v0, s_IPUState + 24
     or      $v1, $v1, $a2
     sw      $v0, 0x2010($a1)
-    sw      $at, -19440($a0)
-    sw      $a3, -19424($a0)
-    sw      $v1, -19456($a0)
+    sw      $at, -0x4BF0($a0)
+    sw      $a3, -0x4BE0($a0)
+    sw      $v1, -0x4C00($a0)
 2:
     jr      $ra
     addiu   $v0, $v0, 1
@@ -234,8 +234,8 @@ _mpeg_dmac_handler:
     sll     $v0, $a3, 10
     mult    $v1, $v1, $a3
     subu    $at, $at, $a3
-    sw      $a2, -20464($t1)
-    sw      $a0, -19440($t1)
+    sw      $a2, -0x4FF0($t1)
+    sw      $a0, -0x4BF0($t1)
     addu    $a2, $a2, $v0
     srl     $v0, $v0, 4
     addu    $a0, $a0, $v1
@@ -244,15 +244,15 @@ _mpeg_dmac_handler:
     sw      $a2, 4($a1)
     lui     $t0, 0x1000
     sw      $at, 8($a1)
-    sw      $v0, -20448($t1)
+    sw      $v0, -0x4FE0($t1)
     lui     $v0, 0x7000
-    sw      $v1, -19424($t1)
+    sw      $v1, -0x4BE0($t1)
     addiu   $v1, $zero, 0x0101
     or      $v0, $v0, $a3
-    sw      $v1, -19456($t1)
+    sw      $v1, -0x4C00($t1)
     andi    $v1, 0x0100
     sw      $v0, 0x2000($t0)
-    sw      $v1, -20480($t1)
+    sw      $v1, -0x5000($t1)
     jr      $ra
     nor     $v0, $zero, $zero
 1:
@@ -272,22 +272,22 @@ _MPEG_CSCImage:
     sw      $a1,  8($sp)
     bgezal  $zero, _ipu_suspend
     sw      $a2, 12($sp)
-    sw      $zero, 0x2000($t1)
+    sw      $zero, 0x2000($t1) # expecting 0x1000 to already be loaded in t1 high? nice bug... 0x10002000
     addiu   $t0, $zero, 1023
     addiu   $v0, $zero,    8
     addiu   $a0, $zero,    3
     addiu   $v1, $zero,   22 # __NR__EnableDmac
-    lw      $a2, 12($sp)
+    lw      $a2, 12($sp) # for reference… 0x10010000
     addiu   $t3, $zero,  384
-    sw      $v0, -8176($a1)
+    sw      $v0, -0x1FF0($a1) # expecting 0x1000 to already be loaded in a1 high? nice bug... 0x1000E010
     pminw   $t0, $t0, $a2
     lw      $t4, 4($sp)
     lw      $a3, 8($sp)
     subu    $a2, $a2, $t0
     mult    $t3, $t3, $t0
     sll     $t5, $t0, 10
-    sw      $a3, -20464($a1)
-    sw      $t4, -19440($a1)
+    sw      $a3, -0x4FF0($a1) # 0x1000B010
+    sw      $t4, -0x4BF0($a1) # 0x1000B410
     sw      $a2, s_CSCParam + 8
     addu    $t4, $t4, $t3
     addu    $a3, $a3, $t5
@@ -295,8 +295,8 @@ _MPEG_CSCImage:
     srl     $t3, $t3, 4
     sw      $a3, s_CSCParam + 4
     srl     $t5, $t5, 4
-    sw      $t3, -19424($a1)
-    sw      $t5, -20448($a1)
+    sw      $t3, -0x4BE0($a1) # 0x1000B420
+    sw      $t5, -0x4FE0($a1) # 0x1000B020
     sw      $t0, 4($sp)
     syscall
     lw      $t0, 4($sp)
@@ -305,10 +305,10 @@ _MPEG_CSCImage:
     lui     $v0, 0x7000
     lui     $a0, 0x1000
     or      $v0, $v0, $t0
-    sw      $v1, -19456($at)
+    sw      $v1, -0x4C00($at) # 0x1000B400
     andi    $v1, $v1, 0x0100
-    sw      $v0, 0x2000($a0)
-    sw      $v1, -20480($at)
+    sw      $v0, 0x2000($a0) # 0x10002000
+    sw      $v1, -0x5000($at) # 0x1000B000
     lw      $a0, s_Sema
     addiu   $v1, $zero, 68 # __NR_WaitSema
     sb      $v1, s_CSCFlag
@@ -333,7 +333,7 @@ _ipu_sync:
     slti    $a2, $a2, 32
     beq     $a2, $zero, 2f
     lui     $a2, 0x1001
-    lw      $a2, -19424($a2)
+    lw      $a2, -0x4BE0($a2)
     bgtzl   $a2, 1b
     lw      $a0, 0x2020($at)
     addiu   $sp, $sp, -16
@@ -378,7 +378,7 @@ _ipu_sync_data:
     sltiu   $v0, $v0, 32
     beq     $v0, $zero, 2f
     lui     $v0, 0x1001
-    lw      $v0, -19424($v0)
+    lw      $v0, -0x4BE0($v0)
     bgtzl   $v0, 1b
     lw      $a0, 0x2020($at)
     lw      $v0, s_SetDMA + 0
@@ -744,9 +744,9 @@ _MPEG_BDEC:
     lw      $v1, 0x2010($at)
     addiu   $a0, $zero, 48
     addiu   $a2, $zero, 0x0100
-    sw      $t0, -20464($a1)
-    sw      $a0, -20448($a1)
-    sw      $a2, -20480($a1)
+    sw      $t0, -0x4FF0($a1)
+    sw      $a0, -0x4FE0($a1)
+    sw      $a2, -0x5000($a1)
     bltzall $v1, _ipu_sync
     lw      $a0, 0x2020($at)
     ld      $ra, 0($sp)
@@ -771,7 +771,7 @@ _MPEG_WaitBDEC:
     lw      $v0, 0x2010($at)
     and     $v0, $v0, $a0
     bne     $v0, $zero, 3f
-    lw      $a2, -20448($a2)
+    lw      $a2, -0x4FE0($a2)
     addiu   $v0, $zero, 1
     bnel    $a2, $zero, 1b
     lw      $v1, 0x2010($at)
@@ -797,18 +797,18 @@ _MPEG_WaitBDEC:
     and     $at, $at, $v0
     nor     $a2, $v0, $zero
     bne     $at, $zero, 4b
-    lw      $at, -2784($a0)
+    lw      $at, -0xAE0($a0)
     xor     $v1, $v1, $v1
     or      $at, $at, $v0
-    sw      $at, -2672($a0)
-    sw      $zero, -20480($a0)
-    lw      $at, -2784($a0)
+    sw      $at, -0xA70($a0)
+    sw      $zero, -0x5000($a0)
+    lw      $at, -0xAE0($a0)
     xor     $v0, $v0, $v0
     and     $at, $at, $a2
-    sw      $at, -2672($a0)
+    sw      $at, -0xA70($a0)
     ei
     beq     $zero, $zero, 2b
-    sw      $zero, -20448($a0)
+    sw      $zero, -0x4FE0($a0)
 
 _MPEG_dma_ref_image:
     addiu   $at, $zero, 4
@@ -823,16 +823,16 @@ _MPEG_dma_ref_image:
     lui     $t1, 0x2000
     la      $t0, s_DMAPack
 1:
-    lw      $v1, -11264($v0)
+    lw      $v1, -0x2C00($v0)
     andi    $v1, $v1, 0x0100
     bne     $v1, $zero, 1b
     nop
     srl     $at, $at, 4
-    sw      $zero, -11232($v0)
+    sw      $zero, -0x2BE0($v0)
     or      $t1, $t1, $t0
-    sw      $at, -11136($v0)
+    sw      $at, -0x2B80($v0)
     lui     $v1, 0x3000
-    sw      $t0, -11216($v0)
+    sw      $t0, -0x2BD0($v0)
     ori     $v1, $v1, 0x0030
 1:
     lw      $t0, 0($a1)
@@ -846,11 +846,11 @@ _MPEG_dma_ref_image:
     addiu   $a1, $a1, 40
     addiu   $t1, $t1, 32
     bgtz    $a2, 1b
-    addiu   $a0, $a0, 1536
+    addiu   $a0, $a0, 0x600
     andi    $v1, $v1, 0xFFFF
     addiu   $at, $zero, 0x0105
     sw      $v1, -16($t1)
     sw      $zero, 32($a1)
     sync.l
     jr      $ra
-    sw      $at, -11264($v0)
+    sw      $at, -0x2C00($v0)
