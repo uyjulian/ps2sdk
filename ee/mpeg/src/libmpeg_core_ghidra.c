@@ -68,10 +68,10 @@ LAB_0001041c:
     }
     iVar1 = read_volatile_4(REG_DMAC_4_IPU_TO_QWC);
     if (iVar1 < 1) {
-      *(undefined4 *)((int)register0x000001d0 + 0xfff0) = unaff_retaddr;
+      *(undefined4 *)((int)register0x000001d0 + 0xfff0) = unaff_retaddr; // ignore this (we don't need to save return address manually)
       lVar2 = (*s_SetDMA + 0)(s_SetDMA + 4);
-      unaff_retaddr = *(undefined4 *)((int)register0x000001d0 + 0xfff0);
-      register0x000001d0 = (BADSPACEBASE *)((int)register0x000001d0 + 0x10000);
+      unaff_retaddr = *(undefined4 *)((int)register0x000001d0 + 0xfff0); // likewise
+      register0x000001d0 = (BADSPACEBASE *)((int)register0x000001d0 + 0x10000); //likewise
       if (lVar2 == 0) {
         *s_pEOF = 0x20;
         s_DataBuf[0] = 0x20;
@@ -111,14 +111,12 @@ LAB_000104b8:
     }
     iVar1 = read_volatile_4(REG_DMAC_4_IPU_TO_QWC);
     if (iVar1 < 1) {
-      *(undefined4 *)((int)register0x000001d0 + 0xfff0) = unaff_retaddr;
+      *(undefined4 *)((int)register0x000001d0 + 0xfff0) = unaff_retaddr; // ignore this (we don't need to save return address manually)
       lVar2 = (*s_SetDMA + 0)(s_SetDMA + 4);
-      unaff_retaddr = *(undefined4 *)((int)register0x000001d0 + 0xfff0);
-      register0x000001d0 = (BADSPACEBASE *)((int)register0x000001d0 + 0x10000);
+      unaff_retaddr = *(undefined4 *)((int)register0x000001d0 + 0xfff0); // likewise
+      register0x000001d0 = (BADSPACEBASE *)((int)register0x000001d0 + 0x10000); // likewise
       if (lVar2 == 0) {
         *s_pEOF + 0 = 0x20;
-        s_SetDMA + 0 = 0x20;
-        s_SetDMA + 4 = 0x1b7;
         return;
       }
       goto LAB_000104b8;
@@ -236,8 +234,8 @@ void _MPEG_dma_ref_image(_MPEGMacroBlock8 *param_1,_MPEGMotion *param_2,int para
     } while ((uVar3 & 0x100) != 0);
     write_volatile_4(REG_DMAC_9_SPR_TO_QWC,0);
     write_volatile_4(REG_DMAC_9_SPR_TO_SADR,(uint)param_1 & 0xfffffff);
-    write_volatile_4(REG_DMAC_9_SPR_TO_TADR,&gp0x0000c000);
-    puVar2 = (undefined4 *)((uint)&gp0x0000c000 | 0x20000000);
+    write_volatile_4(REG_DMAC_9_SPR_TO_TADR,&s_DMAPack);
+    puVar2 = (undefined4 *)((uint)&s_DMAPack | 0x20000000);
     do {
       p_Var4 = param_2;
       puVar6 = puVar2;

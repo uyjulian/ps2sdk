@@ -200,17 +200,81 @@ int _MPEG_CSCImage ( void* arg0, void* arg1, int arg2 )
 	_ipu_resume();
 }
 
-#if 0
-void _ipu_sync( void )
+void _ipu_sync( u32 arg0 )
 {
+	u32 var0 = arg0; // *R_EE_IPU_BP from caller
+	do
+	{
+		do
+		{
+			// in_v1_lo = *R_EE_IPU_CTRL from caller?
+			if ((in_v1_lo & 0x4000) != 0)
+			{
+				return;
+			}
+			if ((int)((((var0 & 0xff00) >> 1) + ((var0 & 0x30000) >> 9)) - (var0 & 0x7f)) < 0x20)
+			{
+				break;
+			}
+LAB_0001041c:
+			in_v1_lo = *R_EE_IPU_CTRL;
+			if (-1 < *R_EE_IPU_CTRL)
+			{
+				return;
+			}
+			var0 = *R_EE_IPU_BP;
+		}
+		while (true);
 
+		if ((int)*R_EE_D4_QWC < 1)
+		{
+			u32 var2 = (s_SetDMA[0])(s_SetDMA[1]);
+			if (var2 == 0)
+			{
+				*s_pEOF = 0x20;
+				s_DataBuf[0] = 0x20;
+				s_DataBuf[1] = 0x1b7;
+			}
+		}
+		var0 = *R_EE_IPU_BP;
+		in_v1_lo = *R_EE_IPU_CTRL;
+	}
+	while (true);
 }
 
 void _ipu_sync_data( void )
 {
-
+	if (-1 < *R_EE_IPU_CMD)
+	{
+		return;
+	}
+	u32 var3 = *R_EE_IPU_BP;
+	do
+	{
+		while (0x1f < (((var3 & 0xff00) >> 1) + ((var3 & 0x30000) >> 9)) - (var3 & 0x7f))
+		{
+LAB_000104b8:
+			if (-1 < *R_EE_IPU_CMD)
+			{
+				return;
+			}
+			var3 = *R_EE_IPU_BP;
+		}
+		if (*R_EE_D4_QWC < 1)
+		{
+			if ((s_SetDMA[0])(s_SetDMA[1]) == 0)
+			{
+				*s_pEOF = 0x20;
+				s_DataBuf[0] = 0x20;
+				s_DataBuf[1] = 0x1b7;
+				return;
+			}
+			goto LAB_000104b8;
+		}
+		var3 = *R_EE_IPU_BP;
+	}
+	while (true);
 }
-#endif
 
 unsigned int _ipu_get_bits( unsigned int arg0 )
 {
@@ -459,17 +523,102 @@ void _MPEG_BDEC ( int arg0, int arg1, int arg2, int arg3, void* arg4 )
 	*R_EE_IPU_CMD = arg0 << 0x1b | 0x20000000U | arg1 << 0x1a | arg2 << 0x19 | arg3 << 0x10;
 }
 
-#if 0
 int _MPEG_WaitBDEC ( void )
 {
-
+	u32 var2 = *R_EE_IPU_CTRL;
+	while (true)
+	{
+		if (var2 < 0)
+		{
+			_ipu_sync(*R_EE_IPU_BP);
+		}
+		if ((*s_pEOF != 0))
+		{
+			break;
+		}
+		var1 = *R_EE_D3_QWC;
+		if ((*R_EE_IPU_CTRL & 0x4000) != 0)
+		{
+			break;
+		}
+		if (var1 == 0)
+		{
+			// XXX: check CONCAT44 order
+			s_DataBuf[0] = 0x20;
+			s_DataBuf[1] = *R_EE_IPU_TOP;
+			return 1;
+		}
+		var2 = *R_EE_IPU_CTRL;
+	}
+	_ipu_suspend();
+	// TODO: $t1+0x2010 is set to 0x40000000
+	_ipu_resume();
+	int eie;
+	do
+	{
+		DI();
+		EE_SYNCP();
+		asm volatile ("mfc0\t%0, $12" : "=r" (eie));
+		eie &= 0x10000;
+	}
+	while (eie != 0);
+	*R_EE_D_ENABLEW = *R_EE_D_ENABLER | 0x10000;
+	*R_EE_D3_CHCR = 0;
+	*R_EE_D_ENABLEW = *R_EE_D_ENABLER & 0xfffeffff;
+	EI();
+	*R_EE_D3_QWC = 0;
+	s_DataBuf[0] = 0;
+	s_DataBuf[1] = 0;
+	return 0;
 }
 
 void _MPEG_dma_ref_image ( _MPEGMacroBlock8* arg0, _MPEGMotion* arg1, int arg2, int arg3 )
 {
-
+	u8* var00 = (u8*)arg0;
+	u8* var01 = (u8*)arg1;
+	u32 var3 = 4;
+	if (arg2 < 5)
+	{
+		var3 = arg2;
+	}
+	u64 var5 = (ulong)var3;
+	if (arg2 >> 0x1f < 1)
+	{
+		// TODO: correct implementation of CONCAT44?
+		var5 = ((param_3 >> 0x1f) << 32) | var3;
+	}
+	if (0 < var5)
+	{
+		do {} while ((*R_EE_D9_CHCR & 0x100) != 0);
+		*R_EE_D9_QWC = 0;
+		*R_EE_D9_SADR = (u32)param_1 & 0xfffffff;
+		*R_EE_D9_SADR = (u32)&s_DMAPack;
+		u32 *var2 = &s_DMAPack | 0x20000000;
+		u32 *var6;
+		// do while…
+		u8 *var4;
+		do
+		{
+			var4 = arg1;
+			var6 = var2;
+			u8 * var1 = var4->m_pSrc;
+			var5 = (u64)((int)var5 + 0xffff);
+			var6[0] = 0x30000030;
+			var6[1] = (u32)var1;
+			var6[4] = 0x30000030;
+			var6[5] = (u32)var1 + arg3 * 0x180;
+			var4->m_pSrc = var00;
+			var00 += 4;
+			var2 = var6 + 8;
+			var01 = var4 + 1;
+		}
+		while (var5 != 0);
+		var6[4] = 0x30;
+		var4[1].MC_Luma = (void *)0x0;
+		SYNC_L();
+		*R_EE_D9_CHCR = 0x105;
+	}
 }
-#endif
 
 void _MPEG_put_block_fr ( _MPEGMotions* arg0 )
 {

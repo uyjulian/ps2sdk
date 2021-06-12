@@ -378,7 +378,7 @@ _ipu_sync_data:
     sltiu   $v0, $v0, 32
     beq     $v0, $zero, 2f
     lui     $v0, 0x1001
-    lw      $v0, -0x4BE0($v0)
+    lw      $v0, -0x4BE0($v0) # 0x1000B420
     bgtzl   $v0, 1b
     lw      $a0, 0x2020($at)
     lw      $v0, s_SetDMA + 0
@@ -788,7 +788,7 @@ _MPEG_WaitBDEC:
     bgezal  $zero, _ipu_suspend
     lui     $t0, 0x4000
     bgezal  $zero, _ipu_resume
-    sw      $t0, 0x2010($t1)
+    sw      $t0, 0x2010($t1) # expecting 0x1000 to already be loaded in t1 high? nice bug... 0x10002000
     lui     $v0, 0x0001
 4:
     di
@@ -797,18 +797,18 @@ _MPEG_WaitBDEC:
     and     $at, $at, $v0
     nor     $a2, $v0, $zero
     bne     $at, $zero, 4b
-    lw      $at, -0xAE0($a0)
+    lw      $at, -0xAE0($a0) # 0x1000F520
     xor     $v1, $v1, $v1
     or      $at, $at, $v0
-    sw      $at, -0xA70($a0)
-    sw      $zero, -0x5000($a0)
-    lw      $at, -0xAE0($a0)
+    sw      $at, -0xA70($a0) # 0x1000F590
+    sw      $zero, -0x5000($a0) # 0x1000B000
+    lw      $at, -0xAE0($a0) # 0x1000F520
     xor     $v0, $v0, $v0
     and     $at, $at, $a2
-    sw      $at, -0xA70($a0)
+    sw      $at, -0xA70($a0) # 0x1000F590
     ei
     beq     $zero, $zero, 2b
-    sw      $zero, -0x4FE0($a0)
+    sw      $zero, -0x4FE0($a0) # 0x1000B020
 
 _MPEG_dma_ref_image:
     addiu   $at, $zero, 4
