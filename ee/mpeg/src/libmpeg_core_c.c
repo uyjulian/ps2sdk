@@ -551,7 +551,8 @@ int _MPEG_WaitBDEC ( void )
 		var2 = *R_EE_IPU_CTRL;
 	}
 	_ipu_suspend();
-	// TODO: $t1+0x2010 is set to 0x40000000
+	// XXX: $t1 is not set in this function, so probably from another function?
+	*R_EE_IPU_CTRL = 0x40000000;
 	_ipu_resume();
 	int eie;
 	do
