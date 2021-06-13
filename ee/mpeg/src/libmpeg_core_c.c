@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <kernel.h>
+#include <ee_regs.h>
 
 #include "libmpeg.h"
 #include "libmpeg_internal.h"
@@ -29,13 +30,16 @@
 
 static u8 s_DMAPack[128];
 static u32 s_DataBuf[2];
-static u32 s_SetDMA[2];
+static int ( * s_SetDMA_func) ( void* );
+static void * s_SetDMA_arg;
 static u32 s_IPUState[8];
 static int* s_pEOF;
 static int s_Sema;
 static u32 s_CSCParam[3];
 static int s_CSCID;
 static u8 s_CSCFlag;
+
+extern s32 _mpeg_dmac_handler( s32 channel, void *arg, void *addr );
 
 void _MPEG_Initialize ( _MPEGContext* arg0, int ( * arg1) ( void* ), void* arg2, int* arg3)
 {
@@ -49,8 +53,8 @@ void _MPEG_Initialize ( _MPEGContext* arg0, int ( * arg1) ( void* ), void* arg2,
 	*R_EE_IPU_CTRL = var2 | 0x800000;
 	*R_EE_D3_QWC = 0;
 	*R_EE_D4_QWC = 0;
-	s_SetDMA[0] = (u32)arg1;
-	s_SetDMA[1] = (u32)arg2;
+	s_SetDMA_func = arg1;
+	s_SetDMA_arg = arg2;
 	s_pEOF = arg3;
 	*s_pEOF = 0;
 	// TODO: check if this is the correct options for the semaphore
@@ -127,14 +131,14 @@ void _ipu_resume ( void )
 		*R_EE_D3_CHCR = s_IPUState[3] | 0x100;
 	}
 	u32 var2 = (s_IPUState[7] >> 0x10 & 3) + (s_IPUState[7] >> 8 & 0xf);
-	u32 var3 = (s_IPUState[2]) + iVar2;
+	u32 var3 = (s_IPUState[2]) + var2;
 	if (var3 != 0)
 	{
 		*R_EE_IPU_CMD = (s_IPUState[7]) & 0x7f;
 		do {} while (*R_EE_IPU_CTRL < 0);
 		*R_EE_IPU_CTRL = s_IPUState[6];
-		*R_EE_D4_MADR = (s_IPUState[1]) + iVar2 * -0x10;
-		*R_EE_D4_QWC = iVar3;
+		*R_EE_D4_MADR = (s_IPUState[1]) + var2 * -0x10;
+		*R_EE_D4_QWC = var3;
 		*R_EE_D4_CHCR = s_IPUState[0] | 0x100;
 	}
 }
@@ -152,7 +156,7 @@ s32 _mpeg_dmac_handler( s32 channel, void *arg, void *addr )
 	{
 		iDisableDmac(3);
 		iSignalSema(s_Sema);
-		*s_CSCFlag = 0;
+		s_CSCFlag = 0;
 		return ~0;
 	}
 	u32 var2 = var1;
@@ -195,20 +199,25 @@ int _MPEG_CSCImage ( void* arg0, void* arg1, int arg2 )
 	*R_EE_D4_CHCR = 0x101;
 	*R_EE_IPU_CMD = var1;
 	*R_EE_D3_CHCR = 0x100;
-	*s_CSCFlag = 68; // TODO: validate this
+	s_CSCFlag = 68; // TODO: validate this
 	WaitSema(s_Sema);
 	_ipu_resume();
+	return var1;
 }
 
-void _ipu_sync( u32 arg0 )
+void _ipu_sync( void )
 {
-	u32 var0 = arg0; // *R_EE_IPU_BP from caller
+	u32 var0 = *R_EE_IPU_BP;
+	u32 var1 = *R_EE_IPU_CTRL;
+	if ((s32)var1 >= 0)
+	{
+		return;
+	}
 	do
 	{
 		do
 		{
-			// in_v1_lo = *R_EE_IPU_CTRL from caller?
-			if ((in_v1_lo & 0x4000) != 0)
+			if ((var1 & 0x4000) != 0)
 			{
 				return;
 			}
@@ -217,36 +226,36 @@ void _ipu_sync( u32 arg0 )
 				break;
 			}
 LAB_0001041c:
-			in_v1_lo = *R_EE_IPU_CTRL;
+			var1 = *R_EE_IPU_CTRL;
 			if (-1 < *R_EE_IPU_CTRL)
 			{
 				return;
 			}
 			var0 = *R_EE_IPU_BP;
 		}
-		while (true);
+		while (1);
 
 		if ((int)*R_EE_D4_QWC < 1)
 		{
-			u32 var2 = (s_SetDMA[0])(s_SetDMA[1]);
-			if (var2 == 0)
+			if (s_SetDMA_func(s_SetDMA_arg) == 0)
 			{
 				*s_pEOF = 0x20;
 				s_DataBuf[0] = 0x20;
 				s_DataBuf[1] = 0x1b7;
 			}
+			goto LAB_0001041c;
 		}
 		var0 = *R_EE_IPU_BP;
-		in_v1_lo = *R_EE_IPU_CTRL;
+		var1 = *R_EE_IPU_CTRL;
 	}
-	while (true);
+	while (1);
 }
 
-void _ipu_sync_data( void )
+u32 _ipu_sync_data( void )
 {
 	if (-1 < *R_EE_IPU_CMD)
 	{
-		return;
+		return *R_EE_IPU_BP;
 	}
 	u32 var3 = *R_EE_IPU_BP;
 	do
@@ -256,32 +265,27 @@ void _ipu_sync_data( void )
 LAB_000104b8:
 			if (-1 < *R_EE_IPU_CMD)
 			{
-				return;
+				return var3;
 			}
 			var3 = *R_EE_IPU_BP;
 		}
 		if (*R_EE_D4_QWC < 1)
 		{
-			if ((s_SetDMA[0])(s_SetDMA[1]) == 0)
+			if (s_SetDMA_func(s_SetDMA_arg) == 0)
 			{
 				*s_pEOF = 0x20;
-				s_DataBuf[0] = 0x20;
-				s_DataBuf[1] = 0x1b7;
-				return;
+				return var3;
 			}
 			goto LAB_000104b8;
 		}
 		var3 = *R_EE_IPU_BP;
 	}
-	while (true);
+	while (1);
 }
 
 unsigned int _ipu_get_bits( unsigned int arg0 )
 {
-	if ((s32)*R_EE_IPU_CTRL < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	if (s_DataBuf[0] < (int)arg0)
 	{
 		*R_EE_IPU_CMD = 0x40000000;
@@ -304,10 +308,7 @@ unsigned int _ipu_show_bits ( unsigned int arg0 )
 {
 	if (s_DataBuf[0] < (int)arg0)
 	{
-		if ((s32)*R_EE_IPU_CTRL < 0)
-		{
-			_ipu_sync(*R_EE_IPU_BP);
-		}
+		_ipu_sync();
 		*R_EE_IPU_CMD = 0x40000000;
 		s_DataBuf[1] = _ipu_sync_data();
 		s_DataBuf[0] = 0x20;
@@ -322,10 +323,7 @@ unsigned int _MPEG_ShowBits ( unsigned int arg0 )
 
 void _ipu_align_bits( void )
 {
-	if ((s32)*R_EE_IPU_CTRL < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	u32 var3 = -(*R_EE_IPU_BP & 7) & 7;
 	if (var3 != 0)
 	{
@@ -394,23 +392,17 @@ void _MPEG_SetDefQM ( int arg0 )
 
 void _MPEG_SetQM ( int arg0 )
 {
-	if ((s32)*R_EE_IPU_CTRL < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	*R_EE_IPU_CMD = arg0 << 0x1b | 0x50000000;
 	s_DataBuf[0] = 0;
 }
 
 int _MPEG_GetMBAI ( void )
 {
-	if ((s32)*R_EE_IPU_CTRL < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	int var5 = 0;
 	u32 var4 = 0;
-	while (true)
+	while (1)
 	{
 		*R_EE_IPU_CMD = 0x30000000;
 		var4 = _ipu_sync_data();
@@ -435,10 +427,7 @@ int _MPEG_GetMBAI ( void )
 
 int _MPEG_GetMBType ( void )
 {
-	if ((s32)*R_EE_IPU_CTRL < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	*R_EE_IPU_CMD = 0x34000000;
 	u32 var4 = _ipu_sync_data();
 	if (var4 != 0)
@@ -452,10 +441,7 @@ int _MPEG_GetMBType ( void )
 
 int _MPEG_GetMotionCode ( void )
 {
-	if ((s32)*R_EE_IPU_CTRL < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	*R_EE_IPU_CMD = 0x38000000;
 	u32 var4 = _ipu_sync_data();
 	if (var4 == 0)
@@ -473,10 +459,7 @@ int _MPEG_GetMotionCode ( void )
 
 int _MPEG_GetDMVector ( void )
 {
-	if ((s32)*R_EE_IPU_CTRL < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	*R_EE_IPU_CMD = 0x3c000000;
 	u32 var4 = _ipu_sync_data();
 	s_DataBuf[0] = 0x20;
@@ -495,7 +478,7 @@ void _MPEG_SetQSTIVFAS ( void )
 	unsigned int var1 = _MPEG_GetBits(1);
 	unsigned int var2 = _MPEG_GetBits(1);
 	unsigned int var3 = _MPEG_GetBits(1);
-	*R_EE_IPU_CTRL = (*R_EE_IPU_CTRL & 0xff8fffff) | var1 << 0x16 | var2 << 0x15 | var3 << 0x14
+	*R_EE_IPU_CTRL = (*R_EE_IPU_CTRL & 0xff8fffff) | var1 << 0x16 | var2 << 0x15 | var3 << 0x14;
 }
 
 void _MPEG_SetPCT ( unsigned int arg0 )
@@ -503,40 +486,32 @@ void _MPEG_SetPCT ( unsigned int arg0 )
 	u32 var3 = *R_EE_IPU_CTRL;
 	if (-1 < (int)var3)
 	{
-		*R_EE_IPU_CTRL = (var3 & 0xf8ffffff) | param_1 << 0x18;
+		*R_EE_IPU_CTRL = (var3 & 0xf8ffffff) | arg0 << 0x18;
 		return;
 	}
-	// TODO: validate
-	_ipu_sync(*R_EE_IPU_BP);
+	// TODO: validate. Bugged and in wrong place?
+	_ipu_sync();
 }
 
 void _MPEG_BDEC ( int arg0, int arg1, int arg2, int arg3, void* arg4 )
 {
-	u32 var1 = *R_EE_IPU_CTRL;
-	*R_EE_D3_MADR = (uint)arg4 & 0xfffffff | 0x80000000;
+	*R_EE_D3_MADR = ((uint)arg4 & 0xfffffff) | 0x80000000;
 	*R_EE_D3_QWC = 0x30;
 	*R_EE_D3_CHCR = 0x100;
-	if (var1 < 0)
-	{
-		_ipu_sync(*R_EE_IPU_BP);
-	}
+	_ipu_sync();
 	*R_EE_IPU_CMD = arg0 << 0x1b | 0x20000000U | arg1 << 0x1a | arg2 << 0x19 | arg3 << 0x10;
 }
 
 int _MPEG_WaitBDEC ( void )
 {
-	u32 var2 = *R_EE_IPU_CTRL;
-	while (true)
+	while (1)
 	{
-		if (var2 < 0)
-		{
-			_ipu_sync(*R_EE_IPU_BP);
-		}
+		_ipu_sync();
 		if ((*s_pEOF != 0))
 		{
 			break;
 		}
-		var1 = *R_EE_D3_QWC;
+		u32 var1 = *R_EE_D3_QWC;
 		if ((*R_EE_IPU_CTRL & 0x4000) != 0)
 		{
 			break;
@@ -548,7 +523,6 @@ int _MPEG_WaitBDEC ( void )
 			s_DataBuf[1] = *R_EE_IPU_TOP;
 			return 1;
 		}
-		var2 = *R_EE_IPU_CTRL;
 	}
 	_ipu_suspend();
 	// XXX: $t1 is not set in this function, so probably from another function?
@@ -576,7 +550,7 @@ int _MPEG_WaitBDEC ( void )
 void _MPEG_dma_ref_image ( _MPEGMacroBlock8* arg0, _MPEGMotion* arg1, int arg2, int arg3 )
 {
 	u8* var00 = (u8*)arg0;
-	u8* var01 = (u8*)arg1;
+	_MPEGMotion* var01 = (_MPEGMotion*)arg1;
 	u32 var3 = 4;
 	if (arg2 < 5)
 	{
@@ -586,37 +560,36 @@ void _MPEG_dma_ref_image ( _MPEGMacroBlock8* arg0, _MPEGMotion* arg1, int arg2, 
 	if (arg2 >> 0x1f < 1)
 	{
 		// TODO: correct implementation of CONCAT44?
-		var5 = ((param_3 >> 0x1f) << 32) | var3;
+		var5 = ((u64)(arg2 >> 0x1f) << 32) | var3;
 	}
 	if (0 < var5)
 	{
 		do {} while ((*R_EE_D9_CHCR & 0x100) != 0);
 		*R_EE_D9_QWC = 0;
-		*R_EE_D9_SADR = (u32)param_1 & 0xfffffff;
+		*R_EE_D9_SADR = (u32)arg0 & 0xfffffff;
 		*R_EE_D9_SADR = (u32)&s_DMAPack;
-		u32 *var2 = &s_DMAPack | 0x20000000;
+		u32 *var2 = (u32 *)((u32)&s_DMAPack | 0x20000000);
 		u32 *var6;
-		// do while…
-		u8 *var4;
 		do
 		{
-			var4 = arg1;
 			var6 = var2;
-			u8 * var1 = var4->m_pSrc;
+			u8 * var1 = var01->m_pSrc;
+			// TODO: simply math
 			var5 = (u64)((int)var5 + 0xffff);
 			var6[0] = 0x30000030;
 			var6[1] = (u32)var1;
 			var6[4] = 0x30000030;
 			var6[5] = (u32)var1 + arg3 * 0x180;
-			var4->m_pSrc = var00;
+			var01->m_pSrc = var00;
 			var00 += 4;
-			var2 = var6 + 8;
-			var01 = var4 + 1;
+			var2 = var6 + 2; // + 8 bytewise
+			var01 += 1;
 		}
 		while (var5 != 0);
 		var6[4] = 0x30;
-		var4[1].MC_Luma = (void *)0x0;
-		SYNC_L();
+		var01 += 1;
+		var01->MC_Luma = (void *)0x0;
+		EE_SYNCL();
 		*R_EE_D9_CHCR = 0x105;
 	}
 }
