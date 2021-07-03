@@ -239,12 +239,12 @@ void udpbd_rx(u16 pointer)
 {
 	USE_SMAP_REGS;
 	udpbd_header_t hdr;
-	u32 * phdr = (u32 *)&hdr;
 
-	//phdr[0] = UDPBD_HEADER_MAGIC;
-	phdr[1] = SMAP_REG32(SMAP_R_RXFIFO_DATA); // CMD
-	phdr[2] = SMAP_REG32(SMAP_R_RXFIFO_DATA); // PAR1
-	phdr[3] = SMAP_REG32(SMAP_R_RXFIFO_DATA); // PAR2
+    hdr.cmd = 0;
+	//((u32 *)&hdr)[0] = UDPBD_HEADER_MAGIC;
+	((u32 *)&hdr)[1] = SMAP_REG32(SMAP_R_RXFIFO_DATA); // CMD
+	((u32 *)&hdr)[2] = SMAP_REG32(SMAP_R_RXFIFO_DATA); // PAR1
+	((u32 *)&hdr)[3] = SMAP_REG32(SMAP_R_RXFIFO_DATA); // PAR2
 
 	switch (hdr.cmd) {
 		case UDPBD_CMD_INFO:

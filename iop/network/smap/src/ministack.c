@@ -52,10 +52,14 @@ void udp_packet_init(udp_packet_t *pkt, u16 port)
 
 static u16 ip_checksum(ip_header_t *ip)
 {
-    u16 *data = (u16 *)ip;
-    int count = 10;
+    u8 tmp_data[sizeof(*ip)];
+    u16 *data = (u16 *)tmp_data;
+    int count = sizeof(tmp_data) / 2;
 	u32 csum = 0;
-	
+	int i;
+
+	for (i = 0; i < sizeof(tmp_data); i += 1)
+		tmp_data[i] = ((u8 *)ip)[i];
     while(count--)
 		csum += *data++;
 	csum = (csum >> 16) + (csum & 0xffff);
