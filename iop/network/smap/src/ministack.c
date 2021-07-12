@@ -32,8 +32,8 @@ void ip_packet_init(ip_packet_t *pkt)
 	//pkt->ip_csum         = ;
 	pkt->ip.addr_src.addr[0] = 192; // FIXME: Make static IP configurable
 	pkt->ip.addr_src.addr[1] = 168; // FIXME: Make static IP configurable
-	pkt->ip.addr_src.addr[2] = 1;   // FIXME: Make static IP configurable
-	pkt->ip.addr_src.addr[3] = 10;  // FIXME: Make static IP configurable
+	pkt->ip.addr_src.addr[2] = 40;   // FIXME: Make static IP configurable
+	pkt->ip.addr_src.addr[3] = 15;  // FIXME: Make static IP configurable
 	pkt->ip.addr_dst.addr[0] = 255;
 	pkt->ip.addr_dst.addr[1] = 255;
 	pkt->ip.addr_dst.addr[2] = 255;

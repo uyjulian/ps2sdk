@@ -457,9 +457,9 @@ int _start(int argc, char *argv[]){
 	else
 	{
 		//Set some defaults.
-		IP4_ADDR(&IP,192,168,0,80);
+		IP4_ADDR(&IP,192,168,40,15);
 		IP4_ADDR(&NM,255,255,255,0);
-		IP4_ADDR(&GW,192,168,0,1);
+		IP4_ADDR(&GW,192,168,40,2);
 	}
 
 	return InitLWIPStack(&IP, &NM, &GW)==0?MODULE_RESIDENT_END:MODULE_NO_RESIDENT_END;

@@ -108,7 +108,7 @@ static int _udpbd_read(struct block_device* bd, u32 sector, void* buffer, u16 co
     udp_packet_send((udp_packet_t *)&g_pkt, sizeof(udpbd_header_t) + 2);
 
     // Set alarm in case somthing hangs
-    USec2SysClock((count+2) * 1000, &clock);
+    USec2SysClock((count+2) * 1000000, &clock);
     SetAlarm(&clock, _udpbd_read_timeout, NULL);
 
     //wait for data...
@@ -181,7 +181,8 @@ static int udpbd_read(struct block_device* bd, u32 sector, void* buffer, u16 cou
 
 static int udpbd_write(struct block_device* bd, u32 sector, const void* buffer, u16 count)
 {
-	return -EIO;
+    return count;
+	//return -EIO;
 }
 
 static void udpbd_flush(struct block_device* bd)
