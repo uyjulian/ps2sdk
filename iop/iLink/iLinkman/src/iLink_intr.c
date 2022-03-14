@@ -99,7 +99,6 @@ static void ResponseHandler(unsigned int header, volatile unsigned int *buffer, 
 	unsigned int i, HeaderLength;
 	struct ieee1394_TrResponsePacketHdr ResponseData;
 	unsigned char tCode;
-	unsigned int data __attribute__((unused));
 
 	tCode=(header>>4)&0xF;
 
@@ -135,7 +134,7 @@ static void ResponseHandler(unsigned int header, volatile unsigned int *buffer, 
 	    }
 	}
 
-	data=*buffer;	/* Read the last quadlet of the read response that contains only the speed. */
+	(void)(*buffer);	/* Read the last quadlet of the read response that contains only the speed. */
 	SetEventFlag(IntrEventFlag, iLinkEventDataReceived);
 }
 
