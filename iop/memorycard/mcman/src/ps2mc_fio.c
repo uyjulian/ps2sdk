@@ -1117,8 +1117,6 @@ lbl1:
 
 		if (r == sceMcResSucceed)
 			goto lbl1;
-
-		return r;
 	}
 	else {
 		len = strlen(currentdir);
@@ -1133,7 +1131,7 @@ lbl1:
 		r = sceMcResSucceed;
 	}
 
-	return sceMcResSucceed;
+	return r;
 }
 
 //--------------------------------------------------------------
