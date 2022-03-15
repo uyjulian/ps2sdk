@@ -244,6 +244,8 @@ int hddInit(iop_device_t *f)
 {
 	iop_sema_t sema;
 
+	(void)f;
+
 	sema.attr=1;
 	sema.initial=1;
 	sema.max=1;
@@ -255,6 +257,8 @@ int hddInit(iop_device_t *f)
 
 int hddDeinit(iop_device_t *f)
 {
+	(void)f;
+
 	DeleteSema(fioSema);
 	return 0;
 }
@@ -268,6 +272,11 @@ int hddFormat(iop_file_t *f, const char *dev, const char *blockdev, void *arg, i
 	apa_params_t		params;
 	u32				emptyBlocks[32];
 #endif
+
+	(void)dev;
+	(void)blockdev;
+	(void)arg;
+	(void)arglen;
 
 #ifdef APA_SUPPORT_BHDD
 	if (strcmp(f->device->name, "bhdd") == 0)
@@ -537,6 +546,8 @@ int hddOpen(iop_file_t *f, const char *name, int flags, int mode)
 	int			rv;
 	apa_params_t	params;
 	hdd_file_slot_t *fileSlot;
+
+	(void)mode;
 
 	if(f->unit >= 2 || hddDevices[f->unit].status!=0)
 		return -ENODEV;
@@ -858,6 +869,10 @@ int hddIoctl2(iop_file_t *f, int req, void *argp, unsigned int arglen,
 	u32 rv=0, err_lba;
 	hdd_file_slot_t *fileSlot=f->privdata;
 
+	(void)arglen;
+	(void)bufp;
+	(void)buflen;
+
 #ifdef APA_SUPPORT_BHDD
 	if (strcmp(f->device->name, "bhdd") == 0)
 	{
@@ -986,6 +1001,10 @@ int hddDevctl(iop_file_t *f, const char *devname, int cmd, void *arg,
 {
 	int	rv=0;
 
+	(void)devname;
+	(void)arglen;
+	(void)buflen;
+
 #ifdef APA_SUPPORT_BHDD
 	if (strcmp(f->device->name, "bhdd") == 0)
 		return -ENODEV;
@@ -1082,4 +1101,9 @@ int hddDevctl(iop_file_t *f, const char *devname, int cmd, void *arg,
 	return rv;
 }
 
-int hddUnsupported(iop_file_t *f){return -1;}
+int hddUnsupported(iop_file_t *f)
+{
+	(void)f;
+
+	return -1;
+}

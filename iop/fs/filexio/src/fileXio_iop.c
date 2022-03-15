@@ -107,6 +107,9 @@ int _start( int argc, char **argv)
 	struct _iop_thread param;
 	int th, result;
 
+	(void)argc;
+	(void)argv;
+
 	param.attr         = TH_C;
 	param.thread       = (void*)fileXio_Thread;
 	param.priority 	  = 40;
@@ -1024,6 +1027,8 @@ static void fileXio_Thread(void* param)
 {
 	int OldState;
 
+	(void)param;
+
 	printf("fileXio: fileXio RPC Server v1.00\nCopyright (c) 2003 adresd\n");
 	#ifdef DEBUG
 		printf("fileXio: RPC Initialize\n");
@@ -1070,6 +1075,7 @@ static void* filexioRpc_SetRWBufferSize(void *sbuff)
 
 static void* fileXio_rpc_server(int fno, void *data, int size)
 {
+	(void)size;
 
 	switch(fno) {
 		case FILEXIO_DOPEN:

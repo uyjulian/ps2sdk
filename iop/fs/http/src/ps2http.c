@@ -350,6 +350,8 @@ int httpDummy()
 
 int httpInitialize(iop_io_device_t *driver)
 {
+	(void)driver;
+
 	printf("PS2HTTP: filesystem driver initialized\n");
 
 	return 0;
@@ -371,6 +373,8 @@ int httpOpen(iop_io_file_t *f, const char *name, int mode)
 	const char *getName;
 	t_fioPrivData *privData;
 	char hostAddr[100];
+
+	(void)mode;
 
 #ifdef DEBUG
 	printf("httpOpen(-, %s, %d)\n", name, mode);
@@ -517,6 +521,9 @@ iop_io_device_t ps2httpDev = {
  */
 int _start( int argc, char **argv)
 {
+	(void)argc;
+	(void)argv;
+
 	printf("PS2HTTP: Module Loaded\n");
 
 	printf("PS2HTTP: Adding 'http' driver into io system\n");

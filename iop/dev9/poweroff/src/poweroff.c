@@ -85,6 +85,8 @@ static int myCdHandler(void *param)
 
 static void Shutdown(void* data)
 {
+	(void)data;
+
 #ifdef DEBUG
 	printf("Shutdown\n");
 #endif
@@ -105,11 +107,15 @@ static void Shutdown(void* data)
 
 static void SendCmd(void* data)
 {
+	(void)data;
+
 	iWakeupThread(PowerOffThreadID);
 }
 
 static void PowerOffThread(void *arg)
 {
+	(void)arg;
+
 	SleepThread();
 	sceSifCallRpc(&client, POFF_RPC_BUTTON, 0, NULL, 0, NULL, 0, NULL, NULL);
 }
@@ -195,6 +201,8 @@ void PoweroffShutdown()
 
 void* poweroff_rpc_server(int fno, void *data, int size)
 {
+	(void)size;
+
 	switch(fno) {
 	case PWROFF_SHUTDOWN:
 		Shutdown(0);
@@ -216,6 +224,8 @@ void* poweroff_rpc_server(int fno, void *data, int size)
 
 void poweroff_rpc_Thread(void* param)
 {
+	(void)param;
+
 	SifInitRpc(0);
 
 	SifSetRpcQueue(&qd, GetThreadId());
@@ -228,6 +238,9 @@ int _start(int argc, char* argv[])
 	register struct handlerTableEntry *handlers=(struct handlerTableEntry*)0x480;//iopmem
 	iop_thread_t mythread;
 	int i;
+
+	(void)argc;
+	(void)argv;
 
 	if(RegisterLibraryEntries(&_exp_poweroff) != 0)
 	{
