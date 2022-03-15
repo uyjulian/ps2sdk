@@ -19,7 +19,7 @@ extern QWORD GsPrimWorkArea[];
 
 int GsLoadImage(const void *source_addr, GS_IMAGE *dest)
 {
-	int i;
+	unsigned int i;
 	const unsigned char *pTexSrc;
 	unsigned int current, max, remainder, img_qwc;
 	QWORD *p;

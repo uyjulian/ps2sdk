@@ -232,7 +232,7 @@ static int ioctl2Attr(pfs_cache_t *clink, int cmd, void *arg, void *outbuf, u32 
 
 void pfsFioDevctlCloseAll(void)
 {
-	s32 i;
+	u32 i;
 
 	for(i=0;i < pfsConfig.maxOpen;i++)
 	{

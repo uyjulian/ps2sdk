@@ -82,7 +82,7 @@ void log_regdata(u32 *rd)
 
 void log_data(int type, u8 *data, u32 size)
 {
-	int i;
+	u32 i;
 
 	if (!logging) return;
 

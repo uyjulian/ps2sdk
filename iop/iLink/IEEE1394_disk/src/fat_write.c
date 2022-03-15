@@ -1088,7 +1088,8 @@ static int fat_fillDirentryInfo(fat_driver* fatd, const char* lname, char* sname
 			char directory, unsigned int* startCluster,
 			unsigned int* retSector, int* retOffset) {
 	fat_direntry_summary dir;
-	int i, j;
+	unsigned int i;
+	int j;
 	unsigned int startSector, dirSector, theSector;
 	int cont;
 	int ret;
@@ -1207,15 +1208,15 @@ static int enlargeDirentryClusterSpace(fat_driver* fatd, unsigned int startClust
 {
 	int ret;
 	unsigned int startSector, dirSector;
-	int i;
-	int maxSector;
-	int entriesPerSector;
+	unsigned int i;
+	unsigned int maxSector;
+	unsigned int entriesPerSector;
 	int chainSize;
 	unsigned int currentCluster;
 	unsigned int newCluster;
 
 	i = entryIndex + direntrySize;
-	XPRINTF("USBHDFSD: cur=%d ecount=%d \n", i, entryCount);
+	XPRINTF("USBHDFSD: cur=%u ecount=%d \n", i, entryCount);
 	//we don't need to enlarge directory cluster space
 	if (i <= entryCount) return 0; //direntry fits into current space
 
@@ -1339,7 +1340,8 @@ static int createDirectorySpace(fat_driver* fatd, unsigned int dirCluster, unsig
 static int saveDirentry(fat_driver* fatd, unsigned int startCluster,
 	const char* lname, const char* sname, char directory, unsigned int cluster,
 	int entrySize, int entryIndex, unsigned int* retSector, int* retOffset, const fat_direntry_sfn *orig_dsfn) {
-	int i, j;
+	unsigned int i;
+	int j;
 	unsigned int startSector, dirSector, theSector;
 	int cont;
 	int ret;
@@ -1610,8 +1612,8 @@ non_empty:
 
 //---------------------------------------------------------------------------
 static int fat_wipeDirEntries(fat_driver *fatd){
-	int ret;
-	unsigned int i, theSector;
+	int i, ret;
+	unsigned int theSector;
 	unsigned char* sbuf = NULL;
 
 	//now mark direntries as deleted

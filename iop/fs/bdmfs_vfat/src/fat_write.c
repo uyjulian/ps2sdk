@@ -1127,7 +1127,8 @@ static int fat_fillDirentryInfo(fat_driver* fatd, const char* lname, const char*
     unsigned int* retSector, int* retOffset)
 {
     fat_direntry_summary dir;
-    int i, j;
+    unsigned int i;
+    int j;
     unsigned int startSector, dirSector, theSector;
     int cont;
     int ret;
@@ -1245,15 +1246,15 @@ static int enlargeDirentryClusterSpace(fat_driver* fatd, unsigned int startClust
 {
     int ret;
     unsigned int startSector, dirSector;
-    int i;
-    int maxSector;
-    int entriesPerSector;
+    unsigned int i;
+    unsigned int maxSector;
+    unsigned int entriesPerSector;
     int chainSize;
     unsigned int currentCluster;
     unsigned int newCluster;
 
     i = entryIndex + direntrySize;
-    M_DEBUG("cur=%d ecount=%d \n", i, entryCount);
+    M_DEBUG("cur=%u ecount=%d \n", i, entryCount);
     //we don't need to enlarge directory cluster space
     if (i <= entryCount)
         return 0; //direntry fits into current space
@@ -1365,7 +1366,8 @@ static int createDirectorySpace(fat_driver* fatd, unsigned int dirCluster, unsig
 */
 static int updateDirectoryParent(fat_driver* fatd, unsigned int dirCluster, unsigned int parentDirCluster)
 {
-    int i, j;
+    int i;
+    unsigned int j;
     int ret;
     unsigned int startSector;
 
@@ -1433,7 +1435,8 @@ static int saveDirentry(fat_driver* fatd, unsigned int startCluster,
     const char* lname, const char* sname, char directory, unsigned int cluster,
     int entrySize, int entryIndex, unsigned int* retSector, int* retOffset, const fat_direntry_sfn* orig_dsfn)
 {
-    int i, j;
+    unsigned int i;
+    int j;
     unsigned int dirSector;
     unsigned int startSector;
     unsigned int theSector;
@@ -1706,8 +1709,8 @@ static int checkDirspaceEmpty(fat_driver* fatd, unsigned int startCluster)
 //---------------------------------------------------------------------------
 static int fat_wipeDirEntries(fat_driver* fatd)
 {
-    int ret;
-    unsigned int i, theSector;
+    int i, ret;
+    unsigned int theSector;
     unsigned char* sbuf = NULL;
 
     //now mark direntries as deleted

@@ -16,7 +16,8 @@
 
 int poll(struct pollfd *fds, unsigned long nfds, int timeout)
 {
-    int i,err;
+	unsigned long i;
+    int err;
     fd_set rfd, wfd, efd, ifd;
     struct timeval timebuf;
     struct timeval *tbuf = (struct timeval *)0;

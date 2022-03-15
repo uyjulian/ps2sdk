@@ -388,7 +388,7 @@ static void sendCmd_Rx_PIO(uint8_t* rdBufA, int rcvSz, int portNr)
 
 static uint8_t wait_equal(uint8_t value, int count, int portNr)
 {
-    uint32_t i;
+    int i;
     uint8_t response = 0;
 
     for (i = 0; i < count; i++) {

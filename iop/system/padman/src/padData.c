@@ -164,7 +164,7 @@ static u32 setupTransferData(u32 index, u32 port, u32 slot)
 
 	if(padData[port][slot].in_size > 0)
 	{
-		int i;
+		u32 i;
 
 		for(i=0; i < padData[port][slot].in_size; i++)
 		{
@@ -209,7 +209,7 @@ u32 readSio2OutBuffer(u32 bit, u32 port, u32 slot)
 
 			if( padData[port][slot].out_size > 0)
 			{
-				int i;
+				u32 i;
 
 				for(i=0; i < padData[port][slot].out_size; i++)
 				{
@@ -493,7 +493,7 @@ u32 pdSetInBuffer(u32 port, u32 slot, u32 size, const u8 *buf)
 
 		if(size > 0)
 		{
-			int i;
+			u32 i;
 
 			for(i=0; i < size; i++)
 				padData[port][slot].in_buffer[i] = buf[i];
@@ -513,7 +513,7 @@ u32 pdGetOutBuffer(u32 port, u32 slot, u32 size, u8 *buf)
 
 		if(size > 0)
 		{
-			int i;
+			u32 i;
 
 			for(i=0; i < size; i++)
 				buf[i] = padData[port][slot].out_buffer[i];

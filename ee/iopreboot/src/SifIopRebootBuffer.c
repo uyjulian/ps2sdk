@@ -31,19 +31,19 @@ extern u8 iopbtconf_img[IOPBTCONF_IOP_MAX_SIZE];
 extern unsigned char _imgdrv_irx[];
 extern unsigned int size__imgdrv_irx;
 
-extern int imgdrv_offset_ioprpimg;
-extern int imgdrv_offset_ioprpsiz;
+extern unsigned int imgdrv_offset_ioprpimg;
+extern unsigned int imgdrv_offset_ioprpsiz;
 
 extern void init_imgdrv_offsets(void);
 
 #ifdef F__iopcontrol_special_internals
 u8 iopbtconf_img[IOPBTCONF_IOP_MAX_SIZE] __attribute__((aligned(64)));
-int imgdrv_offset_ioprpimg = 0;
-int imgdrv_offset_ioprpsiz = 0;
+unsigned int imgdrv_offset_ioprpimg = 0;
+unsigned int imgdrv_offset_ioprpsiz = 0;
 
 void init_imgdrv_offsets(void)
 {
-	int i;
+	unsigned int i;
 	if (imgdrv_offset_ioprpimg == 0 || imgdrv_offset_ioprpsiz == 0)
 	{
 		for (i = 0; i < size__imgdrv_irx; i += 4)

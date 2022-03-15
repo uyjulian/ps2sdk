@@ -200,7 +200,7 @@ int httpConnect( struct sockaddr_in * server, char *hostAddr, const char * url, 
 	// We now need to read the header information
 	while ( 1 )
 	{
-		int i;
+		unsigned int i;
 
 		// read a line from the header information.
 		rc = readLine( peerHandle, mimeBuffer, 100 );

@@ -47,7 +47,8 @@ unsigned char *LM_Password_Hash(const unsigned char *password, unsigned char *ci
  */
 unsigned char *NTLM_Password_Hash(const unsigned char *password, unsigned char *cipher)
 {
-	int i, j;
+	unsigned int i;
+	int j;
 
 	memset(passwd_buf, 0, sizeof(passwd_buf));
 

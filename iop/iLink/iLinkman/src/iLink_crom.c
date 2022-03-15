@@ -41,7 +41,8 @@ static void ieee1394Swab32(void *dest, void *src, unsigned int nQuads){
 }
 
 unsigned short int iLinkCalculateCRC16(void *data, unsigned int nQuads){
-	int i, lShift;
+	unsigned int i;
+	int lShift;
 	unsigned int lData, lSum;
 	unsigned short int lCRC = 0;
 
@@ -104,7 +105,7 @@ int iLinkGetNodeCapabilities(unsigned short NodeID){
 }
 
 int iLinkGetNodeMaxSpeed(unsigned short int NodeID){
-	unsigned int i;
+	int i;
 	int result;
 
 	result=-1;

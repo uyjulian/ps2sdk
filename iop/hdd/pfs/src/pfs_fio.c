@@ -109,7 +109,7 @@ pfs_mount_t *pfsFioGetMountedUnit(int unit)
 
 static int mountDevice(pfs_block_device_t *blockDev, int fd, int unit, int flag)
 {
-	s32 i;
+	u32 i;
 	int rv;
 
 	if(unit >= pfsConfig.maxMount)
@@ -314,7 +314,7 @@ label:
 static int fileTransferRemainder(pfs_file_slot_t *fileSlot, void *buf, int size, int operation)
 {
 	u32 sector, pos;
-	s32 i;
+	u32 i;
 	int result;
 	pfs_blockpos_t *blockpos = &fileSlot->block_pos;
 	pfs_mount_t *pfsMount = fileSlot->clink->pfsMount;
@@ -592,7 +592,7 @@ int	pfsFioFormat(iop_file_t *f, const char *dev, const char *blockdev, void *arg
 int	pfsFioOpen(iop_file_t *f, const char *name, int flags, int mode)
 {
 	int rv = 0;
-	s32 i;
+	u32 i;
 	pfs_file_slot_t *freeSlot;
 	pfs_mount_t *pfsMount;
 
@@ -1221,7 +1221,7 @@ int pfsFioChdir(iop_file_t *f, const char *name)
 
 static void _sync(void)
 {
-	s32 i, j;
+	u32 i, j;
 
 	for(i=0;i<pfsConfig.maxOpen;i++)
 	{
@@ -1300,7 +1300,7 @@ int pfsFioMount(iop_file_t *f, const char *fsname, const char *devname, int flag
 
 int pfsFioUmount(iop_file_t *f, const char *fsname)
 {
-	s32 i;
+	u32 i;
 	int rv=0;
 	int	busy_flag=0;
 	pfs_mount_t *pfsMount;

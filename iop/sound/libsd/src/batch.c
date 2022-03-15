@@ -42,7 +42,7 @@ s32 SifDmaBatch(u32 ee_addr, void *iop_addr, u32 size)
 
 int sceSdProcBatch(sceSdBatch *batch, u32 *rets, u32 num)
 {
-	s32 loop;
+	u32 loop;
 	s32 ret;
 
 	for(loop = 0; loop < num; loop++)
@@ -86,18 +86,18 @@ int sceSdProcBatch(sceSdBatch *batch, u32 *rets, u32 num)
 			SifDmaBatch(batch[loop].value, rets, batch[loop].entry);
 			break;
 		default:
-			return -1 - loop;
+			return -1 - (s32)loop;
 		}
 
 		if(rets) rets[loop] = ret;
 	}
 
-	return loop;
+	return (s32)loop;
 }
 
 int sceSdProcBatchEx(sceSdBatch *batch, u32 *rets, u32 num, u32 voice)
 {
-	s32 loop;
+	u32 loop;
 	s32 ret;
 	s32 voice_loop;
 	s32 cmd_count;

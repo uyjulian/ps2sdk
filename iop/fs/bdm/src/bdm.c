@@ -120,7 +120,7 @@ void bdm_disconnect_fs(struct file_system* fs)
 
 void bdm_get_bd(struct block_device** pbd, unsigned int count)
 {
-    int i;
+    u32 i;
 
     M_DEBUG("%s\n", __func__);
 

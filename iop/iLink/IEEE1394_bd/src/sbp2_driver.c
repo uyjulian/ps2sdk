@@ -532,7 +532,7 @@ static int sbp2_get_max_lun(struct scsi_interface* scsi)
 static int sbp2_queue_cmd(struct scsi_interface* scsi, const unsigned char* cmd, unsigned int cmd_len, unsigned char* data, unsigned int data_len, unsigned int data_wr)
 {
     struct SBP2Device* dev = (struct SBP2Device*)scsi->priv;
-    int i;
+    unsigned int i;
     int ret;
     struct CommandDescriptorBlock cdb;
 

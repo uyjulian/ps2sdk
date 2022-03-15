@@ -139,7 +139,8 @@ u32 VrefParam(u32 val, padState_t *pstate)
 
 u32 ReadData(padState_t *pstate)
 {
-	u32 res, i;
+	u32 res;
+	s32 i;
 	u32 ret = 0;
 
 	res = sio2CmdGetPortCtrl1(pstate->modeCurId, pstate->stat70bit, pstate->model);

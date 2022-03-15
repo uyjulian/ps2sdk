@@ -580,7 +580,7 @@ static int read_erl(int elf_handle, u8 * elf_mem, u32 addr, struct erl_record_t 
     struct elf_section_t * sec = 0;
     struct elf_symbol_t * sym = 0;
     struct elf_reloc_t reloc;
-    int i, j;
+    u32 i, j;
     // int erx_compressed; // Not used
     char * names = 0, * strtab_names = 0, * reloc_section = 0;
     int symtab = 0, strtab = 0, linked_strtab = 0;
@@ -904,7 +904,7 @@ return code
 	    }
 	}
 
-	dprintf("%6i: %08X %08X %-7s %-6s %6i %-10s : %s\n", i,
+	dprintf("%6u: %08X %08X %-7s %-6s %6i %-10s : %s\n", i,
 	  sym[i].st_value, sym[i].st_size, symbol_types[sym[i].st_info & 15],
 	  binding_types[sym[i].st_info >> 4], sym[i].st_shndx,
 	  sym[i].st_name ? strtab_names + sym[i].st_name : "(null)",

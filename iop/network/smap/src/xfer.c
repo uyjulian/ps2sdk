@@ -23,10 +23,10 @@
 
 extern struct SmapDriverData SmapDriverData;
 
-static int SmapDmaTransfer(volatile u8 *smap_regbase, void *buffer, unsigned int size, int direction)
+static unsigned int SmapDmaTransfer(volatile u8 *smap_regbase, void *buffer, unsigned int size, int direction)
 {
     unsigned int NumBlocks;
-    int result;
+    unsigned int result;
 
     (void)smap_regbase;
 
@@ -45,7 +45,7 @@ static int SmapDmaTransfer(volatile u8 *smap_regbase, void *buffer, unsigned int
 
 static inline void CopyFromFIFO(volatile u8 *smap_regbase, void *buffer, unsigned int length, u16 RxBdPtr)
 {
-    int i, result;
+    unsigned int i, result;
 
     SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = RxBdPtr;
 
@@ -60,7 +60,7 @@ static inline void CopyFromFIFO(volatile u8 *smap_regbase, void *buffer, unsigne
 
 static inline void CopyToFIFO(volatile u8 *smap_regbase, const void *buffer, unsigned int length)
 {
-    int i, result;
+    unsigned int i, result;
 
     if ((result = SmapDmaTransfer(smap_regbase, (void *)buffer, length, DMAC_FROM_MEM)) < 0) {
         result = 0;

@@ -51,11 +51,12 @@ void GsSetDefaultDrawEnvAddress(GS_DRAWENV *drawenv, u16 vram_addr)
 
 int checkModelVersion(void)
 {
-	int fd, result, i;
+	int fd, result;
 	char data[256], *pData;
 
 	if((fd=open("rom0:ROMVER", O_RDONLY))>=0)
 	{
+		unsigned int i;
 		for(pData=data,i=0; i<sizeof(data); i++)
 		{
 			read(fd, pData, 1);

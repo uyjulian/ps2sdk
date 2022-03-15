@@ -77,7 +77,7 @@ static inline void setloopflags(int id, u8 *buf, int len)
 	If we're stereo and near the end of the file, we send half the data to left and half to right
 
 */
-int fillbuf(int id, int chan)
+int fillbuf(int id, u32 chan)
 {
 	u8 *buf = stream_buf;
 	int size;
@@ -87,7 +87,7 @@ int fillbuf(int id, int chan)
 	size = read(stream_fd, buf, stream_buflen);
 	if (size<0)  /* Error */
 	{
-		dprintf(OUT_ERROR, "Channel%d: error: %d\n", chan,  size);
+		dprintf(OUT_ERROR, "Channel%u: error: %d\n", chan,  size);
 		return(-1);
 	}
 	if (size==0)
@@ -96,7 +96,7 @@ int fillbuf(int id, int chan)
 	/* If we're stereo and we've read less than a chunk, we're screwed  */
 	if ((stream_chans>1) && (size<stream_buflen))
 	{
-		dprintf(OUT_ERROR, "Channel%d: failed to read entire chunk (read %d bytes)\n", chan, size);
+		dprintf(OUT_ERROR, "Channel%u: failed to read entire chunk (read %d bytes)\n", chan, size);
 		return(-1);
 	}
 
@@ -125,7 +125,7 @@ void stream_thread(void *a)
 		dprintf(OUT_DEBUG, "SPU2 now playing buffer %d (block %d)\n", (int)stream_bufid, stream_cur);
 
 		/* Fill the buffer the SPU2 isn't playing */
-		for (int i=0;i<stream_chans;i++)
+		for (u32 i=0;i<stream_chans;i++)
 		{
 			int r;
 			r = fillbuf(stream_bufsafe, i);
@@ -229,7 +229,7 @@ int sndStreamOpen(char *file, u32 voices, u32 flags, u32 bufaddr, u32 bufsize)
 	}
 
 	/* Setup other SPU2 voice stuff... */
-	for (int i=0;i<stream_chans;i++) /* XXX */
+	for (u32 i=0;i<stream_chans;i++) /* XXX */
 	{
 		sceSdSetParam(stream_voice[i] | SD_VPARAM_PITCH, 0x1000); /* 0x1000 = normal pitch */
 		sceSdSetParam(stream_voice[i] | SD_VPARAM_ADSR1, SD_SET_ADSR1(SD_ADSR_AR_EXPi, 0, 0xf, 0xf));
@@ -360,7 +360,7 @@ int sndStreamSetPosition(int block)
 	sceSdSetAddr(SD_ADDR_IRQA, stream_bufspu[0]+stream_buflen);
 
 	for (int i=0;i<2;i++)
-	for (int c=0;c<stream_chans;c++)
+	for (u32 c=0;c<stream_chans;c++)
 	if (fillbuf(i, c)<=0)
 		{
 			dprintf(OUT_ERROR, "Hit EOF or error on buffer fill %d\n", i);
@@ -368,7 +368,7 @@ int sndStreamSetPosition(int block)
 			return(-1);
 		}
 
-	for (int c=0;c<stream_chans;c++)
+	for (u32 c=0;c<stream_chans;c++)
 		sceSdSetAddr(stream_voice[c] | SD_VADDR_SSA, stream_bufspu[c]);
 
 	/* Restart playing if we were playing before */

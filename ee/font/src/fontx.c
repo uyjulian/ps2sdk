@@ -394,7 +394,7 @@ void fontx_unload(fontx_t *fontx)
 char *fontx_get_char(fontx_t* fontx, unsigned short c)
 {
 
-	unsigned int i;
+	int i;
 
 	int table = -1;
 	int table_offset = 0;

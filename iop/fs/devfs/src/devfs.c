@@ -1017,7 +1017,7 @@ int devfs_getstat(iop_file_t *file, const char *name, iox_stat_t *stat)
 int init_devfs(void)
 
 {
-   int dummy_loop;
+   unsigned int dummy_loop;
    dummy_func *dummy;
 
    root_device = NULL;

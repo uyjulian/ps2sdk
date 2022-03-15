@@ -605,7 +605,8 @@ int sceCdStStart(u32 lbn, sceCdRMode * mode)
 #ifdef F_sceCdStRead
 int sceCdStRead(u32 sectorType, u32 * buffer, u32 mode, u32 * error)
 {
-	int ret, i, err, sectorReadSize;
+	int ret, err, sectorReadSize;
+	u32 i;
 
 	*error = 0;
 	if (CdDebug > 0)
@@ -630,7 +631,7 @@ int sceCdStRead(u32 sectorType, u32 * buffer, u32 mode, u32 * error)
 		if (err) {
 			*error = err;
 			if (CdDebug > 0)
-				printf("sceCdStRead BLK Read cur_size= %d read_size= %d req_size= %d err 0x%x\n", i,
+				printf("sceCdStRead BLK Read cur_size= %u read_size= %d req_size= %d err 0x%x\n", i,
 				       sectorReadSize, sectorType, err);
 
 			if (sectorReadSize == 0)

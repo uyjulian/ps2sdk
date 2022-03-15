@@ -107,7 +107,7 @@ int sio2_intr_handler(void *arg)
 
 void send_td(sio2_transfer_data_t *td)
 {
-	int i;
+	u32 i;
 
 #ifdef SIO2LOG
 	log_default(LOG_TRS);
@@ -160,7 +160,7 @@ void send_td(sio2_transfer_data_t *td)
 
 void recv_td(sio2_transfer_data_t *td)
 {
-	int i;
+	u32 i;
 #ifdef SIO2LOG
 	log_default(LOG_TRR);
 #endif

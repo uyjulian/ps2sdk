@@ -122,7 +122,7 @@ void part_create(struct block_device* bd, part_record* rec, unsigned int parNr)
 int part_connect(struct block_device* bd)
 {
     part_table partTable;
-    unsigned int i;
+    int i;
     int parts;
     int rval = -1;
 

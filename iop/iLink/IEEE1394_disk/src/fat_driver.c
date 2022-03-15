@@ -735,8 +735,8 @@ void fat_getClusterAtFilePos(fat_driver* fatd, fat_dir* fatDir, unsigned int fil
 
 //---------------------------------------------------------------------------
 int fat_readFile(fat_driver* fatd, fat_dir* fatDir, unsigned int filePos, unsigned char* buffer, unsigned int size) {
-	int ret, chainSize;
-	unsigned int i, j, startSector, clusterChainStart, bufSize, sectorSkip, clusterSkip, dataSkip;
+	int i, ret, chainSize;
+	unsigned int j, startSector, clusterChainStart, bufSize, sectorSkip, clusterSkip, dataSkip;
 	unsigned char nextChain;
 	struct SBP2Device* mass_device = fatd->dev;
 
@@ -820,8 +820,8 @@ int fat_readFile(fat_driver* fatd, fat_dir* fatDir, unsigned int filePos, unsign
 //---------------------------------------------------------------------------
 int fat_getNextDirentry(fat_driver* fatd, fat_dir_list* fatdlist, fat_dir* fatDir) {
 	fat_direntry_summary dir;
-	int i, ret;
-	unsigned int startSector, dirSector, dirPos, dirCluster;
+	int ret;
+	unsigned int i, startSector, dirSector, dirPos, dirCluster;
 	unsigned char cont, new_entry;
 #ifdef DEBUG
 	struct SBP2Device* mass_device = fatd->dev;
@@ -850,7 +850,7 @@ int fat_getNextDirentry(fat_driver* fatd, fat_dir_list* fatdlist, fat_dir* fatDi
 	cont = 1;
 	new_entry = 1;
 	dirPos = (fatdlist->direntryIndex*32) % fatd->partBpb.sectorSize;
-	for (i = ((fatdlist->direntryIndex*32) / fatd->partBpb.sectorSize); (i < dirSector) && cont; i++) {
+	for (i = (((unsigned int)(fatdlist->direntryIndex)*32) / fatd->partBpb.sectorSize); (i < dirSector) && cont; i++) {
 		unsigned char* sbuf = NULL; //sector buffer
 
 		//At cluster borders, get correct sector from cluster chain buffer

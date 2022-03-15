@@ -112,7 +112,7 @@ static info fmtinfo[] = {
   { 'p',  16,  "0123456789ABCDEF", 0, "x0", RADIX,      }, /* Pointers */
   { '\'',  0,  0,                  0,    0, CHARLIT,    }, /* Literal char */
 };
-#define NINFO  (sizeof(fmtinfo)/sizeof(info))  /* Size of the fmtinfo table */
+#define NINFO  ((int)(sizeof(fmtinfo)/sizeof(info)))  /* Size of the fmtinfo table */
 
 /*
 ** If NOFLOATINGPOINT is defined, then none of the floating point
@@ -216,7 +216,7 @@ int vxprintf(func,arg,format,ap)
   char *zMem = 0;           /* String to be freed */
   static char spaces[] =
      "                                                    ";
-#define SPACESIZE (sizeof(spaces)-1)
+#define SPACESIZE ((int)(sizeof(spaces)-1))
 #ifndef NOFLOATINGPOINT
   int  exp;                 /* exponent of real numbers */
   long double rounder;      /* Used for rounding floating point values */

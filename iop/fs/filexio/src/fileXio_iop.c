@@ -165,7 +165,8 @@ static int fileXio_GetDeviceList_RPC(struct fileXioDevice* ee_devices, int eecou
 static int fileXio_CopyFile_RPC(const char *src, const char *dest, int mode)
 {
   iox_stat_t stat;
-  int infd, outfd, size, remain, i, retval = 0;
+  int infd, outfd, size, remain;
+  unsigned int i;
 
   if ((infd = open(src, O_RDONLY, 0666)) < 0) {
     return infd;
@@ -177,7 +178,7 @@ static int fileXio_CopyFile_RPC(const char *src, const char *dest, int mode)
   size = lseek(infd, 0, SEEK_END);
   lseek(infd, 0, SEEK_SET);
   if (!size)
-    return retval;
+    return 0;
 
   remain = size % RWBufferSize;
   for (i = 0; i < (size / RWBufferSize); i++) {

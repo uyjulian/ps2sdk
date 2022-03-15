@@ -237,7 +237,7 @@ int DvrdrvSendCmdAck(struct_itr_sema *itrsema, u16 command, u16 *input_word, s32
     s16 v23;
     unsigned int v24;
     int v25;
-    s32 i;
+    u32 i;
     iop_sys_clock_t v28;
     USE_SPD_REGS;
 
@@ -553,7 +553,7 @@ int DvrdrvWaitCmdComp(struct_itr_sema *itrsema, u16 command, u16 *status_4220, u
     int v9;
     s16 v10;
     int v11;
-    s32 v12;
+    u32 v12;
     u16 *v13;
     USE_SPD_REGS;
 

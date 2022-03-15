@@ -108,7 +108,7 @@ static int part_getPartitionTable(mass_dev* dev, part_table* part)
 int part_connect(mass_dev* dev)
 {
 	part_table partTable;
-	unsigned int count = 0, i;
+	unsigned int count = 0;
 	int parts;
 	XPRINTF("USBHDFSD: part_connect devId %i \n", dev->devId);
 
@@ -117,6 +117,7 @@ int part_connect(mass_dev* dev)
 
 	if (parts > 0)
 	{
+		int i;
 		for ( i = 0; i < parts; i++)
 		{
 			if(

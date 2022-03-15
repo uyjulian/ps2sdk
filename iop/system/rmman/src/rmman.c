@@ -420,7 +420,8 @@ static int HandleRmTaskFailed(struct RmData *RmData)
 static int DmaSendEE(struct RmData *RmData)
 {
 	SifDmaTransfer_t dmat;
-	int i, OldState, dmatID;
+	u32 i;
+	int OldState, dmatID;
 
 	RmData->eeData.frame = RmData->frame;
 	RmData->frame++;

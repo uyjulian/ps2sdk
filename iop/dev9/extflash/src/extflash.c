@@ -134,7 +134,7 @@ int flash_device_reset(void)
 int flash_get_info(flash_info_t *info)
 {
 	USE_SPD_REGS;
-	int i;
+	u32 i;
 	u16 id;
 
 	SPD_REG16(0x480c) = 0x100;
@@ -241,7 +241,7 @@ int flash_page_read(flash_info_t *info, u32 page, u32 count, void *buf)
 	USE_SPD_REGS;
 	u32 *buf_w;
 	u16 *buf_h;
-	int i, j;
+	u32 i, j;
 	u32 byteofs, pageofs = page * 512;
 	u32 has_timedout;
 	u16 func = 0x100;
@@ -312,7 +312,7 @@ int flash_page_write(flash_info_t *info, u32 page, void *buf)
 {
 	USE_SPD_REGS;
 	u16 *buf_h = buf;
-	int i;
+	u32 i;
 	u32 pageofs = page * 512;
 	u32 has_timedout = 0;
 

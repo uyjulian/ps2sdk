@@ -152,7 +152,7 @@ int hddGetFilesystemList(t_hddFilesystem hddFs[], int maxEntries)
 
 	while((rv > 0) && (count < maxEntries))
 	{
-		int i;
+		unsigned int i;
 		int partitionFd;
 		u32 zoneFree, zoneSize;
 
