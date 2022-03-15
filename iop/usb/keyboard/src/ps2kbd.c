@@ -265,7 +265,7 @@ int ps2kbd_connect(int devId)
   currDev->dataEndp = sceUsbdOpenPipe(devId, endp);
   currDev->packetSize = endp->wMaxPacketSizeLB | ((int) endp->wMaxPacketSizeHB << 8);
   currDev->eventmask = (1 << devLoop);
-  if(currDev->packetSize > sizeof(kbd_data_recv))
+  if(currDev->packetSize > (int)(sizeof(kbd_data_recv)))
     {
       currDev->packetSize = sizeof(kbd_data_recv);
     }

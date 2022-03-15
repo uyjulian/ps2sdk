@@ -870,7 +870,7 @@ int fileXioFormat(const char *dev, const char *blockdev, const void *args, int a
 	if(blockdev)
 		strncpy(packet->blockDevice, blockdev, sizeof(packet->blockDevice));
 
-	if(arglen > sizeof(packet->args)) arglen = sizeof(packet->args);
+	if(arglen > (int)(sizeof(packet->args))) arglen = sizeof(packet->args);
 	memcpy(packet->args, args, arglen);
 	packet->arglen = arglen;
 

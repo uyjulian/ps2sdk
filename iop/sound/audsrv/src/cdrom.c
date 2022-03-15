@@ -378,7 +378,7 @@ static void cdda_procedure(void *arg)
 			up.left = (short *)cd_rendered_left;
 			up.right = (short *)cd_rendered_right;
 
-			if (offset + 1880 < sizeof(cd_ringbuf))
+			if (offset + 1880 < (int)(sizeof(cd_ringbuf)))
 			{
 				/* enough bytes in ringbuffer */
 				up.src = cd_ringbuf + offset;

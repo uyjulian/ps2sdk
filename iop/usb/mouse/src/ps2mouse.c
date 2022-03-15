@@ -252,7 +252,7 @@ int ps2mouse_connect(int devId)
   currDev->configEndp = sceUsbdOpenPipe(devId, NULL);
   currDev->dataEndp = sceUsbdOpenPipe(devId, endp);
   currDev->packetSize = endp->wMaxPacketSizeLB | ((int) endp->wMaxPacketSizeHB << 8);
-  if(currDev->packetSize > sizeof(mouse_data_recv))
+  if(currDev->packetSize > (int)(sizeof(mouse_data_recv)))
     {
       currDev->packetSize = sizeof(mouse_data_recv);
     }
