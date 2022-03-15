@@ -3491,7 +3491,7 @@ lbl0:
 			return sceMcResSucceed;
 		}
 
-		if ((mce->wr_flag & ~(-1 << j)) == 0) {
+		if ((mce->wr_flag & ~((~0u) << j)) == 0) {
 			mce->wr_flag = 0;
 			return sceMcResSucceed;
 		}
@@ -4111,7 +4111,7 @@ int McReplaceBadBlock(void)
 		}
 
 		i = 0; //sp5c
-		value = ~(-1 << mcdi->clusters_per_block);
+		value = ~((~0u) << mcdi->clusters_per_block);
 		do {
 			clust = (mcman_badblock * mcdi->clusters_per_block) + i;
 			if (clust < mcdi->alloc_offset) {

@@ -198,7 +198,7 @@ void AHXVoice_CalcADSR(struct AHXVoice* pVoice)
 void clipint(int* x)
 {
 	if(*x > 127<<FIXEDPOINT) { *x = 127<<FIXEDPOINT; return; }
-	if(*x < -128<<FIXEDPOINT) { *x = -128<<FIXEDPOINT; return; }
+	if(*x < (int)((~127u)<<FIXEDPOINT)) { *x = (~127u)<<FIXEDPOINT; return; }
 }
 
 void GenerateFilterWaveforms(char* Buffer, char* Low, char* High)
