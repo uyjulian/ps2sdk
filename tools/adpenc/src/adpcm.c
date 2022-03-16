@@ -45,8 +45,8 @@ flags:
 
 static short wave[BUFFER_SIZE];
 
-static void find_predict( short *samples, double *d_samples, int *predict_nr, int *shift_factor );
-static void pack( double *d_samples, short *four_bit, int predict_nr, int shift_factor );
+static void find_predict( short *samples, double *d_samples, int *predict_nr, unsigned int *shift_factor );
+static void pack( double *d_samples, short *four_bit, int predict_nr, unsigned int shift_factor );
 
 int adpcm_encode(FILE* fp, FILE* sad, int offset, int sample_len, int flag_loop)
 {
@@ -54,7 +54,7 @@ int adpcm_encode(FILE* fp, FILE* sad, int offset, int sample_len, int flag_loop)
 	double d_samples[28];
 	short four_bit[28];
 	int predict_nr;
-	int shift_factor;
+	unsigned int shift_factor;
 	int flags;
 	int i, j, k;
 	unsigned char d;
@@ -163,7 +163,7 @@ static double f[5][2] = { { 0.0, 0.0 },
 
 
 
-static void find_predict( short *samples, double *d_samples, int *predict_nr, int *shift_factor )
+static void find_predict( short *samples, double *d_samples, int *predict_nr, unsigned int *shift_factor )
 {
     int i, j;
     double buffer[28][5];
@@ -231,7 +231,7 @@ static void find_predict( short *samples, double *d_samples, int *predict_nr, in
 
 }
 
-static void pack( double *d_samples, short *four_bit, int predict_nr, int shift_factor )
+static void pack( double *d_samples, short *four_bit, int predict_nr, unsigned int shift_factor )
 {
     double ds;
     int di;
@@ -253,7 +253,7 @@ static void pack( double *d_samples, short *four_bit, int predict_nr, int shift_
 
         four_bit[i] = (short) di;
 
-        di = di >> shift_factor;
+        di = (int)((unsigned int)di >> shift_factor);
         s_2 = s_1;
         s_1 = (double) di - s_0;
 

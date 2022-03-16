@@ -540,10 +540,10 @@ void _MPEG_dma_ref_image ( _MPEGMacroBlock8* arg0, _MPEGMotion* arg1, int arg2, 
 		var3 = arg2;
 	}
 	u64 var5 = (ulong)var3;
-	if (arg2 >> 0x1f < 1)
+	if ((unsigned int)arg2 >> 0x1f < 1)
 	{
 		// TODO: correct implementation of CONCAT44?
-		var5 = ((u64)(arg2 >> 0x1f) << 32) | var3;
+		var5 = ((u64)((unsigned int)arg2 >> 0x1f) << 32) | var3;
 	}
 	if (0 < var5)
 	{
