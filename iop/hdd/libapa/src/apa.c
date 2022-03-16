@@ -138,13 +138,14 @@ apa_cache_t *apaInsertPartition(s32 device, const apa_params_t *params, u32 sect
 {	// Adds a new partition using an empty block.
 	apa_cache_t *clink_empty;
 	apa_cache_t *clink_this;
-	apa_cache_t *clink_next;
 
 	if((clink_this=apaCacheGetHeader(device, sector, APA_IO_MODE_READ, err))==0)
 		return 0;
 
 	while(clink_this->header->length!=params->size)
 	{
+		apa_cache_t *clink_next;
+
 		if((clink_next=apaCacheGetHeader(device, clink_this->header->next, APA_IO_MODE_READ, err))==NULL)
 		{	// Get next partition
 			apaCacheFree(clink_this);
@@ -312,13 +313,13 @@ apa_cache_t *apaDeleteFixNext(apa_cache_t *clink, int *err)
 	u32				length=header->length;
 	u32				saved_length=header->length;
 	u32				lnext=header->next;
-	apa_cache_t		*clink1;
-	apa_cache_t		*clink2;
 	u32				device=clink->device;
 	u32				tmp;
 
 	while(lnext!=0)
 	{
+		apa_cache_t *clink1;
+
 		if(!(clink1=apaCacheGetHeader(device, lnext, APA_IO_MODE_READ, err)))
 		{
 			apaCacheFree(clink);
@@ -342,6 +343,8 @@ apa_cache_t *apaDeleteFixNext(apa_cache_t *clink, int *err)
 	}
 	if(length!=saved_length)
 	{
+		apa_cache_t *clink2;
+
 		if(!(clink2=apaCacheGetHeader(device, lnext, APA_IO_MODE_READ, err)))
 		{
 			apaCacheFree(clink);
@@ -362,10 +365,8 @@ apa_cache_t *apaDeleteFixNext(apa_cache_t *clink, int *err)
 int apaDelete(apa_cache_t *clink)
 {
 	int				rv=0;
-	apa_cache_t		*clink_mbr;
 	u32				device=clink->device;
 	u32				start=clink->header->start;
-	int				i;
 
 	if(!start) {
 		apaCacheFree(clink);
@@ -374,6 +375,8 @@ int apaDelete(apa_cache_t *clink)
 
 	if(clink->header->next==0)
 	{
+		apa_cache_t *clink_mbr;
+
 		if((clink_mbr=apaCacheGetHeader(device, 0, APA_IO_MODE_READ, &rv))==NULL)
 		{
 			apaCacheFree(clink);
@@ -391,6 +394,7 @@ int apaDelete(apa_cache_t *clink)
 		} while(clink->header->type==0);
 		apaCacheFree(clink_mbr);
 	} else {
+		int i;
 		u32 length=clink->header->length;
 
 		for(i=0;i < 2;i++){
@@ -448,7 +452,7 @@ int apaGetFormat(s32 device, int *format)
 {
 	apa_cache_t *clink;
 	int rv=0;
-	u32 *pDW, i;
+	u32 i;
 
 	clink=apaCacheAlloc();
 	*format=0;
@@ -458,6 +462,8 @@ int apaGetFormat(s32 device, int *format)
 		if(ata_device_sector_io(device, clink->header, APA_SECTOR_SECTOR_ERROR, 2, ATA_DIR_READ))
 			rv=-EIO; // return -EIO;
 		if(rv==0){
+			u32 *pDW;
+
 			pDW=(u32 *)clink->header;
 			for(i=0;i < 256; i++)
 			{

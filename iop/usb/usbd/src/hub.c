@@ -297,7 +297,6 @@ void hubDeviceResetCallback(IoRequest *arg) {
 
 void hubResetDevice(void *devp) {
 	Device *dev = devp;
-	UsbHub *hub;
 	if (memPool.delayResets) {
 		dev->deviceStatus = DEVICE_RESETDELAYED;
 	} else {
@@ -307,6 +306,8 @@ void hubResetDevice(void *devp) {
 		if (dev->parent == memPool.deviceTreeRoot) { // root hub port
 			memPool.ohciRegs->HcRhPortStatus[dev->attachedToPortNo - 1] = BIT(PORT_RESET);
 		} else { // normal hub port
+			UsbHub *hub;
+
 			hub = (UsbHub *)dev->parent->privDataField;
 			hub->hubStatusCounter = dev->attachedToPortNo;
 
@@ -386,9 +387,10 @@ void fetchConfigDescriptors(IoRequest *req) {
 	Endpoint *ep = req->correspEndpoint;
 	Device *dev = ep->correspDevice;
 	u16 readLen;
-	int fetchDesc;
 
 	if ((req->resultCode == USB_RC_OK) || (dev->fetchDescriptorCounter == 0)) {
+		int fetchDesc;
+
 		u32 curDescNum = dev->fetchDescriptorCounter++;
 
 		fetchDesc = curDescNum & 1;
@@ -496,10 +498,11 @@ int hubTimedSetFuncAddress(Device *dev) {
 }
 
 void hubGetPortStatusCallback(IoRequest *req) {
-	int feature = -1;
 	UsbHub *dev = (UsbHub *)req->userCallbackArg;
 	Device *port;
 	if (req->resultCode == USB_RC_OK) {
+		int feature = -1;
+
 		dbg_printf("port status change: %d: %08X\n", dev->portCounter, dev->portStatusChange);
 		if (dev->portStatusChange & BIT(C_PORT_CONNECTION))
 			feature = C_PORT_CONNECTION;
@@ -575,11 +578,12 @@ void hubSetPortPower(IoRequest *req) {
 }
 
 void hubSetupPorts(IoRequest *req) {
-	int port;
 	UsbHub *dev = (UsbHub *)req->userCallbackArg;
 	Device *usbDev = dev->controlEp->correspDevice;
 
 	if (req->resultCode == USB_RC_OK) {
+		int port;
+
 		dev->hubStatusCounter = 0;
 		dev->portCounter = 0;
 		dev->numChildDevices = dev->desc.bNbrPorts;

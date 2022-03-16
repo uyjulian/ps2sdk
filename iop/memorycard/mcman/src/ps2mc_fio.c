@@ -545,7 +545,7 @@ int mcman_read2(int fd, void *buffer, int nbyte)
 //--------------------------------------------------------------
 int mcman_write2(int fd, void *buffer, int nbyte)
 {
-	register int r, r2, wpos, size, offset;
+	register int r, wpos;
 	register MC_FHANDLE *fh = (MC_FHANDLE *)&mcman_fdhandles[fd];
 	register MCDevInfo *mcdi = &mcman_devinfos[fh->port][fh->slot];
 	McCacheEntry *mce;
@@ -565,6 +565,8 @@ int mcman_write2(int fd, void *buffer, int nbyte)
 	wpos = 0;
 	{
 		while (nbyte) {
+			register int r2, size, offset;
+
 			r = mcman_fatRseek(fd);
 			if (r == sceMcResFullDevice) {
 

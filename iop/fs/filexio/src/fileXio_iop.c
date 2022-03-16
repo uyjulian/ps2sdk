@@ -299,7 +299,6 @@ static int fileXio_Write_RPC(int outfd, const char *write_buf, int write_size, i
      SifRpcReceiveData_t rdata;
      int left;
      int wlen;
-     int writelen;
      int pos;
      int total;
 
@@ -320,6 +319,7 @@ static int fileXio_Write_RPC(int outfd, const char *write_buf, int write_size, i
 	left-=mis;
 	pos=(int)write_buf+mis;
 	while(left){
+		int writelen;
 		writelen = MIN(RWBufferSize, left);
 		SifRpcGetOtherData(&rdata, (void *)pos, rwbuf, writelen, 0);
 		wlen=write(outfd, rwbuf, writelen);
