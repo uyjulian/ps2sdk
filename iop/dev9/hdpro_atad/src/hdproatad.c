@@ -895,7 +895,7 @@ int ata_io_finish(void)
 			goto finish;
 
 		/* Transfer each PIO data block.  */
-		while (--cmd_state->blkcount != -1) {
+		while (--cmd_state->blkcount != 0xffffffff) {
 			if ((res = ata_pio_transfer(cmd_state)) < 0)
 				goto finish;
 			if ((res = ata_wait_busy()) < 0)

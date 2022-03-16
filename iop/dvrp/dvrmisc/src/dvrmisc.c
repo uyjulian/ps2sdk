@@ -1315,7 +1315,7 @@ int dvrioctl2_get_dv_nodeid(
         } while (bufwalked < buflen);
     }
     if (buflen) {
-        int bufbusyloop;
+        unsigned int bufbusyloop;
         bufbusyloop = 0;
         while (bufbusyloop++ < buflen)
             ;

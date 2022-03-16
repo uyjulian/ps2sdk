@@ -72,7 +72,7 @@ static int ttyfs_read(iop_file_t *file, void *ptr, size_t size) {
 
 static int ttyfs_write(iop_file_t *file, u8 *ptr, size_t size) {
     char temp[65];
-    int bCount = 0, toWrite;
+    unsigned int bCount = 0;
 
     (void)file;
 
@@ -80,6 +80,7 @@ static int ttyfs_write(iop_file_t *file, u8 *ptr, size_t size) {
 
     while(bCount < size)
     {
+        int toWrite;
         toWrite = (size - bCount);
         if(toWrite > 64)
             toWrite = 64;
@@ -91,7 +92,7 @@ static int ttyfs_write(iop_file_t *file, u8 *ptr, size_t size) {
         bCount += toWrite;
     }
 
-    return(bCount);
+    return (int)bCount;
 }
 
 static int ttyfs_lseek(iop_file_t *file, int offset, int mode) {
