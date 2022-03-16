@@ -2948,10 +2948,7 @@ int mcman_FNC8ca4(int port, int slot, MC_FHANDLE *fh)
 
 					mce = mcman_get1stcacheEntp();
 
-					if ((j + 1) < 0)
-						temp = j + 8;
-					else
-						temp = j + 1;
+					temp = j + 1;
 
 					temp &= 0xfffffff8;
 					temp = (j + 1) - temp;
@@ -3394,16 +3391,12 @@ void mcman_addcacheentry(McCacheEntry *mce)
 
 	i = MAX_CACHEENTRY - 1;
 
-	if (i < 0)
-		goto lbl1;
-
 	do {
 		if (pmce[i] == mce)
 			break;
 	} while (--i >= 0);
 
 	{
-lbl1:
 		while (i != 0) {
 			pmce[i] = pmce[i-1];
 			i -= 1;

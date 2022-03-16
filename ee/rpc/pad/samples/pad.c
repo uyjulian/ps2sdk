@@ -234,9 +234,6 @@ main()
             }
             ret=padGetState(port, slot);
         }
-        if(i==1) {
-            printf("Pad: OK!\n");
-        }
 
         ret = padRead(port, slot, &buttons); // port, slot, buttons
 

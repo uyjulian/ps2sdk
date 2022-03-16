@@ -175,10 +175,7 @@ void processDoneQueue_GenTd(HcTD *arg) {
 
 		if (hcRes || ((tdHcArea & 0xE00000) != 0xE00000)) { // E00000: interrupts disabled
 			req->prev = lastElem;
-			if (lastElem)
-				lastElem->next = req;
-			else
-				firstElem = req;
+			firstElem = req;
 			req->next = NULL;
 			lastElem = req;
 		}

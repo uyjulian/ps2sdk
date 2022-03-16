@@ -1827,15 +1827,12 @@ static int ps2netfs_op_ioctl2(char *buf, int len)
  */
 static void ps2netfs_Listener(int sock)
 {
- int done;
  int len;
  unsigned int cmd;
  ps2netfs_pkt_hdr *header;
  int retval;
 
- done = 0;
-
- while(!done) {
+ while(1) {
    len = ps2netfs_accept_pktunknown(sock, &ps2netfs_recv_packet[0]);
 
    if (len > 0)

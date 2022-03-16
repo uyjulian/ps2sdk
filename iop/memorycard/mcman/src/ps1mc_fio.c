@@ -181,15 +181,10 @@ int mcman_open1(int port, int slot, char *filename, int flags)
 
 				mce = mcman_get1stcacheEntp();
 
-				if ((i + 1) < 0)
-					temp = i + 8;
-				else
-					temp = i + 1;
+				temp = i + 1;
 
 				temp &= 0xfffffff8;
 				temp = (i + 1) - temp;
-				if (temp < 0)
-					temp = 0;
 
 				mce->wr_flag |= 1 << temp;
 			}
@@ -223,10 +218,7 @@ int mcman_open1(int port, int slot, char *filename, int flags)
 
 	mce = mcman_get1stcacheEntp();
 
-	if ((cluster + 1) < 0)
-		temp = cluster + 8;
-	else
-		temp = cluster + 1;
+	temp = cluster + 1;
 
 	temp &= 0xfffffff8;
 	temp = (cluster + 1) - temp;
@@ -499,8 +491,6 @@ int mcman_setinfo1(int port, int slot, char *filename, sceMcTblGetDir *info, int
 	mce = mcman_get1stcacheEntp();
 
 	temp = r + 1;
-	if ((r + 1) < 0)
-		temp = r + 8;
 
 	temp &= 0xfffffff8;
 	temp = (r + 1) - temp;
