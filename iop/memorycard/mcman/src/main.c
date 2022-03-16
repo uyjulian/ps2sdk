@@ -445,6 +445,8 @@ int mcman_checkdirpath(char *str1, char *str2)
 				}
 			}
 		}
+		if (pos == -1)
+			return 0;
 		if (strncmp(p2, p1, pos) != 0)
 			return 0;
 
