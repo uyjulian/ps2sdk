@@ -204,7 +204,7 @@ void apaAddEmptyBlock(apa_header_t *header, u32 *emptyBlocks)
 	if(header->type==APA_TYPE_FREE) {
 		for(i=0;i<32;i++)
 		{
-			if(header->length==(u32)(1 << i)) {
+			if(header->length==(u32)(1u << i)) {
 				if(emptyBlocks[i]==APA_TYPE_FREE) {
 					emptyBlocks[i]=header->start;
 					return;
@@ -475,10 +475,10 @@ u32 apaGetPartitionMax(u32 totalLBA)
 	u32 i, size;
 
 	totalLBA>>=6; // totalLBA/64
-	size=(1<<0x1F);
+	size=(1u<<0x1F);
 	for(i=31;i!=0;i--)
 	{
-		size=1<<i;
+		size=1u<<i;
 		if(size&totalLBA)
 			break;
 	}
