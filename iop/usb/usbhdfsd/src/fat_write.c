@@ -1220,7 +1220,7 @@ static int enlargeDirentryClusterSpace(fat_driver* fatd, unsigned int startClust
 	i = entryIndex + direntrySize;
 	XPRINTF("USBHDFSD: cur=%u ecount=%d \n", i, entryCount);
 	//we don't need to enlarge directory cluster space
-	if (i <= entryCount) return 0; //direntry fits into current space
+	if ((int)i <= entryCount) return 0; //direntry fits into current space
 
 	entriesPerSector = fatd->partBpb.sectorSize / 32;
 	maxSector = i / entriesPerSector;
@@ -2133,7 +2133,7 @@ static int fat_writeSingleSector(mass_dev *dev, unsigned int sector, const void 
 	unsigned char* sbuf = NULL; //sector buffer
 	int ret;
 
-	if ((dataSkip > 0) || (size < dev->sectorSize) || (((int)buffer & 3) != 0)) {
+	if ((dataSkip > 0) || ((unsigned int)size < dev->sectorSize) || (((int)buffer & 3) != 0)) {
 		//Handle the partially-filled sector.
 		ret = READ_SECTOR(dev, sector, sbuf);
 		if (ret < 0) {

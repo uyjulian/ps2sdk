@@ -204,7 +204,7 @@ void apaAddEmptyBlock(apa_header_t *header, u32 *emptyBlocks)
 	if(header->type==APA_TYPE_FREE) {
 		for(i=0;i<32;i++)
 		{
-			if(header->length==(1 << i)) {
+			if(header->length==(u32)(1 << i)) {
 				if(emptyBlocks[i]==APA_TYPE_FREE) {
 					emptyBlocks[i]=header->start;
 					return;
@@ -425,7 +425,7 @@ int apaReadHeader(s32 device, apa_header_t *header, u32 lba)
 		return -EIO;
 	if(header->magic!=APA_MAGIC)
 		return -EIO;
-	if(apaCheckSum(header)!=header->checksum)
+	if(apaCheckSum(header)!=(int)(header->checksum))
 		return -EIO;
 	if(lba==APA_SECTOR_MBR)
 	{

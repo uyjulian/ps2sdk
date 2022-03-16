@@ -457,7 +457,7 @@ void ps2mouse_data_recv(int resultCode, int bytes, void *arg)
 
 	      if(dev->timer[buttonLoop])
 		{
-		  if((msec - dev->timer[buttonLoop]) < mouse_dblclicktime)
+		  if((int)(msec - dev->timer[buttonLoop]) < mouse_dblclicktime)
 		    {
 		      //printf("Double click\n");
 		      buttonData |= (1 << (buttonLoop + 8));
@@ -558,7 +558,7 @@ void do_ps2mouse_setreadmode(u32 *data, int size)
   (void)size;
 
   //printf("PS2MOUSE setreadmode mode %d\n", data[0]);
-  if(data[0] == mouse_readmode)
+  if((int)(data[0]) == mouse_readmode)
     {
       return;
     }

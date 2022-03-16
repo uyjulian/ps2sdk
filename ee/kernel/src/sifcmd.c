@@ -124,7 +124,8 @@ int _SifCmdIntHandler(int channel)
 	struct cmd_data *cmd_data = &_sif_cmd_data;
 	SifCmdHeader_t *header;
 	SifCmdHandlerData_t *cmd_handlers;
-	int size, pktquads, id, i = 0;
+	int size, pktquads, i = 0;
+	unsigned int id;
 
 	(void)channel;
 

@@ -1256,7 +1256,7 @@ static int enlargeDirentryClusterSpace(fat_driver* fatd, unsigned int startClust
     i = entryIndex + direntrySize;
     M_DEBUG("cur=%u ecount=%d \n", i, entryCount);
     //we don't need to enlarge directory cluster space
-    if (i <= entryCount)
+    if ((int)i <= entryCount)
         return 0; //direntry fits into current space
 
     entriesPerSector = fatd->partBpb.sectorSize / 32;

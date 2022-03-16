@@ -903,7 +903,7 @@ int cdfs_readSect(u32 lsn, u32 sectors, u8 *buf) {
 }
 
 int cdfs_getDir(const char *pathname, const char *extensions, enum CDFS_getMode getMode, struct TocEntry tocEntry[], unsigned int req_entries) {
-    int matched_entries;
+    unsigned int matched_entries;
     int dir_entry;
 
     struct TocEntry localTocEntry;
@@ -979,7 +979,7 @@ int cdfs_getDir(const char *pathname, const char *extensions, enum CDFS_getMode 
                 dir_entry++;
 
                 if (matched_entries >= req_entries)  // if we've filled the requested buffer
-                    return (matched_entries);        // then just return
+                    return (int)(matched_entries);        // then just return
 
             }  // end of the current cache block
 
@@ -1063,7 +1063,7 @@ int cdfs_getDir(const char *pathname, const char *extensions, enum CDFS_getMode 
                 dir_entry++;
 
                 if (matched_entries >= req_entries)  // if we've filled the requested buffer
-                    return (matched_entries);        // then just return
+                    return (int)(matched_entries);        // then just return
 
             }  // end of the current cache block
 
@@ -1083,7 +1083,7 @@ int cdfs_getDir(const char *pathname, const char *extensions, enum CDFS_getMode 
     }
     // reached the end of the dir, before filling up the requested entries
 
-    return (matched_entries);
+    return (int)(matched_entries);
 }
 
 // This function uses sceCdTrayReq to check if the disc in the disc drive has changed.

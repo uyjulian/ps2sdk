@@ -41,7 +41,7 @@ IRX_ID(MODNAME, 1, 2);
 
 #define DEFAULT_RWSIZE	16384
 static void *rwbuf = NULL;
-static unsigned int RWBufferSize=DEFAULT_RWSIZE;
+static int RWBufferSize=DEFAULT_RWSIZE;
 
 // 0x4800 bytes for DirEntry structures
 // 0x400 bytes for the filename string
@@ -166,7 +166,7 @@ static int fileXio_CopyFile_RPC(const char *src, const char *dest, int mode)
 {
   iox_stat_t stat;
   int infd, outfd, size, remain;
-  unsigned int i;
+  int i;
 
   if ((infd = open(src, O_RDONLY, 0666)) < 0) {
     return infd;
@@ -340,7 +340,7 @@ static int fileXio_Write_RPC(int outfd, const char *write_buf, int write_size, i
 // It DMA's entries to the specified buffer in EE memory
 static int fileXio_GetDir_RPC(const char* pathname, struct fileXioDirEntry dirEntry[], unsigned int req_entries)
 {
-	int matched_entries;
+	unsigned int matched_entries;
       int fd, res;
   	iox_dirent_t dirbuf;
 	struct fileXioDirEntry localDirEntry;

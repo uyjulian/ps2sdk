@@ -60,7 +60,7 @@ static void _sync(void);
 
 int pfsFioCheckForLastError(pfs_mount_t *pfsMount, int rv)
 {
-	return pfsMount->lastError ? pfsMount->lastError : rv;
+	return pfsMount->lastError ? (int)(pfsMount->lastError) : rv;
 }
 
 int pfsFioCheckFileSlot(pfs_file_slot_t *fileSlot)
@@ -112,7 +112,7 @@ static int mountDevice(pfs_block_device_t *blockDev, int fd, int unit, int flag)
 	u32 i;
 	int rv;
 
-	if(unit >= pfsConfig.maxMount)
+	if(unit >= (int)(pfsConfig.maxMount))
 		return -EMFILE;
 
 	if(pfsMountBuf[unit].flags & PFS_MOUNT_BUSY)

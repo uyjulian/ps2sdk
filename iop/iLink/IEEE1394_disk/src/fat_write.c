@@ -1218,7 +1218,7 @@ static int enlargeDirentryClusterSpace(fat_driver* fatd, unsigned int startClust
 	i = entryIndex + direntrySize;
 	XPRINTF("USBHDFSD: cur=%u ecount=%d \n", i, entryCount);
 	//we don't need to enlarge directory cluster space
-	if (i <= entryCount) return 0; //direntry fits into current space
+	if ((int)i <= entryCount) return 0; //direntry fits into current space
 
 	entriesPerSector = fatd->partBpb.sectorSize / 32;
 	maxSector = i / entriesPerSector;

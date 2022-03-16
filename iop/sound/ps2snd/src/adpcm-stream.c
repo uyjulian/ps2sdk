@@ -94,7 +94,7 @@ int fillbuf(int id, u32 chan)
 		return(0);   /* EOF */
 
 	/* If we're stereo and we've read less than a chunk, we're screwed  */
-	if ((stream_chans>1) && (size<stream_buflen))
+	if ((stream_chans>1) && ((u32)size<stream_buflen))
 	{
 		dprintf(OUT_ERROR, "Channel%u: failed to read entire chunk (read %d bytes)\n", chan, size);
 		return(-1);
@@ -129,7 +129,7 @@ void stream_thread(void *a)
 		{
 			int r;
 			r = fillbuf(stream_bufsafe, i);
-			if (r<stream_buflen) /* treat EOF and errors as the same thing atm */
+			if (r<(int)stream_buflen) /* treat EOF and errors as the same thing atm */
 			{
 				sndStreamClose();
 				return;

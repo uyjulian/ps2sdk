@@ -333,7 +333,7 @@ int hddMakeFilesystem(int fsSizeMB, char *name, int type)
 
 	// Get index for max partition size
 	for(maxIndex = 0; maxIndex < 9; maxIndex++)
-		if(sizesMB[maxIndex] == hddMaxPartitionSize)
+		if((u32)(sizesMB[maxIndex]) == hddMaxPartitionSize)
 			break;
 
 	// Get index of size we will use to create main partition
@@ -487,7 +487,7 @@ int hddExpandFilesystem(t_hddFilesystem *fs, int extraMB)
 
 	// Get index for max partition size
 	for(maxIndex = 0; maxIndex < 9; maxIndex++)
-		if(sizesMB[maxIndex] == hddMaxPartitionSize)
+		if((u32)(sizesMB[maxIndex]) == hddMaxPartitionSize)
 			break;
 
 	// Get index of size we will use to create new subs

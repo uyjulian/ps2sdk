@@ -299,7 +299,7 @@ static void _request_end(SifRpcRendPkt_t *request, void *data)
 	client->hdr.pkt_addr = NULL;
 }
 
-static void *search_svdata(u32 sid, struct rpc_data *rpc_data)
+static void *search_svdata(int sid, struct rpc_data *rpc_data)
 {
 	SifRpcServerData_t *server;
 	SifRpcDataQueue_t *queue = rpc_data->active_queue;
@@ -673,7 +673,7 @@ int SifCheckStatRpc(SifRpcClientData_t *cd)
 	if (!packet)
 		return 0;
 
-	if (cd->hdr.rpc_id != packet->rpc_id)
+	if (cd->hdr.rpc_id != (u32)(packet->rpc_id))
 		return 0;
 
 	if (!(packet->rec_id & PACKET_F_ALLOC))

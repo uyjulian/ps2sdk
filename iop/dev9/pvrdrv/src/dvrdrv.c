@@ -1259,7 +1259,7 @@ int DvrdrvExecCmdAckDma2Comp(drvdrv_exec_cmd_ack *a1)
     struct_itr_sema *v2;
     struct_itr_sema *v3;
     int v5;
-    int v6;
+    u32 v6;
     s16 v7;
     struct_itr_sema *v8;
     u16 v9;

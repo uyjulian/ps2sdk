@@ -692,7 +692,7 @@ int fileXioRead(int fd, void *buf, int size)
 
 int fileXioWrite(int fd, const void *buf, int size)
 {
-	unsigned int miss;
+	int miss;
 	int rv;
 	struct fxio_write_packet *packet=(struct fxio_write_packet*)sbuff;
 

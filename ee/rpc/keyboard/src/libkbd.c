@@ -22,8 +22,8 @@
 extern int _iop_reboot_count;
 static int kbd_iop = -1;
 static int kbd_fd = -1;
-static int curr_blockmode = PS2KBD_NONBLOCKING;
-static int curr_readmode = PS2KBD_READMODE_NORMAL;
+static u32 curr_blockmode = PS2KBD_NONBLOCKING;
+static u32 curr_readmode = PS2KBD_READMODE_NORMAL;
 
 int PS2KbdInit(void)
 {

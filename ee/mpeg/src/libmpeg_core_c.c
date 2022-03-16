@@ -267,7 +267,7 @@ LAB_000104b8:
 unsigned int _ipu_get_bits( unsigned int arg0 )
 {
 	_ipu_sync();
-	if (s_DataBuf[0] < (int)arg0)
+	if ((int)(s_DataBuf[0]) < (int)arg0)
 	{
 		*R_EE_IPU_CMD = 0x40000000;
 		s_DataBuf[1] = _ipu_sync_data();
@@ -287,7 +287,7 @@ unsigned int _MPEG_GetBits ( unsigned int arg0 )
 
 unsigned int _ipu_show_bits ( unsigned int arg0 )
 {
-	if (s_DataBuf[0] < (int)arg0)
+	if ((int)(s_DataBuf[0]) < (int)arg0)
 	{
 		_ipu_sync();
 		*R_EE_IPU_CMD = 0x40000000;
