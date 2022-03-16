@@ -143,9 +143,9 @@ static void DESEncryptPassword(u32 id_lo, u32 id_hi, char *password_out, const c
 	{
 		shift = PC1[i] - 1;
 
-		if((shift << 26) >= 0)
+		if(((shift & 0x1f) >= 0) && ((shift & 0x20) == 0))
 		{	//0 to 31-bit shift
-			if((shift << 26) > 0)	//Shift all bits left by shift (hi,lo >> shift)
+			if(((shift & 0x3f) != 0))	//Shift all bits left by shift (hi,lo >> shift)
 				key1 = (BitMask_lo >> shift) | (BitMask_hi << (-shift));
 			else	//0-bit shift, which should not happen.
 				key1 = BitMask_lo >> shift;
@@ -285,9 +285,9 @@ static void DESEncryptPassword(u32 id_lo, u32 id_hi, char *password_out, const c
 		{
 			shift = PC2[i] - 1;
 
-			if((shift << 26) >= 0)
+			if(((shift & 0x1f) >= 0) && ((shift & 0x20) == 0))
 			{	//0 to 31-bit shift
-				if((shift << 26) > 0)	//Shift all bits left by shift (hi,lo >> shift)
+				if(((shift & 0x3f) != 0))	//Shift all bits left by shift (hi,lo >> shift)
 					key1 = (BitMask_lo >> shift) | (BitMask_hi << (-shift));
 				else	//0-bit shift, which should not happen.
 					key1 = BitMask_lo >> shift;
@@ -327,9 +327,9 @@ static void DESEncryptPassword(u32 id_lo, u32 id_hi, char *password_out, const c
 	{
 		shift = IP[i] - 1;
 
-		if((shift << 26) >= 0)
+		if(((shift & 0x1f) >= 0) && ((shift & 0x20) == 0))
 		{	//0 to 31-bit shift
-			if((shift << 26) > 0)	//Shift all bits left by shift (hi,lo >> shift)
+			if(((shift & 0x3f) != 0))	//Shift all bits left by shift (hi,lo >> shift)
 				key1 = (BitMask_lo >> shift) | (BitMask_hi << (-shift));
 			else	//0-bit shift, which should not happen.
 				key1 = BitMask_lo >> shift;
@@ -378,9 +378,9 @@ static void DESEncryptPassword(u32 id_lo, u32 id_hi, char *password_out, const c
 		for(i = 0; i < 48; i++)
 		{
 			shift = Expansion[i] - 1;
-			if((shift << 26) >= 0)
+			if(((shift & 0x1f) >= 0) && ((shift & 0x20) == 0))
 			{	//0 to 31-bit shift
-				if((shift << 26) > 0)	//Shift all bits left by shift (hi,lo >> shift)
+				if(((shift & 0x3f) != 0))	//Shift all bits left by shift (hi,lo >> shift)
 					key1 = (BitMask_lo >> shift) | (BitMask_hi << (-shift));
 				else	//0-bit shift, which should not happen.
 					key1 = BitMask_lo >> shift;
@@ -422,9 +422,9 @@ static void DESEncryptPassword(u32 id_lo, u32 id_hi, char *password_out, const c
 			eVal_hi >>= 6;
 
 			input_hi = 0;
-			if((shift << 26) >= 0)
+			if(((shift & 0x1f) >= 0) && ((shift & 0x20) == 0))
 			{	//0 to 31-bit shift
-				if((shift << 26) > 0)	//Shift all bits right by shift (hi,lo >> shift)
+				if(((shift & 0x3f) != 0))	//Shift all bits right by shift (hi,lo >> shift)
 					key3 = (input_hi << shift) | (input_lo >> (-shift));
 				else	//0-bit shift, which should not happen.
 					key3 = input_hi << shift;
@@ -449,9 +449,9 @@ static void DESEncryptPassword(u32 id_lo, u32 id_hi, char *password_out, const c
 		for(i = 0; i < 32; i++)
 		{
 			shift = Permutation[i] - 1;
-			if((shift << 26) >= 0)
+			if(((shift & 0x1f) >= 0) && ((shift & 0x20) == 0))
 			{	//0 to 31-bit shift
-				if((shift << 26) > 0)	//Shift all bits left by shift (hi,lo >> shift)
+				if(((shift & 0x3f) != 0))	//Shift all bits left by shift (hi,lo >> shift)
 					key1 = (BitMask_lo >> shift) | (BitMask_hi << (-shift));
 				else	//0-bit shift, which should not happen.
 					key1 = BitMask_lo >> shift;
@@ -493,9 +493,9 @@ static void DESEncryptPassword(u32 id_lo, u32 id_hi, char *password_out, const c
 	for(i = 0; i < 64; i++)
 	{
 		shift = FP[i] - 1;
-		if((shift << 26) >= 0)
+		if(((shift & 0x1f) >= 0) && ((shift & 0x20) == 0))
 		{	//0 to 31-bit shift
-			if((shift << 26) > 0)	//Shift all bits left by shift (hi,lo >> shift)
+			if(((shift & 0x3f) != 0))	//Shift all bits left by shift (hi,lo >> shift)
 				key1 = (BitMask_lo >> shift) | (BitMask_hi << (-shift));
 			else	//0-bit shift, which should not happen.
 				key1 = BitMask_lo >> shift;
