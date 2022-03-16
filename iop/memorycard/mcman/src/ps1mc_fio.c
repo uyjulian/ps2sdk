@@ -260,8 +260,8 @@ int mcman_read1(int fd, void *buffer, int nbyte)
 		nbyte = fh->filesize - fh->position;
 
 	rpos = 0;
-	if (nbyte) {
-		do {
+	{
+		while (nbyte) {
 			if ((int)(fh->position) < 0)
 				temp = fh->position + 0x3ff;
 			else
@@ -288,7 +288,7 @@ int mcman_read1(int fd, void *buffer, int nbyte)
 			nbyte -= size;
 			fh->position += size;
 
-		} while (nbyte);
+		}
 	}
 
 	return rpos;

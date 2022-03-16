@@ -972,17 +972,17 @@ int avioctl2_cmd_ack(
     (void)a3;
 
     cmdack.command = cmd | 0x3100;
-    if (arglen >> 1) {
+    {
         u16 *input_word_tmp;
         unsigned int input_word_copied;
         input_word_tmp = (u16 *)&cmdack.input_word[0];
         input_word_copied = 0;
-        do {
+        while (input_word_copied < arglen >> 1) {
             *input_word_tmp = *(u16 *)arg;
             arg = (char *)arg + 2;
             input_word_copied += 1;
             input_word_tmp += 1;
-        } while (input_word_copied < arglen >> 1);
+        }
     }
     cmdack.input_word_count = arglen >> 1;
     if (DvrdrvExecCmdAck(&cmdack)) {
@@ -1026,17 +1026,17 @@ int avioctl2_cmd_ack_comp(
     (void)a3;
 
     cmdack.command = cmd | 0x3100;
-    if (arglen >> 1) {
+    {
         u16 *input_word_tmp;
         unsigned int input_word_copied;
         input_word_tmp = (u16 *)&cmdack.input_word[0];
         input_word_copied = 0;
-        do {
+        while (input_word_copied < arglen >> 1) {
             *input_word_tmp = *(u16 *)arg;
             input_word_tmp += 1;
             arg = (char *)arg + 2;
             input_word_copied += 1;
-        } while (input_word_copied < arglen >> 1);
+        }
     }
     cmdack.input_word_count = arglen >> 1;
     cmdack.timeout = a2;

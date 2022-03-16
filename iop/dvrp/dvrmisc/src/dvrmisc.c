@@ -1200,10 +1200,10 @@ int dvrioctl2_get_device_key(
                 printf("MISCCMD_GET_DEVKEY_INFO -> Status error!\n");
                 return -5;
             }
-            if ((u16)v21 + 1 > 1) {
+            {
                 u16 *in_word_tmp2;
                 in_word_tmp2 = cmdack.return_result_word;
-                do {
+                while (v22 < (u16)v21 + 1) {
                     u8 *v24;
                     v24 = (u8 *)buf + v19;
                     v19 += 2;
@@ -1211,7 +1211,7 @@ int dvrioctl2_get_device_key(
                     v24[4] = (*in_word_tmp2 & 0xFF00) >> 8;
                     v24[5] = (*in_word_tmp2 & 0x00FF);
                     in_word_tmp2 += 1;
-                } while (v22 < (u16)v21 + 1);
+                }
             }
             v18 -= v21;
             v20 = (u16)v18;
@@ -1241,17 +1241,17 @@ int dvrioctl2_set_dv_nodeid(
 
     argwalked = 0;
     cmdack.command = 0x511D;
-    if (arglen) {
+    {
         u8 *inword_tmp;
         inword_tmp = ((u8 *)&cmdack.input_word[0]);
-        do {
+        while (argwalked < arglen) {
             u8 *inword_tmp2;
             inword_tmp2 = ((u8 *)arg + argwalked);
             inword_tmp[0] = inword_tmp2[1];
             inword_tmp[1] = inword_tmp2[0];
             inword_tmp += 2;
             argwalked += 2;
-        } while (argwalked < arglen);
+        }
     }
     cmdack.input_word_count = 4;
     cmdack.timeout = 10000000;
@@ -1302,17 +1302,17 @@ int dvrioctl2_get_dv_nodeid(
         return -5;
     }
     bufwalked = 0;
-    if (buflen) {
+    {
         u16 *return_result_word;
         return_result_word = cmdack.return_result_word;
-        do {
+        while (bufwalked < buflen) {
             char *buftmp;
             buftmp = (char *)buf + bufwalked;
             bufwalked += 2;
             buftmp[0] = (*return_result_word & 0xFF00) >> 8;
             buftmp[1] = (*return_result_word & 0x00FF);
             return_result_word += 1;
-        } while (bufwalked < buflen);
+        }
     }
     if (buflen) {
         unsigned int bufbusyloop;

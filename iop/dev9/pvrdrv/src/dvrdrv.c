@@ -264,13 +264,13 @@ int DvrdrvSendCmdAck(struct_itr_sema *itrsema, u16 command, u16 *input_word, s32
     while ((SPD_REG16(0x4218) & 0x80) != 0)
         ;
     v15 = 0;
-    if (input_word_count > 0) {
+    {
         v16 = input_word;
-        do {
+        while (v15 < input_word_count) {
             v17 = *v16++;
             ++v15;
             SPD_REG16(0x4214) = v17;
-        } while (v15 < input_word_count);
+        }
     }
     USec2SysClock(0x1C9C380u, &v28);
     v18 = (u16)(command & 0xF00) >> 8;
@@ -394,13 +394,13 @@ int DvrdrvTransferDma(u8 *output_buffer, int a2)
         default:
         LABEL_7:
             dev9DmaTransfer(2, output_buffer, (v6 << 16) | 0x20, v4);
-            if (v7 > 0) {
-                do {
+            {
+                while (v7 > 0) {
                     v7 -= 4;
                     SPD_REG16(0x4120) = ((*((u32 *)v8)) & 0x0000FFFF);
                     SPD_REG16(0x4122) = ((*((u32 *)v8)) & 0xFFFF0000) >> 16;
                     v8 += 1;
-                } while (v7 > 0);
+                }
             }
             UnblockAPI();
             result = 0;
@@ -487,13 +487,13 @@ int DvrdrvWaitDmaEnd(struct_itr_sema *itrsema, u16 command)
             else
                 v6 = (u8)(SPD_REG16(0x4228) & 0xFC) >> 2;
             v7 = 0;
-            if (v6) {
+            {
                 v8 = &v10;
-                do {
+                while (v7 < v6) {
                     ++v7;
                     *(u16 *)v8 = SPD_REG16(0x4224);
                     v8 += 2;
-                } while (v7 < v6);
+                }
             }
         } else {
             v5 = -1;
@@ -573,12 +573,12 @@ int DvrdrvWaitCmdComp(struct_itr_sema *itrsema, u16 command, u16 *status_4220, u
                     v11 = (u8)(SPD_REG16(0x4228) & 0xFC) >> 2;
                 *status_4228 = v11;
                 v12 = 0;
-                if (*status_4228 > 0) {
+                {
                     v13 = comp_status;
-                    do {
+                    while (v12 < *status_4228) {
                         ++v12;
                         *v13++ = SPD_REG16(0x4224);
-                    } while (v12 < *status_4228);
+                    }
                 }
                 *status_4220 = SPD_REG16(0x4220);
             } else {
@@ -770,13 +770,13 @@ void INTR_CMD_ACK_HANDLER(int a1, void *a2)
         if ((SPD_REG16(0x4228) & 1) == 0)
             v3 = (u8)(SPD_REG16(0x4228) & 0xFC) >> 2;
         v4 = 0;
-        if (v3) {
+        {
             v5 = &v7;
-            do {
+            while (v4 < v3) {
                 ++v4;
                 *(u16 *)v5 = SPD_REG16(0x4224);
                 v5 += 2;
-            } while (v4 < v3);
+            }
         }
     }
 }
@@ -824,13 +824,13 @@ void INTR_CMD_COMP_HANDLER(int a1, void *a2)
         if ((SPD_REG16(0x4228) & 1) == 0)
             v3 = (u8)(SPD_REG16(0x4228) & 0xFC) >> 2;
         v4 = 0;
-        if (v3) {
+        {
             v5 = &v7;
-            do {
+            while (v4 < v3) {
                 ++v4;
                 *(u16 *)v5 = SPD_REG16(0x4224);
                 v5 += 2;
-            } while (v4 < v3);
+            }
         }
     }
 }
