@@ -67,7 +67,7 @@ static int iLinkSendData(struct TransactionContextData *trContext, unsigned int 
 
 	SignalSema(UBUFTxSema);
 
-	return((FlagBits&iLinkEventError)?-1:PayloadLength);
+	return((FlagBits&iLinkEventError)?-1:(int)PayloadLength);
 }
 
 void SendResponse(unsigned short int NodeID, unsigned short RcvdBusID, unsigned char rCode, unsigned char tLabel, unsigned char tCode, unsigned char speed, unsigned int *buffer, unsigned int nQuads){

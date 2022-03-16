@@ -711,7 +711,7 @@ int hddDread(iop_file_t *f, iox_dirent_t *dirent)
 	if(!(f->mode & O_DIROPEN))
 		return -ENOTDIR;
 
-	if(fileSlot->parts[0].start==-1)
+	if(fileSlot->parts[0].start==0xffffffff)
 		return 0;// end :)
 
 	WaitSema(fioSema);

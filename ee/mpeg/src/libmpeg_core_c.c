@@ -213,7 +213,7 @@ void _ipu_sync( void )
 				break;
 			}
 LAB_0001041c:
-			if (-1 < *R_EE_IPU_CTRL)
+			if ((*R_EE_IPU_CTRL & 0x80000000) == 0)
 			{
 				return;
 			}
@@ -234,7 +234,7 @@ LAB_0001041c:
 
 u32 _ipu_sync_data( void )
 {
-	if (-1 < *R_EE_IPU_CMD)
+	if (((*R_EE_IPU_CMD) & 0x8000000000000000) == 0)
 	{
 		return *R_EE_IPU_BP;
 	}
@@ -244,7 +244,7 @@ u32 _ipu_sync_data( void )
 		while (0x1f < (((var3 & 0xff00) >> 1) + ((var3 & 0x30000) >> 9)) - (var3 & 0x7f))
 		{
 LAB_000104b8:
-			if (-1 < *R_EE_IPU_CMD)
+			if (((*R_EE_IPU_CMD) & 0x8000000000000000) == 0)
 			{
 				return var3;
 			}
