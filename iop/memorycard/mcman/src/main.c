@@ -1377,7 +1377,8 @@ int mcman_setdevspec(int port, int slot)
 //--------------------------------------------------------------
 int mcman_setdevinfos(int port, int slot)
 {
-	register int r, allocatable_clusters_per_card, iscluster_valid, current_allocatable_cluster, cluster_cnt;
+	register int r, allocatable_clusters_per_card, iscluster_valid, cluster_cnt;
+	register unsigned int current_allocatable_cluster;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 	McFsEntry *pfse;
 
@@ -1455,7 +1456,7 @@ int mcman_setdevinfos(int port, int slot)
 			|| (mcdi->alloc_offset == current_allocatable_cluster)) {
 			iscluster_valid = 1;
 			for (r=0; r<16; r++) {
-				if ((current_allocatable_cluster / mcdi->clusters_per_block) == mcdi->bad_block_list[r])
+				if ((int)(current_allocatable_cluster / mcdi->clusters_per_block) == mcdi->bad_block_list[r])
 					iscluster_valid = 0;
 			}
 		}
@@ -1472,7 +1473,8 @@ int mcman_setdevinfos(int port, int slot)
 //--------------------------------------------------------------
 int mcman_reportBadBlocks(int port, int slot)
 {
-	register int r, i, block, bad_blocks, page, erase_byte, err_cnt, err_limit;
+	register unsigned int block;
+	register int r, i, bad_blocks, page, erase_byte, err_cnt, err_limit;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 	u8 *p;
 
@@ -1613,7 +1615,8 @@ int McCreateDirentry(int port, int slot, int parent_cluster, int num_entries, in
 //--------------------------------------------------------------
 int mcman_fatRseek(int fd)
 {
-	register int r, entries_to_read, fat_index;
+	register int fat_index;
+	register unsigned int entries_to_read;
 	register MC_FHANDLE *fh = (MC_FHANDLE *)&mcman_fdhandles[fd]; //s1
 	register MCDevInfo *mcdi = &mcman_devinfos[fh->port][fh->slot];	//s2
 	int fat_entry;
@@ -1637,6 +1640,7 @@ int mcman_fatRseek(int fd)
 	}
 
 	do {
+		register int r;
 		r = McGetFATentry(fh->port, fh->slot, fat_index, &fat_entry);
 		if (r != sceMcResSucceed)
 			return r;
@@ -1660,7 +1664,8 @@ int mcman_fatRseek(int fd)
 //--------------------------------------------------------------
 int mcman_fatWseek(int fd) // modify FAT to hold new content for a file
 {
-	register int r, entries_to_write, fat_index;
+	register int r, fat_index;
+	register unsigned int entries_to_write;
 	register MC_FHANDLE *fh = (MC_FHANDLE *)&mcman_fdhandles[fd];
 	register MCDevInfo *mcdi = &mcman_devinfos[fh->port][fh->slot];
 	register McCacheEntry *mce;
@@ -1699,7 +1704,7 @@ int mcman_fatWseek(int fd) // modify FAT to hold new content for a file
 			if (r != sceMcResSucceed)
 				return r;
 
-			if (fat_entry >= 0xffffffff) {
+			if (fat_entry >= -1) {
 				r = mcman_findfree2(fh->port, fh->slot, 1);
 				if (r < 0)
 						return r;
@@ -1729,7 +1734,8 @@ int mcman_fatWseek(int fd) // modify FAT to hold new content for a file
 //--------------------------------------------------------------
 int mcman_findfree2(int port, int slot, int reserve)
 {
-	register int r, rfree, indirect_index, ifc_index, fat_offset, indirect_offset, fat_index, block;
+	register unsigned int fat_index;
+	register int r, rfree, indirect_index, ifc_index, fat_offset, indirect_offset, block;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 	McCacheEntry *mce1, *mce2;
 
@@ -1785,7 +1791,8 @@ int mcman_findfree2(int port, int slot, int reserve)
 //--------------------------------------------------------------
 int mcman_getentspace(int port, int slot, char *dirname)
 {
-	register int r, i, entspace;
+	register unsigned int i;
+	register int r, entspace;
 	McCacheDir cacheDir;
 	McFsEntry *fse;
 	McFsEntry mfe;
@@ -1946,7 +1953,8 @@ int mcman_cachedirentry(int port, int slot, char *filename, McCacheDir *pcacheDi
 //--------------------------------------------------------------
 int mcman_getdirinfo(int port, int slot, McFsEntry *pfse, char *filename, McCacheDir *pcd, int unknown_flag)
 {
-	register int i, r, ret, len, pos;
+	register unsigned int i;
+	register int r, ret, len, pos;
 	McFsEntry *fse;
 	u8 *pfsentry, *pfsee, *pfseend;
 
@@ -1956,7 +1964,7 @@ int mcman_getdirinfo(int port, int slot, McFsEntry *pfse, char *filename, McCach
 
 	pos = mcman_chrpos(filename, '/');
 	if (pos < 0)
-		pos = strlen(filename);
+		pos = (int)(strlen(filename));
 
 	ret = 0;
 	if ((pos == 2) && (!strncmp(filename, "..", 2))) {
@@ -2046,7 +2054,7 @@ int mcman_getdirinfo(int port, int slot, McFsEntry *pfse, char *filename, McCach
 			if (r != sceMcResSucceed)
 				return r;
 
-			if (((fse->mode & sceMcFileAttrExists) == 0) && (pcd) && (i < pcd->maxent))
+			if (((fse->mode & sceMcFileAttrExists) == 0) && (pcd) && ((int)i < pcd->maxent))
 				 pcd->maxent = i;
 
 			if (unknown_flag) {
@@ -2063,15 +2071,15 @@ int mcman_getdirinfo(int port, int slot, McFsEntry *pfse, char *filename, McCach
 
 			if ((pos >= 11) && (!strncmp(&filename[10], &fse->name[10], pos-10))) {
 				len = pos;
-				if (strlen(fse->name) >= pos)
-					len = strlen(fse->name);
+				if ((int)(strlen(fse->name)) >= pos)
+					len = (int)(strlen(fse->name));
 
 				if (!strncmp(filename, fse->name, len))
 					goto continue_check;
 			}
 
-			if (strlen(fse->name) >= pos)
-				len = strlen(fse->name);
+			if ((int)(strlen(fse->name)) >= pos)
+				len = (int)(strlen(fse->name));
 			else
 				len = pos;
 
@@ -2228,7 +2236,8 @@ int mcman_writecluster(int port, int slot, int cluster, int flag)
 //--------------------------------------------------------------
 int McSetDirEntryState(int port, int slot, int cluster, int fsindex, int flags)
 {
-	register int r, i, fat_index;
+	register int r, i;
+	register unsigned int fat_index;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 	McFsEntry *fse;
 	int fat_entry;
@@ -2250,10 +2259,10 @@ int McSetDirEntryState(int port, int slot, int cluster, int fsindex, int flags)
 		if ((mcman_fdhandles[i].port != port) || (mcman_fdhandles[i].slot != slot))
 			continue;
 
-		if (mcman_fdhandles[i].field_20 != cluster)
+		if (mcman_fdhandles[i].field_20 != (u32)cluster)
 			continue;
 
-		if (mcman_fdhandles[i].field_24 == fsindex)
+		if (mcman_fdhandles[i].field_24 == (u32)fsindex)
 			return sceMcResDeniedPermit;
 
 	} while (++i < MAX_FDHANDLES);
@@ -2267,7 +2276,7 @@ int McSetDirEntryState(int port, int slot, int cluster, int fsindex, int flags)
 
 	fat_index = fse->cluster;
 
-	if (fat_index >= 0) {
+	if ((fat_index & 0x80000000) == 0) {
 		if (fat_index < mcdi->unknown2)
 			mcdi->unknown2 = fat_index;
 		mcdi->unknown5 = -1;
@@ -2333,7 +2342,7 @@ int mcman_checkBackupBlocks(int port, int slot)
 
 	// bachup block2 is not erased, so programming is assumed to have not been completed
 	// reads content of backup block1
-	for (r1 = 0; r1 < mcdi->clusters_per_block; r1++) {
+	for (r1 = 0; r1 < (int)(mcdi->clusters_per_block); r1++) {
 
 		McReadCluster(port, slot, (mcdi->backup_block1 * mcdi->clusters_per_block) + r1, &mce);
 		mce->rd_flag = 1;
@@ -2364,7 +2373,7 @@ int mcman_checkBackupBlocks(int port, int slot)
 			return r;
 	}
 
-	for (r1 = 0; r1 < mcdi->clusters_per_block; r1++)
+	for (r1 = 0; r1 < (int)(mcdi->clusters_per_block); r1++)
 		mcman_freecluster(port, slot, (mcdi->backup_block1 * mcdi->clusters_per_block) + r1);
 
 check_done:
@@ -2663,7 +2672,7 @@ int mcman_clearPS1direntry(int port, int slot, int cluster, int flags)
 
 	for (i = 0; i < MAX_FDHANDLES; i++) {
 		if ((fh->status != 0) && (fh->port == port) && (fh->slot == slot)) {
-			if (fh->freeclink == cluster)
+			if (fh->freeclink == (u32)cluster)
 				return sceMcResDeniedPermit;
 
 		}
@@ -3738,11 +3747,12 @@ lbl_exit:
 //--------------------------------------------------------------
 int McReadCluster(int port, int slot, int cluster, McCacheEntry **pmce)
 {
-	register int r, i, block, block_offset;
+	register unsigned int i;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 	McCacheEntry *mce;
 
 	if (mcman_badblock > 0) {
+		register int block, block_offset;
 		block = cluster / mcdi->clusters_per_block;
 		block_offset = cluster % mcdi->clusters_per_block;
 
@@ -3763,6 +3773,7 @@ int McReadCluster(int port, int slot, int cluster, McCacheEntry **pmce)
 
 	mce = mcman_getcacheentry(port, slot, cluster);
 	if (mce == NULL) {
+		register int r;
 		mce = pmcman_mccache[MAX_CACHEENTRY - 1];
 
 		if (mce->wr_flag != 0) {
@@ -3834,7 +3845,7 @@ int McReadDirEntry(int port, int slot, int cluster, int fsindex, McFsEntry **pfs
 			if (r != sceMcResSucceed)
 				return -70;
 
-			if (clust == 0xffffffff)
+			if (clust == -1)
 				return sceMcResNoEntry;
 			clust &= 0x7fffffff;
 
@@ -4032,7 +4043,7 @@ int mcman_fillbackupblock1(int port, int slot, int block, void **pagedata, void 
 			return sceMcResFailReplace;
 	}
 
-	if ((mcdi->alloc_offset / mcdi->clusters_per_block) == block) // Appparently this refuse to take care of a bad rootdir cluster
+	if ((int)(mcdi->alloc_offset / mcdi->clusters_per_block) == block) // Appparently this refuse to take care of a bad rootdir cluster
 		return sceMcResFailReplace;
 
 	r = mcman_eraseblock(port, slot, mcdi->backup_block2, NULL, NULL);
@@ -4076,7 +4087,7 @@ int mcman_fillbackupblock1(int port, int slot, int block, void **pagedata, void 
 //--------------------------------------------------------------
 int McReplaceBadBlock(void)
 {
-	register int r, i, curentry, clust, index, offset, numifc, fat_length, temp, length;
+	register int r, index, offset, temp;
 	register int value, value2, cluster, index2, offset2, s3;
 	register MCDevInfo *mcdi = &mcman_devinfos[mcman_badblock_port][mcman_badblock_slot];
 	int fat_entry[16];
@@ -4092,6 +4103,7 @@ int McReplaceBadBlock(void)
 		return sceMcResSucceed;
 
 	if (mcman_badblock >= 0) {
+		register unsigned int i, fat_length, numifc, clust, curentry, length;
 		McFlushCache(mcman_badblock_port, mcman_badblock_slot);
 		mcman_clearcache(mcman_badblock_port, mcman_badblock_slot);
 
@@ -4391,7 +4403,7 @@ int mcman_clearsuperblock(int port, int slot)
 	strcpy(mcdi->magic, SUPERBLOCK_MAGIC);
 	strcat(mcdi->magic, SUPERBLOCK_VERSION);
 
-	for (i = 0; (u32)(i < sizeof(MCDevInfo)); i += 1024) {
+	for (i = 0; i < (int)(sizeof(MCDevInfo)); i += 1024) {
 		temp = i;
 		if (i < 0)
 			temp = i + 1023;

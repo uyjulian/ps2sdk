@@ -39,9 +39,11 @@ static sceMcStDateTime mcman_fsmodtime;
 //--------------------------------------------------------------
 int mcman_format2(int port, int slot)
 {
-	register int r, i, size, ifc_index, indirect_offset, allocatable_clusters_per_card;
-	register int ifc_length, fat_length, fat_entry, alloc_offset;
-	register int j = 0, z = 0;
+	register unsigned int i, size, allocatable_clusters_per_card;
+	register int r, ifc_index, indirect_offset;
+	register unsigned int ifc_length, fat_length;
+	register int fat_entry, alloc_offset;
+	register unsigned int j = 0, z = 0;
 	MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 	McCacheEntry *mce;
 
@@ -236,10 +238,7 @@ lbl1:
 
 	// read superblock to mc cache
 	for (i = 0; i < sizeof (MCDevInfo); i += MCMAN_CLUSTERSIZE) {
-		if (i < 0)
-			size = i + (MCMAN_CLUSTERSIZE - 1);
-		else
-			size = i;
+		size = i;
 
 		if (McReadCluster(port, slot, size >> 10, &mce) != sceMcResSucceed)
 			return -48;
@@ -603,7 +602,7 @@ int mcman_write2(int fd, void *buffer, int nbyte)
 			r = fh->position + size;
 			fh->position += size;
 
-			if (r < fh->filesize)
+			if ((u32)r < fh->filesize)
 				r = fh->filesize ;
 
 			fh->filesize = r;
@@ -806,7 +805,7 @@ int mcman_open2(int port, int slot, char *filename, int flags)
 				fh2 = (MC_FHANDLE *)&mcman_fdhandles[i];
 
 				if ((fh2->status == 0) || (fh2->port != port) || (fh2->slot != slot) \
-					|| (fh2->field_20 != cacheDir.cluster) || (fh2->field_24 != cacheDir.fsindex))
+					|| (fh2->field_20 != (u32)(cacheDir.cluster)) || (fh2->field_24 != (u32)(cacheDir.fsindex)))
 					continue;
 
 				if (fh2->wrflag != 0)
@@ -868,7 +867,7 @@ int mcman_open2(int port, int slot, char *filename, int flags)
 	} while (pfsentry < pfseend);
 
 	i = -1;
-	if (mcman_dircache[2].length == cacheDir.maxent) {
+	if (mcman_dircache[2].length == (u32)(cacheDir.maxent)) {
 
 		fsindex = mcman_dircache[2].length / (mcdi->cluster_size >> 9); //v1
 		fsoffset = mcman_dircache[2].length % (mcdi->cluster_size >> 9); //v0
@@ -1277,7 +1276,8 @@ int mcman_getdir2(int port, int slot, char *dirname, int flags, int maxent, sceM
 //--------------------------------------------------------------
 int mcman_delete2(int port, int slot, char *filename, int flags)
 {
-	register int r, i;
+	register int r;
+	register unsigned int i;
 	McCacheDir cacheDir;
 	McFsEntry *fse1, *fse2;
 

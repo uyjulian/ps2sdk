@@ -29,7 +29,7 @@ static u8 mcman_sio2inbufs_PS1PDA[0x90];
 u8 mcman_sio2outbufs_PS1PDA[0x90];
 
 static u32 mcman_timercount;
-static int mcman_timerthick;
+static u32 mcman_timerthick;
 
 // mcman cmd table used by sio2packet_add fnc
 static const u8 mcman_cmdtable[36] = {
@@ -81,14 +81,14 @@ void sio2packet_add(int port, int slot, int cmd, u8 *buf)
 	register int pos;
 	u8 *p;
 
-	if (cmd == 0xffffffff) {
+	if (cmd == -1) {
 		mcman_sio2packet.in_dma.count = 0;
 		return;
 	}
 
 	if (mcman_sio2packet.in_dma.count < 0xb) {
 
-		if (cmd == 0xfffffffe) {
+		if (cmd == -2) {
 			mcman_sio2packet.regdata[mcman_sio2packet.in_dma.count] = 0;
 			mcman_sio2packet.out_dma.count = mcman_sio2packet.in_dma.count;
 			return;
