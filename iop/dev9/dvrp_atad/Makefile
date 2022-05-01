@@ -6,7 +6,13 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 
-SUBDIRS = dev9 extflash poweroff atad hdpro_atad pvrdrv dvrp_atad
+IOP_BIN ?= dvrpatad.irx
+
+IOP_INCS += -I$(PS2SDKSRC)/iop/dev9/atad/include
+
+IOP_OBJS = dvrpatad.o imports.o exports.o
 
 include $(PS2SDKSRC)/Defs.make
-include $(PS2SDKSRC)/Rules.make
+include $(PS2SDKSRC)/iop/Rules.bin.make
+include $(PS2SDKSRC)/iop/Rules.make
+include $(PS2SDKSRC)/iop/Rules.release
