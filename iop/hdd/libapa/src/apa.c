@@ -167,7 +167,7 @@ apa_cache_t *apaFindPartition(s32 device, const char *id, int *err)
 
 #ifdef APA_SUPPORT_BHDD
     if (strcmp(id, "__xcontents") == 0 || strcmp(id, "__extend") == 0 || strcmp(id, "__xdata") == 0)
-        sector = hddDevices[device].totalLBA;
+        sector = hddDevices[device].dvrPartitionLBAStart;
 #endif
 
     clink = apaCacheGetHeader(device, sector, APA_IO_MODE_READ, err);

@@ -367,7 +367,7 @@ static int apaOpen(s32 device, hdd_file_slot_t *fileSlot, apa_params_t *params, 
 
 #ifdef APA_SUPPORT_BHDD
     if (strcmp(params->id, "__xcontents") == 0 || strcmp(params->id, "__extend") == 0 || strcmp(params->id, "__xdata") == 0)
-        sector = hddDevices[device].totalLBA;
+        sector = hddDevices[device].dvrPartitionLBAStart;
 #endif
 
     // walk all looking for any empty blocks & look for partition
@@ -559,7 +559,7 @@ int hddOpen(iop_file_t *f, const char *name, int flags, int mode)
         } else {
 #ifdef APA_SUPPORT_BHDD
             if (strcmp(f->device->name, "bhdd") == 0) {
-                fileSlot->parts[0].start = hddDevices[f->unit].totalLBA;
+                fileSlot->parts[0].start = hddDevices[f->unit].dvrPartitionLBAStart;
             } else {
                 fileSlot->parts[0].start = 0;
             }

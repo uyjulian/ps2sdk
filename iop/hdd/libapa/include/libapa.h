@@ -200,6 +200,10 @@ typedef struct
     u32 partitionMaxSize;
     int format;
     int status;
+#ifdef APA_SUPPORT_BHDD
+    u32 dvrPartitionLBAStart;
+    u32 totalLBAForBhdd;
+#endif
 } apa_device_t;
 
 int apaGetFreeSectors(s32 device, u32 *free, apa_device_t *deviceinfo);

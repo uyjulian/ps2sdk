@@ -201,6 +201,9 @@ int _start(int argc, char **argv)
 	int		cacheSize=3;
 	apa_ps2time_t tm;
 	ata_devinfo_t *hddInfo;
+#ifdef APA_SUPPORT_BHDD
+	int devctl_result = 0;
+#endif
 
 	printStartup();
 
@@ -261,6 +264,23 @@ int _start(int argc, char **argv)
 		{
 				hddDevices[i].status--;
 				hddDevices[i].totalLBA=hddInfo->total_sectors;
+#ifdef APA_SUPPORT_BHDD
+				// Ensure bhdd access is clamped to avoid new partitions overwriting the DVR partitions
+				// TODO: determine DVR partition start without calling devctl on dvr_hdd0:
+				hddDevices[i].totalLBAForBhdd = hddInfo->total_sectors;
+				hddDevices[i].dvrPartitionLBAStart = hddInfo->total_sectors;
+				devctl_result = devctl("dvr_hdd0:", HDIOC_ISLBA48, NULL, 0, NULL, 0);
+				if (devctl_result > 0)
+				{
+					devctl_result = devctl("dvr_hdd0:", HDIOC_GETMAXLBA48, NULL, 0, NULL, 0);
+					if (devctl_result > 0)
+					{
+						hddDevices[i].totalLBAForBhdd = hddInfo->total_sectors;
+						hddDevices[i].totalLBA = devctl_result;
+						hddDevices[i].dvrPartitionLBAStart = devctl_result;
+					}
+				}
+#endif
 				hddDevices[i].partitionMaxSize=apaGetPartitionMax(hddInfo->total_sectors);
 				if(unlockDrive(i)==0)
 					hddDevices[i].status--;
