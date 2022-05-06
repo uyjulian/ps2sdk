@@ -167,6 +167,9 @@ static u8 SBUF[0x20000] __attribute__((aligned((64))));
 /* Export 9 */
 int ata_device_sector_io(int device, void *buf, u32 lba, u32 nsectors, int dir)
 {
+    int ret = ATA_RES_ERR_NODEV;
+    u32 nbytes = nsectors * 512;
+
     if (device == 0)
     {
         // FIXME: Do we need to byteswap for DVRP?
@@ -177,21 +180,26 @@ int ata_device_sector_io(int device, void *buf, u32 lba, u32 nsectors, int dir)
             args->lba = lba;
             args->size = nsectors;
 
-            return devctl("dvr_hdd0:", HDIOC_READSECTOR, args, sizeof(hddAtaTransfer_t), buf, nsectors * 512);
+            ret = devctl("dvr_hdd0:", HDIOC_READSECTOR, args, sizeof(hddAtaTransfer_t), buf, nbytes);
         }
         else if (dir == ATA_DIR_WRITE)
         {
+            if ((sizeof(hddAtaTransfer_t) + nbytes) > sizeof(SBUF))
+            {
+                return ATA_RES_ERR_IO;
+            }
+
             hddAtaTransfer_t *args = (hddAtaTransfer_t *)SBUF;
 
             args->lba = lba;
             args->size = nsectors;
-            memcpy(args->data, buf, nsectors * 512);
+            memcpy(args->data, buf, nbytes);
 
-            return devctl("dvr_hdd0:", HDIOC_WRITESECTOR, args, sizeof(hddAtaTransfer_t) + (nsectors * 512), NULL, 0);
+            ret = devctl("dvr_hdd0:", HDIOC_WRITESECTOR, args, sizeof(hddAtaTransfer_t) + nbytes, NULL, 0);
         }        
     }
 
-    return 0;
+    return ret;
 }
 
 /* Export 10 */
@@ -227,7 +235,7 @@ ata_devinfo_t *ata_get_devinfo(int device)
         memset(atad_devinfo, 0, sizeof(atad_devinfo));
         atad_devinfo[0].exists = 1;
         atad_devinfo[0].has_packet = 0;
-        atad_devinfo[0].total_sectors = devctl("dvr_hdd0:", HDIOC_TOTALSECTOR, NULL, 0, NULL, 0);  
+        atad_devinfo[0].total_sectors = devctl("dvr_hdd0:", HDIOC_GETMAXLBA48, NULL, 0, NULL, 0);
         atad_devinfo[0].security_status = 0;
         ata_devinfo_init = 1;
     }
