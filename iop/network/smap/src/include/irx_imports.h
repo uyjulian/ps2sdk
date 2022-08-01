@@ -4,6 +4,9 @@
 #include <irx.h>
 
 /* Please keep these in alphabetical order!  */
+#ifdef SMAP_ENABLE_UDPBD
+#include <bdm.h>
+#endif
 #include <dev9.h>
 #include <intrman.h>
 #include <loadcore.h>

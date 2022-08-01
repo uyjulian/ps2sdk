@@ -8,9 +8,23 @@
 #ifdef BUILDING_SMAP_PS2IP
 #include <ps2ip.h>
 #endif
+#ifdef SMAP_ENABLE_UDPBD
+#include "udpbd.h"
+#include "ministack.h"
+#endif
 
 static inline int SMAPCommonTxPacketNext(void **data)
 {
+#ifdef SMAP_ENABLE_UDPBD
+	{
+		int buf_size;
+		buf_size = smap_ministack_tx_get(data);
+		if (buf_size != 0)
+		{
+			return buf_size;
+		}
+	}
+#endif
 #if defined(BUILDING_SMAP_NETMAN)
     return NetManTxPacketNext(data);
 #elif defined(BUILDING_SMAP_PS2IP)
@@ -23,6 +37,11 @@ static inline int SMAPCommonTxPacketNext(void **data)
 static inline void SMAPCommonTxPacketDeQ(void **data)
 {
 	(void)data;
+#ifdef SMAP_ENABLE_UDPBD
+	if (smap_ministack_tx_dequeue(data)) {
+		return;
+	}
+#endif
 #if defined(BUILDING_SMAP_NETMAN)
     NetManTxPacketDeQ();
 #elif defined(BUILDING_SMAP_PS2IP)
@@ -53,6 +72,9 @@ static inline void SMapCommonLinkStateUp(struct SmapDriverData *SmapDrivPrivData
     PS2IPLinkStateUp();
 #else
     (void)SmapDrivPrivData;
+#endif
+#ifdef SMAP_ENABLE_UDPBD
+    udpbd_init();
 #endif
 }
 

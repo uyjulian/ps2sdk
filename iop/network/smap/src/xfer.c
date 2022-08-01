@@ -110,6 +110,17 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData)
             } else {
                 void *pbuf, *payload;
 
+#ifdef SMAP_ENABLE_UDPBD
+                // Filter out UDPBD packages:
+                // - skip 14 bytes of ethernet
+                // - skip 20 bytes of IP
+                // - skip  8 bytes of UDP
+                // - skip  2 bytes align
+                SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = pointer + 44;
+                if (SMAP_REG32(SMAP_R_RXFIFO_DATA) == UDPBD_HEADER_MAGIC) {
+                    udpbd_rx(pointer);
+                } else
+#endif
                 if ((pbuf = SMapCommonStackAllocRxPacket(LengthRounded, &payload)) != NULL) {
                     CopyFromFIFO(SmapDrivPrivData->smap_regbase, payload, length, pointer);
                     SMapStackEnQRxPacket(pbuf);
