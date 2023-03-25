@@ -4,7 +4,7 @@
 #include "ministack.h"
 
 
-static uint32_t ip_addr = IP_ADDR(192, 168, 1, 10);
+static uint32_t ip_addr = IP_ADDR(192, 168, 40, 84);
 
 typedef struct {
     uint8_t  mac[6];
