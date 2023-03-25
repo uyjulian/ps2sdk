@@ -4,6 +4,9 @@
 #include <irx.h>
 
 /* Please keep these in alphabetical order!  */
+#ifdef SMAP_ENABLE_UDPBD
+#include <bdm.h>
+#endif
 #include <dev9.h>
 #include <intrman.h>
 #include <loadcore.h>
@@ -17,5 +20,8 @@
 #include <sysclib.h>
 #include <thbase.h>
 #include <thevent.h>
+#ifdef SMAP_ENABLE_UDPBD
+#include <thsemap.h>
+#endif
 
 #endif /* IOP_IRX_IMPORTS_H */

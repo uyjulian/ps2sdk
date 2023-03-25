@@ -224,11 +224,19 @@ static int InitPHY(struct SmapDriverData *SmapDrivPrivData)
 
     RepeatAutoNegoProcess:
         for (AutoNegoRetries = 0; AutoNegoRetries < 3; AutoNegoRetries++) {
+#if 0
             for (i = 0; i < 3; i++) {
                 DelayThread(1000000);
                 if (SmapDrivPrivData->NetDevStopFlag)
                     return 0;
             }
+#else
+            for (i = 0; i < 15; i++) {
+                DelayThread(200000);
+                if (SmapDrivPrivData->NetDevStopFlag)
+                    return 0;
+            }
+#endif
 
             value = _smap_read_phy(SmapDrivPrivData->emac3_regbase, SMAP_DsPHYTER_BMSR);
             if ((value & (SMAP_PHY_BMSR_ANCP | 0x10)) == SMAP_PHY_BMSR_ANCP) { /* 0x30: SMAP_PHY_BMSR_ANCP and Remote fault. */
@@ -257,9 +265,17 @@ static int InitPHY(struct SmapDriverData *SmapDrivPrivData)
                 DEBUG_PRINTF("smap: waiting valid link for 100Mbps Half-Duplex\n");
 
             _smap_write_phy(SmapDrivPrivData->emac3_regbase, SMAP_DsPHYTER_BMCR, SMAP_PHY_BMCR_100M);
+#if 0
             DelayThread(1000000);
             if (SmapDrivPrivData->NetDevStopFlag)
                 return 0;
+#else
+            for (i = 0; i < 5; i++) {
+                DelayThread(200000);
+                if (SmapDrivPrivData->NetDevStopFlag)
+                    return 0;
+            }
+#endif
 
             for (i = 0; !(_smap_read_phy(SmapDrivPrivData->emac3_regbase, SMAP_DsPHYTER_BMSR) & SMAP_PHY_BMSR_LINK); i++) {
                 DelayThread(100000);
@@ -273,10 +289,18 @@ static int InitPHY(struct SmapDriverData *SmapDrivPrivData)
                 if (EnableVerboseOutput)
                     DEBUG_PRINTF("smap: waiting valid link for 10Mbps Half-Duplex\n");
 
+#if 0
                 _smap_write_phy(SmapDrivPrivData->emac3_regbase, SMAP_DsPHYTER_BMCR, SMAP_PHY_BMCR_10M);
                 DelayThread(1000000);
                 if (SmapDrivPrivData->NetDevStopFlag)
                     return 0;
+#else
+                for (i = 0; i < 5; i++) {
+                    DelayThread(200000);
+                    if (SmapDrivPrivData->NetDevStopFlag)
+                        return 0;
+                }
+#endif
 
                 for (i = 0; !(_smap_read_phy(SmapDrivPrivData->emac3_regbase, SMAP_DsPHYTER_BMSR) & SMAP_PHY_BMSR_LINK); i++) {
                     DelayThread(100000);
@@ -1238,6 +1262,8 @@ int smap_init(int argc, char *argv[])
     // Register the interrupt handlers for all SMAP events.
     for (i = 2; i < 7; i++)
         dev9RegisterIntrCb(i, &Dev9IntrCb);
+
+    xfer_init();
 
     dev9RegisterPreDmaCb(1, &Dev9PreDmaCbHandler);
     dev9RegisterPostDmaCb(1, &Dev9PostDmaCbHandler);

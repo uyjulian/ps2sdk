@@ -6,7 +6,7 @@ extern int SMAPCommonTxPacketNext(struct SmapDriverData *SmapDrivPrivData, void 
 extern void SMAPCommonTxPacketDeQ(struct SmapDriverData *SmapDrivPrivData, void **data);
 extern void SMapCommonLinkStateDown(struct SmapDriverData *SmapDrivPrivData);
 extern void SMapCommonLinkStateUp(struct SmapDriverData *SmapDrivPrivData);
-extern void *SMapCommonStackAllocRxPacket(struct SmapDriverData *SmapDrivPrivData, u16 LengthRounded, void **payload);
+extern void *SMapCommonStackAllocRxPacket(struct SmapDriverData *SmapDrivPrivData, u16 LengthRounded, void **payload, u16 pointer);
 extern void SMapStackEnQRxPacket(struct SmapDriverData *SmapDrivPrivData, void *pbuf);
 
 #endif

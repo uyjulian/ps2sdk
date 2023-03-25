@@ -116,7 +116,7 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData)
             } else {
                 void *pbuf, *payload;
 
-                if ((pbuf = SMapCommonStackAllocRxPacket(SmapDrivPrivData, LengthRounded, &payload)) != NULL) {
+                if ((pbuf = SMapCommonStackAllocRxPacket(SmapDrivPrivData, LengthRounded, &payload, pointer)) != NULL) {
                     CopyFromFIFO(SmapDrivPrivData->smap_regbase, payload, length, pointer);
                     SMapStackEnQRxPacket(SmapDrivPrivData, pbuf);
                     NumPacketsReceived++;
@@ -187,4 +187,93 @@ int HandleTxReqs(struct SmapDriverData *SmapDrivPrivData)
         SmapDrivPrivData->packetToSend = NULL;
         SMAPCommonTxPacketDeQ(SmapDrivPrivData, &data);
     }
+}
+
+static int HandleTxReqsFragmented(struct SmapDriverData *SmapDrivPrivData, const void **datas, const u16 *data_sizes, int data_count)
+{
+    USE_SMAP_EMAC3_REGS;
+    USE_SMAP_TX_BD;
+    volatile u8 *smap_regbase;
+    volatile smap_bd_t *BD_ptr;
+    u16 BD_data_ptr;
+    unsigned int TotalSize;
+    unsigned int TotalSizeRounded;
+    int i;
+
+    TotalSize = 0;
+    for (i = 0; i < data_count; i += 1)
+    {
+        TotalSize += data_sizes[i];
+    }
+    TotalSizeRounded = (TotalSize + 3) & ~3;
+
+    while (SmapDrivPrivData->NumPacketsInTx > 0) {
+        u16 ctrl_stat = tx_bd[SmapDrivPrivData->TxDNVBDIndex % SMAP_BD_MAX_ENTRY].ctrl_stat;
+        if (ctrl_stat & SMAP_BD_TX_READY)
+            break;
+        SmapDrivPrivData->TxBufferSpaceAvailable += (tx_bd[SmapDrivPrivData->TxDNVBDIndex & (SMAP_BD_MAX_ENTRY - 1)].length + 3) & ~3;
+        SmapDrivPrivData->TxDNVBDIndex++;
+        SmapDrivPrivData->NumPacketsInTx--;
+    }
+
+    if (SmapDrivPrivData->NumPacketsInTx >= SMAP_BD_MAX_ENTRY)
+        return -1;
+    
+    if (SmapDrivPrivData->TxBufferSpaceAvailable < TotalSizeRounded)
+        return -2;
+
+    smap_regbase = SmapDrivPrivData->smap_regbase;
+
+    BD_data_ptr = SMAP_REG16(SMAP_R_TXFIFO_WR_PTR) + SMAP_TX_BASE;
+    BD_ptr = &tx_bd[SmapDrivPrivData->TxBDIndex % SMAP_BD_MAX_ENTRY];
+
+    for (i = 0; i < data_count; i += 1)
+    {
+        if (data_sizes[i] != 0)
+        {
+            CopyToFIFO(SmapDrivPrivData->smap_regbase, datas[i], data_sizes[i]);
+        }
+    }
+
+    BD_ptr->length = TotalSize;
+    BD_ptr->pointer = BD_data_ptr;
+    SMAP_REG8(SMAP_R_TXFIFO_FRAME_INC) = 0;
+    BD_ptr->ctrl_stat = SMAP_BD_TX_READY | SMAP_BD_TX_GENFCS | SMAP_BD_TX_GENPAD;
+    SmapDrivPrivData->TxBDIndex++;
+    SmapDrivPrivData->NumPacketsInTx++;
+    SmapDrivPrivData->TxBufferSpaceAvailable -= TotalSizeRounded;
+
+    SMAP_EMAC3_SET32(SMAP_R_EMAC3_TxMODE0, SMAP_E3_TX_GNP_0);
+
+    return 1;
+}
+
+static int tx_sema = -1;
+
+void xfer_init(void)
+{
+    iop_sema_t sema_info;
+
+    sema_info.attr    = 0;
+    sema_info.initial = 1; /* Unlocked.  */
+    sema_info.max     = 1;
+    tx_sema = CreateSema(&sema_info);
+}
+
+int smap_transmit(const void **datas, const u16 *data_sizes, int data_count)
+{
+    WaitSema(tx_sema);
+
+    // Add packet to queue (if there's room)
+    while (HandleTxReqsFragmented(&SmapDriverData, datas, data_sizes, data_count) < 0) {
+        // Wait for about 1KiB (at a speed of 100Mbps)
+        // FIXME! We want a blocking write, this works but it's not ideal.
+        // - can the interrupt thread fetch the data?
+        // - use a mutex/semaphore?
+        DelayThread(100);
+    }
+
+    SignalSema(tx_sema);
+
+    return 0;
 }

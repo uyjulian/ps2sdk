@@ -1,6 +1,12 @@
 
 #include "main.h"
 #include "ipstack.h"
+#ifdef SMAP_ENABLE_UDPBD
+#include "udpbd.h"
+#include "ministack.h"
+#endif
+
+static int udpbd_unique_addr;
 
 int SMAPCommonTxPacketNext(struct SmapDriverData *SmapDrivPrivData, void **data)
 {
@@ -99,9 +105,12 @@ void SMapCommonLinkStateUp(struct SmapDriverData *SmapDrivPrivData)
 #else
     (void)SmapDrivPrivData;
 #endif
+#ifdef SMAP_ENABLE_UDPBD
+    udpbd_init();
+#endif
 }
 
-void *SMapCommonStackAllocRxPacket(struct SmapDriverData *SmapDrivPrivData, u16 LengthRounded, void **payload)
+void *SMapCommonStackAllocRxPacket(struct SmapDriverData *SmapDrivPrivData, u16 LengthRounded, void **payload, u16 pointer)
 {
     void *pbuf;
 #ifdef BUILDING_SMAP_MODULAR
@@ -117,6 +126,16 @@ void *SMapCommonStackAllocRxPacket(struct SmapDriverData *SmapDrivPrivData, u16 
                 return res;
             }
         }
+    }
+#endif
+#ifdef SMAP_ENABLE_UDPBD
+    if (handle_rx_eth(pointer) >= 0)
+    {
+        if (payload != NULL) {
+            *payload = NULL;
+        }
+        pbuf = &udpbd_unique_addr;
+        return pbuf;
     }
 #endif
 #if defined(BUILDING_SMAP_NETMAN)
@@ -152,6 +171,12 @@ void SMapStackEnQRxPacket(struct SmapDriverData *SmapDrivPrivData, void *pbuf)
                 return;
             }
         }
+    }
+#endif
+#ifdef SMAP_ENABLE_UDPBD
+    if (pbuf == &udpbd_unique_addr)
+    {
+        return;
     }
 #endif
 #if defined(BUILDING_SMAP_NETMAN)

@@ -1,3 +1,11 @@
+
+#ifdef SMAP_ENABLE_UDPBD
+bdm_IMPORTS_start
+I_bdm_connect_bd
+I_bdm_disconnect_bd
+bdm_IMPORTS_end
+#endif
+
 thbase_IMPORTS_start
 I_CreateThread
 I_StartThread
@@ -74,6 +82,14 @@ I_SetEventFlag
 I_iSetEventFlag
 I_DeleteEventFlag
 thevent_IMPORTS_end
+
+#ifdef SMAP_ENABLE_UDPBD
+thsemap_IMPORTS_start
+I_CreateSema
+I_SignalSema
+I_WaitSema
+thsemap_IMPORTS_end
+#endif
 
 dev9_IMPORTS_start
 I_dev9IntrEnable

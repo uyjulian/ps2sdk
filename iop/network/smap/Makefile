@@ -22,6 +22,9 @@ SMAP_MODULAR ?= 0
 # This will avoid the IOP locking up due to the large amount of interrupts.
 SMAP_RX_PACKETS_POLLING_MODE ?= 1
 
+# UDPBD support.
+SMAP_UDPBD ?= 1
+
 IOP_PREFER_GPOPT = 16384
 IOP_CFLAGS += -mno-check-zero-division
 
@@ -46,9 +49,18 @@ ifneq (x$(SMAP_RX_PACKETS_POLLING_MODE),x0)
 IOP_CFLAGS += -DSMAP_RX_PACKETS_POLLING_MODE=1
 endif
 
+ifneq (x$(SMAP_UDPBD),x0)
+IOP_CFLAGS += -DSMAP_ENABLE_UDPBD=1
+IOP_INCS += -I$(PS2SDKSRC)/iop/fs/bdm/include
+endif
+
 IOP_INCS += -I$(PS2SDKSRC)/iop/dev9/dev9/include
 
 IOP_OBJS = ipstack.o main.o smap.o xfer.o imports.o exports.o
+
+ifneq (x$(SMAP_UDPBD),x0)
+IOP_OBJS += ministack.o udpbd.o
+endif
 
 include $(PS2SDKSRC)/Defs.make
 include $(PS2SDKSRC)/iop/Rules.bin.make
