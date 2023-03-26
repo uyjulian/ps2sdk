@@ -1047,6 +1047,10 @@ static inline int SetupNetDev(void)
     }
 #endif
 
+#if !defined(BUILDING_SMAP_NETMAN) && !defined(BUILDING_SMAP_PS2IP)
+    SetEventFlag(SmapDriverData.Dev9IntrEventFlag, SMAP_EVENT_START);
+#endif
+
     return 0;
 }
 
@@ -1108,7 +1112,7 @@ int smap_init(int argc, char *argv[])
     USE_SMAP_RX_BD;
 
     checksum16 = 0;
-#ifdef BUILDING_SMAP_NETMAN
+#ifndef BUILDING_SMAP_PS2IP
     argc--;
     argv++;
 #endif

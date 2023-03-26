@@ -136,7 +136,7 @@ void eth_packet_init(eth_packet_t *pkt, uint16_t type);
  * @param datasize Size separate payload in bytes
  * @return 0 on succes, -1 on failure
  */
-int eth_packet_send_ll(eth_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize);
+int eth_packet_send_ll(eth_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize, int blocking);
 
 /**
  * Send ethernet packet
@@ -144,9 +144,9 @@ int eth_packet_send_ll(eth_packet_t *pkt, uint16_t pktdatasize, const void *data
  * @param size Size of the payload in bytes
  * @return 0 on succes, -1 on failure
  */
-static inline int eth_packet_send(eth_packet_t *pkt, uint16_t size)
+static inline int eth_packet_send(eth_packet_t *pkt, uint16_t size, int blocking)
 {
-    return eth_packet_send_ll(pkt, size, NULL, 0);
+    return eth_packet_send_ll(pkt, size, NULL, 0, blocking);
 }
 
 /**
@@ -164,7 +164,7 @@ void ip_packet_init(ip_packet_t *pkt, uint32_t ip_dst);
  * @param datasize Size separate payload in bytes
  * @return 0 on succes, -1 on failure
  */
-int ip_packet_send_ll(ip_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize);
+int ip_packet_send_ll(ip_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize, int blocking);
 
 /**
  * Send IP packet
@@ -172,9 +172,9 @@ int ip_packet_send_ll(ip_packet_t *pkt, uint16_t pktdatasize, const void *data, 
  * @param size Size of the payload in bytes
  * @return 0 on succes, -1 on failure
  */
-static inline int ip_packet_send(ip_packet_t *header, uint16_t size)
+static inline int ip_packet_send(ip_packet_t *header, uint16_t size, int blocking)
 {
-    return ip_packet_send_ll(header, size, NULL, 0);
+    return ip_packet_send_ll(header, size, NULL, 0, blocking);
 }
 
 struct udp_socket;
@@ -212,7 +212,7 @@ void udp_packet_init(udp_packet_t *pkt, uint32_t ip_dst, uint16_t port_dst);
  * @param datasize Size separate payload in bytes
  * @return 0 on succes, -1 on failure
  */
-int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize);
+int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize, int blocking);
 
 /**
  * Send UDP packet
@@ -221,9 +221,9 @@ int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdata
  * @param size Size of the payload in bytes
  * @return 0 on succes, -1 on failure
  */
-static inline int udp_packet_send(udp_socket_t *socket, udp_packet_t *pkt, uint16_t size)
+static inline int udp_packet_send(udp_socket_t *socket, udp_packet_t *pkt, uint16_t size, int blocking)
 {
-    return udp_packet_send_ll(socket, pkt, size, NULL, 0);
+    return udp_packet_send_ll(socket, pkt, size, NULL, 0, blocking);
 }
 
 /**

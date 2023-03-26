@@ -268,7 +268,7 @@ void PS2IPLinkStateDown(void)
 }
 #endif
 
-#ifdef BUILDING_SMAP_NETMAN
+#ifndef BUILDING_SMAP_PS2IP
 // While the header of the export table is small, the large size of the export table (as a whole) places it in data instead of sdata.
 extern struct irx_export_table _exp_smap __attribute__((section("data")));
 #endif
@@ -286,11 +286,11 @@ int _start(int argc, char *argv[])
     int numArgs;
     char **pArgv;
 #endif
-#ifdef BUILDING_SMAP_NETMAN
+#ifndef BUILDING_SMAP_PS2IP
     int result;
 #endif
 
-#ifdef BUILDING_SMAP_NETMAN
+#ifndef BUILDING_SMAP_PS2IP
     if (RegisterLibraryEntries(&_exp_smap) != 0) {
         DEBUG_PRINTF("smap: module already loaded\n");
         return MODULE_NO_RESIDENT_END;
@@ -371,6 +371,14 @@ int _start(int argc, char *argv[])
     printf("\n");
 
     // Initialized ok.
+#endif
+
+#if !defined(BUILDING_SMAP_NETMAN) && !defined(BUILDING_SMAP_PS2IP)
+    if ((result = smap_init(argc, argv)) < 0) {
+        DEBUG_PRINTF("smap: smap_init -> %d\n", result);
+        ReleaseLibraryEntries(&_exp_smap);
+        return MODULE_NO_RESIDENT_END;
+    }
 #endif
 
     return MODULE_RESIDENT_END;

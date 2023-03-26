@@ -1,7 +1,7 @@
 
 void _retonly(){};
 
-#ifdef BUILDING_SMAP_NETMAN
+#ifndef BUILDING_SMAP_PS2IP
 DECLARE_EXPORT_TABLE(smap, 1, 1)
 	DECLARE_EXPORT(_retonly)
 	DECLARE_EXPORT(_retonly)

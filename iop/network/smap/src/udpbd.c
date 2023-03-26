@@ -103,7 +103,7 @@ static int _udpbd_read(struct block_device *bd, uint32_t sector, void *buffer, u
     pkt.rw.sector_count = count;
     pkt.rw.sector_nr = sector;
 
-    if (udp_packet_send(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_RWRequest)) < 0)
+    if (udp_packet_send(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_RWRequest), 0) < 0)
         return -1;
 
     // Set alarm in case something hangs
@@ -205,7 +205,7 @@ static int udpbd_write(struct block_device *bd, uint32_t sector, const void *buf
         pkt.rw.sector_count = count;
         pkt.rw.sector_nr = sector;
 
-        if (udp_packet_send(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_RWRequest)) < 0) {
+        if (udp_packet_send(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_RWRequest), 1) < 0) {
             M_DEBUG("%s(%d, %d): ERROR\n", __func__, sector, count);
             return -1;
         }
@@ -224,7 +224,7 @@ static int udpbd_write(struct block_device *bd, uint32_t sector, const void *buf
 
         while (count_left--) {
             pkt.hdr.cmdpkt++;
-            if (udp_packet_send_ll(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_Header) + sizeof(union block_type), buffer, 512) < 0) {
+            if (udp_packet_send_ll(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_Header) + sizeof(union block_type), buffer, 512, 1) < 0) {
                 M_DEBUG("%s(%d, %d): ERROR\n", __func__, sector, count);
                 return -1;
             }
@@ -392,12 +392,14 @@ static int udpbd_isr(udp_socket_t *socket, uint16_t pointer, void *arg)
     return 0;
 }
 
+// Avoid using stack because we need to keep this around while it is transmitting
+static udpbd_pkt_t udpbd_init_packet;
+
 //
 // Public functions
 //
 int udpbd_init(void)
 {
-    udpbd_pkt_t pkt;
     iop_event_t EventFlagData;
 
     M_DEBUG("%s\n", __func__);
@@ -422,11 +424,11 @@ int udpbd_init(void)
     udpbd_socket = udp_bind(UDPBD_PORT, udpbd_isr, NULL);
 
     // Broadcast request for block device information
-    udp_packet_init((udp_packet_t *)&pkt, IP_ADDR(255,255,255,255), UDPBD_PORT);
-    pkt.bd.cmd    = UDPBD_CMD_INFO;
-    pkt.bd.cmdid  = g_cmdid;
-    pkt.bd.cmdpkt = 0;
-    udp_packet_send(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_Header));
+    udp_packet_init((udp_packet_t *)&udpbd_init_packet, IP_ADDR(255,255,255,255), UDPBD_PORT);
+    udpbd_init_packet.bd.cmd    = UDPBD_CMD_INFO;
+    udpbd_init_packet.bd.cmdid  = g_cmdid;
+    udpbd_init_packet.bd.cmdpkt = 0;
+    udp_packet_send(udpbd_socket, (udp_packet_t *)&udpbd_init_packet, sizeof(struct SUDPBDv2_Header), 0);
 
     return 0;
 }

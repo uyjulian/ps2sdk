@@ -75,45 +75,7 @@ static uint16_t ip_checksum(ip_header_t *ip)
     return ~((uint16_t)csum & 0xffff);
 }
 
-static void *g_ministack_buffer = NULL;
-static size_t g_ministack_buffer_size = 0;
-static int g_ministack_buffer_queued = 0;
-
-int smap_ministack_tx(void *buf, size_t size)
-{
-    if (g_ministack_buffer == NULL && size != 0) {
-        g_ministack_buffer = buf;
-        g_ministack_buffer_size = size;
-        SMAPXmit();
-    }
-
-    return 0;
-}
-
-int smap_ministack_tx_get(void **data)
-{
-    if (g_ministack_buffer != NULL && g_ministack_buffer_queued == 0) {
-        *data = g_ministack_buffer;
-        g_ministack_buffer_queued = 1;
-        return g_ministack_buffer_size;
-    } else {
-        return 0;
-    }
-}
-
-int smap_ministack_tx_dequeue(void **data)
-{
-    if (data != NULL && *data == g_ministack_buffer && g_ministack_buffer_queued == 1) {
-        g_ministack_buffer = NULL;
-        g_ministack_buffer_size = 0;
-        g_ministack_buffer_queued = 0;
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-int eth_packet_send_ll(eth_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize)
+int eth_packet_send_ll(eth_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize, int blocking)
 {
     const void *datas[2];
     uint16_t data_sizes[2];
@@ -122,16 +84,16 @@ int eth_packet_send_ll(eth_packet_t *pkt, uint16_t pktdatasize, const void *data
     data_sizes[0] = sizeof(eth_header_t) + pktdatasize;
     datas[1] = data;
     data_sizes[1] = datasize;
-    return smap_transmit(datas, data_sizes, sizeof(datas) / sizeof(datas[0]));
+    return smap_transmit(datas, data_sizes, sizeof(datas) / sizeof(datas[0]), blocking);
 }
 
-int ip_packet_send_ll(ip_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize)
+int ip_packet_send_ll(ip_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize, int blocking)
 {
     pkt->ip.len  = htons(sizeof(ip_header_t) + pktdatasize + datasize);
     pkt->ip.csum = 0;
     pkt->ip.csum = ip_checksum(&pkt->ip);
 
-    return eth_packet_send_ll((eth_packet_t *)pkt, sizeof(ip_header_t) + pktdatasize, data, datasize);
+    return eth_packet_send_ll((eth_packet_t *)pkt, sizeof(ip_header_t) + pktdatasize, data, datasize, blocking);
 }
 
 #define UDP_MAX_PORTS 4
@@ -152,13 +114,13 @@ udp_socket_t *udp_bind(uint16_t port_src, udp_port_handler handler, void *handle
     return NULL;
 }
 
-int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize)
+int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize, int blocking)
 {
     pkt->udp.port_src = socket->port_src;
     pkt->udp.len  = htons(sizeof(udp_header_t) + pktdatasize + datasize);
     pkt->udp.csum = 0; // not needed
 
-    return ip_packet_send_ll((ip_packet_t *)pkt, sizeof(udp_header_t) + pktdatasize, data, datasize);
+    return ip_packet_send_ll((ip_packet_t *)pkt, sizeof(udp_header_t) + pktdatasize, data, datasize, blocking);
 }
 
 int arp_add_entry(uint32_t ip, uint8_t mac[6])
@@ -239,7 +201,7 @@ static inline int handle_rx_arp(uint16_t pointer)
         reply.arp.target_ip     = req.arp.sender_ip;
         datas[0] = &reply;
         data_sizes[0] = 0x2A;
-        smap_transmit(datas, data_sizes, sizeof(datas) / sizeof(datas[0]));
+        smap_transmit(datas, data_sizes, sizeof(datas) / sizeof(datas[0]), 0);
     }
 
     return -1;

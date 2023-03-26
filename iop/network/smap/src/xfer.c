@@ -139,8 +139,8 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData)
 
 static int tx_sema = -1;
 static int tx_completion_ef = -1;
-static const void **tx_datas = NULL;
-static const u16 *tx_data_sizes = NULL;
+static const void *tx_datas[2];
+static u16 tx_data_sizes[2];
 static int tx_data_count = 0;
 
 void xfer_init(void)
@@ -227,9 +227,6 @@ int HandleTxReqs(struct SmapDriverData *SmapDrivPrivData)
                             }
                         }
                         my_data_sent = 1;
-                        tx_datas = NULL;
-                        tx_data_sizes = NULL;
-                        tx_data_count = 0;
                     }
                     else
                     {
@@ -250,29 +247,46 @@ int HandleTxReqs(struct SmapDriverData *SmapDrivPrivData)
         } else
             break; // Queue full
 
-        SmapDrivPrivData->packetToSend = NULL;
-        SMAPCommonTxPacketDeQ(SmapDrivPrivData, &data);
+        if (my_data_count != 0 && my_data_sent != 1)
+        {
+            SmapDrivPrivData->packetToSend = NULL;
+            SMAPCommonTxPacketDeQ(SmapDrivPrivData, &data);
+        }
     }
     if (my_data_sent)
     {
-        tx_datas = NULL;
-        tx_data_sizes = NULL;
         tx_data_count = 0;
         SetEventFlag(tx_completion_ef, 1);
     }
     return result;
 }
 
-int smap_transmit(const void **datas, const u16 *data_sizes, int data_count)
+int smap_transmit(const void **datas, const u16 *data_sizes, int data_count, int blocking)
 {
     WaitSema(tx_sema);
 
-    tx_datas = datas;
-    tx_data_sizes = data_sizes;
-    tx_data_count = data_count;
+    // Wait if something is already in flight
+    if (tx_data_count != 0 && blocking)
+    {
+        u32 EFBits;
+
+        // wait for done...
+        WaitEventFlag(tx_completion_ef, 1, WEF_OR | WEF_CLEAR, &EFBits);
+    }
+
+    {
+        int i;
+        for (i = 0; i < data_count; i += 1)
+        {
+            tx_datas[i] = datas[i];
+            tx_data_sizes[i] = data_sizes[i];
+        }
+        tx_data_count = data_count;
+    }
 
     SMAPXmit();
 
+    if (blocking)
     {
         u32 EFBits;
 
