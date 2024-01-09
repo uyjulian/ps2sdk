@@ -434,16 +434,22 @@ int mcman_eraseblock(int port, int slot, int block, void **pagebuf, void *eccbuf
 	register int retries, size, ecc_offset;
 	int page;
 #if !defined(BUILDING_XFROMMAN) && !defined(BUILDING_VMCMAN)
+	int page_data;
+#endif
+	u16 blocksize;
+#if !defined(BUILDING_XFROMMAN) && !defined(BUILDING_VMCMAN)
 	u8 *p = mcman_sio2packet.out_dma.addr;
 #endif
 	void *p_ecc;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 
-	page = block * mcdi->blocksize;
+	blocksize = le16toh(mcdi->blocksize);
+	page = block * blocksize;
 
 #if !defined(BUILDING_XFROMMAN) && !defined(BUILDING_VMCMAN)
+	page_data = htole32(page);
 	sio2packet_add(port, slot, 0xffffffff, NULL);
-	sio2packet_add(port, slot, 0x02, (u8 *)&page);
+	sio2packet_add(port, slot, 0x02, (u8 *)&page_data);
 	sio2packet_add(port, slot, 0x0d, NULL);
 	sio2packet_add(port, slot, 0xfffffffe, NULL);
 #endif
@@ -471,17 +477,20 @@ int mcman_eraseblock(int port, int slot, int block, void **pagebuf, void *eccbuf
 		return sceMcResChangedCard;
 
 	if (pagebuf && eccbuf) { // This part leave the first ecc byte of each block page in eccbuf
+		u16 pagesize;
+
 		mcman_wmemset(eccbuf, 32, 0);
 
 		page = 0;
-		while (page < mcdi->blocksize) {
-			ecc_offset = page * mcdi->pagesize;
+		pagesize = le16toh(mcdi->pagesize);
+		while (page < blocksize) {
+			ecc_offset = page * pagesize;
 			if (ecc_offset < 0)
 				ecc_offset += 0x1f;
 			ecc_offset = ecc_offset >> 5;
 			p_ecc = (void *)((u8 *)eccbuf + ecc_offset);
 			size = 0;
-			while (size < mcdi->pagesize)	{
+			while (size < pagesize)	{
 				if (*pagebuf)
 					McDataChecksum((void *)((u8 *)(*pagebuf) + size), p_ecc);
 				size += 128;
@@ -520,9 +529,12 @@ int McWritePage(int port, int slot, int page, void *pagebuf, void *eccbuf) // Ex
 {
 	register int retries;
 #if !defined(BUILDING_XFROMMAN) && !defined(BUILDING_VMCMAN)
+	int page_data;
 	register int index, count;
 	u8 *p_pagebuf = (u8 *)pagebuf;
 	u8 *p = mcman_sio2packet.out_dma.addr;
+	u16 pagesize;
+	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 #endif
 
 #ifdef BUILDING_XFROMMAN
@@ -534,7 +546,9 @@ int McWritePage(int port, int slot, int page, void *pagebuf, void *eccbuf) // Ex
 #endif
 
 #if !defined(BUILDING_XFROMMAN) && !defined(BUILDING_VMCMAN)
-	count = (mcman_devinfos[port][slot].pagesize + 127) >> 7;
+	page_data = htole32(page);
+	pagesize = le16toh(mcdi->pagesize);
+	count = (pagesize + 127) >> 7;
 #endif
 
 	retries = 0;
@@ -545,7 +559,7 @@ int McWritePage(int port, int slot, int page, void *pagebuf, void *eccbuf) // Ex
 			mcman_cardchanged(port, slot);
 
  		sio2packet_add(port, slot, 0xffffffff, NULL);
- 		sio2packet_add(port, slot, 0x03, (u8 *)&page);
+ 		sio2packet_add(port, slot, 0x03, (u8 *)&page_data);
 
  		index = 0;
  		while (index < count) {
@@ -553,7 +567,7 @@ int McWritePage(int port, int slot, int page, void *pagebuf, void *eccbuf) // Ex
 			index++;
  		}
 
-   		if (mcman_devinfos[port][slot].cardflags & CF_USE_ECC) {
+   		if (mcdi->cardflags & CF_USE_ECC) {
      		// if memcard have ECC support
    			sio2packet_add(port, slot, 0x0e, eccbuf);
 		}
@@ -574,7 +588,7 @@ int McWritePage(int port, int slot, int page, void *pagebuf, void *eccbuf) // Ex
 	   	if (index < count)
 	   		continue;
 
-	   	if (mcman_devinfos[port][slot].cardflags & CF_USE_ECC) {
+	   	if (mcdi->cardflags & CF_USE_ECC) {
      		// if memcard have ECC support
 			index++;
      		if (p[5 + ((index + (index << 3)) << 4) + mcman_sparesize(port, slot)] != 0x5a)
@@ -615,12 +629,16 @@ int mcman_readpage(int port, int slot, int page, void *buf, void *eccbuf)
 {
 #if !defined(BUILDING_XFROMMAN) && !defined(BUILDING_VMCMAN)
 	register int index, count, retries, r, i;
+	int page_data;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 	u8 *pbuf = (u8 *)buf;
 	u8 *pecc = (u8 *)eccbuf;
 	u8 *p = mcman_sio2packet.out_dma.addr;
+	u16 pagesize;
 
-	count = (mcdi->pagesize + 127) >> 7;
+	page_data = htole32(page);
+	pagesize = le16toh(mcdi->pagesize);
+	count = (pagesize + 127) >> 7;
 
 	retries = 0;
 
@@ -629,7 +647,7 @@ int mcman_readpage(int port, int slot, int page, void *buf, void *eccbuf)
 			mcman_cardchanged(port, slot);
 
  		sio2packet_add(port, slot, 0xffffffff, NULL);
- 		sio2packet_add(port, slot, 0x04, (u8 *)&page);
+ 		sio2packet_add(port, slot, 0x04, (u8 *)&page_data);
 
  		if (count > 0) {
 	 		index = 0;
@@ -734,9 +752,9 @@ int McGetCardSpec(int port, int slot, s16 *pagesize, u16 *blocksize, int *cardsi
 	if (retries >= 5)
 		return sceMcResChangedCard;
 
-	*pagesize = (p[4] << 8) + p[3];
-	*blocksize = (p[6] << 8) + p[5];
-	*cardsize = (p[8] << 8) + p[7] + (p[9] << 16) + (p[10] << 24);
+	*pagesize = le16toh((p[4] << 8) + p[3]);
+	*blocksize = le16toh((p[6] << 8) + p[5]);
+	*cardsize = le32toh((p[8] << 8) + p[7] + (p[9] << 16) + (p[10] << 24));
 	*flags = p[2];
 #elif defined(BUILDING_VMCMAN)
 	if (mcman_iomanx_backing_getcardspec(port, slot, pagesize, blocksize, cardsize, flags))
@@ -992,9 +1010,9 @@ int mcman_probePS1Card2(int port, int slot)
 		return -12;
 
 	if (mcman_sio2outbufs_PS1PDA[1] == 0) {
-		if (mcdi->cardform > 0)
+		if ((s32)(le32toh(mcdi->cardform)) > 0)
 			return sceMcResSucceed;
-		else if (mcdi->cardform < 0)
+		else if ((s32)(le32toh(mcdi->cardform)) < 0)
 			return sceMcResNoFormat;
 	}
 	else if (mcman_sio2outbufs_PS1PDA[1] != 8) {
@@ -1052,7 +1070,7 @@ int mcman_probePS1Card(int port, int slot)
 		return -11;
 
 	if (mcman_sio2outbufs_PS1PDA[1] == 0) {
-		if (mcdi->cardform != 0)
+		if (le32toh(mcdi->cardform) != 0)
 			return sceMcResSucceed;
 		else
 			return sceMcResNoFormat;

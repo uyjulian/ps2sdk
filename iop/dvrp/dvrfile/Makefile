@@ -10,6 +10,8 @@ IOP_INCS += -I$(PS2SDKSRC)/iop/dev9/pvrdrv/include
 IOP_CFLAGS += -DIOMANX_OLD_NAME_COMPATIBILITY=0 -DIOMANX_OLD_NAME_ADDDELDRV=0
 IOP_OBJS = dvrfile.o imports.o
 
+IOP_LIBS += -lgcc
+
 include $(PS2SDKSRC)/Defs.make
 include $(PS2SDKSRC)/iop/Rules.bin.make
 include $(PS2SDKSRC)/iop/Rules.make

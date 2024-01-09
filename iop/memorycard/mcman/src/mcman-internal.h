@@ -39,6 +39,7 @@
 #else
 #include <time.h>
 #endif
+#include <endian.h>
 #include <stdio.h>
 #include <errno.h>
 #ifndef BUILDING_VMCMAN

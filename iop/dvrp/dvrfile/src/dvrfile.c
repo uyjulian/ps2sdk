@@ -17,6 +17,7 @@
 #include "thsemap.h"
 #include "speedregs.h"
 #include "errno.h"
+#include "endian.h"
 
 #define MODNAME "DVRFILE"
 #ifdef DEBUG
@@ -56,15 +57,6 @@ extern int dvrf_df_umount(iomanX_iop_file_t *f, const char *fsname);
 extern int dvrf_df_write(iomanX_iop_file_t *f, void *ptr, int size);
 extern void CopySceStat(iox_stat_t *stat, u8 *dvrp_stat);
 
-static inline u32 bswap32(u32 val)
-{
-#if 0
-    return __builtin_bswap32(val);
-#else
-    return (val << 24) + ((val & 0xFF00) << 8) + ((val >> 8) & 0xFF00) + ((val >> 24) & 0xFF);
-#endif
-}
-
 static int dvrf_translator_df_chdir(iomanX_iop_file_t *f, const char *name)
 {
     char translated_name[1040];
@@ -103,7 +95,7 @@ static int dvrf_translator_df_format(iomanX_iop_file_t *f, const char *dev, cons
 
     if (strcmp(f->device->name, "dvr_hdd") != 0) {
         sprintf(translated_dev, "%s:%s", f->device->name, dev);
-        *(u32 *)arg = bswap32(*(u32 *)arg);
+        *(u32 *)arg = htobe32(*(u32 *)arg);
     } else {
         sprintf(translated_dev, "%s%d:%s", f->device->name, f->unit, dev);
     }
@@ -505,10 +497,10 @@ int dvrf_df_devctl(iomanX_iop_file_t *f, const char *name, int cmd, void *arg, u
         goto finish;
     }
     argoffset = arglen + 16;
-    SBUF[0] = bswap32(argoffset);
-    SBUF[1] = bswap32((u32)cmd);
-    SBUF[2] = bswap32(buflen);
-    SBUF[3] = bswap32(arglen);
+    SBUF[0] = htobe32(argoffset);
+    SBUF[1] = htobe32((u32)cmd);
+    SBUF[2] = htobe32(buflen);
+    SBUF[3] = htobe32(arglen);
     memcpy(&SBUF[4], arg, arglen);
     strcpy((char *)SBUF + argoffset, name);
     cmdack.input_buffer_length = argoffset + strlen(name) + 1;
@@ -571,16 +563,16 @@ int dvrf_df_dread(iomanX_iop_file_t *f, iox_dirent_t *buf)
         goto finish;
     }
     memcpy(buf, RBUF, sizeof(*buf));
-    buf->stat.mode = bswap32(buf->stat.mode);
-    buf->stat.attr = bswap32(buf->stat.attr);
-    buf->stat.size = bswap32(buf->stat.size);
-    buf->stat.hisize = bswap32(buf->stat.hisize);
-    buf->stat.private_0 = bswap32(buf->stat.private_0);
-    buf->stat.private_1 = bswap32(buf->stat.private_1);
-    buf->stat.private_2 = bswap32(buf->stat.private_2);
-    buf->stat.private_3 = bswap32(buf->stat.private_3);
-    buf->stat.private_4 = bswap32(buf->stat.private_4);
-    buf->stat.private_5 = bswap32(buf->stat.private_5);
+    buf->stat.mode = be32toh(buf->stat.mode);
+    buf->stat.attr = be32toh(buf->stat.attr);
+    buf->stat.size = be32toh(buf->stat.size);
+    buf->stat.hisize = be32toh(buf->stat.hisize);
+    buf->stat.private_0 = be32toh(buf->stat.private_0);
+    buf->stat.private_1 = be32toh(buf->stat.private_1);
+    buf->stat.private_2 = be32toh(buf->stat.private_2);
+    buf->stat.private_3 = be32toh(buf->stat.private_3);
+    buf->stat.private_4 = be32toh(buf->stat.private_4);
+    buf->stat.private_5 = be32toh(buf->stat.private_5);
     u8 tmp;
     tmp = buf->stat.ctime[6];
     buf->stat.ctime[6] = buf->stat.ctime[7];
@@ -612,9 +604,9 @@ int dvrf_df_format(iomanX_iop_file_t *f, const char *dev, const char *blockdev, 
     blockdev_len = strlen(blockdev);
     dev_ = dev;
     arg_offset = dev_len + blockdev_len + 1;
-    SBUF[1] = bswap32(arg_offset);
-    SBUF[0] = bswap32(dev_len);
-    SBUF[2] = bswap32(arglen);
+    SBUF[1] = htobe32(arg_offset);
+    SBUF[0] = htobe32(dev_len);
+    SBUF[2] = htobe32(arglen);
     strcpy((char *)&SBUF[3], dev_);
     strcpy((char *)SBUF + dev_len, blockdev);
     memcpy((char *)SBUF + arg_offset, arg, arglen);
@@ -688,10 +680,10 @@ int dvrf_df_ioctl2(iomanX_iop_file_t *f, int cmd, void *arg, unsigned int arglen
 
     WaitSema(sema_id);
     dvrp_fd = (int)f->privdata;
-    SBUF[1] = bswap32(cmd);
-    SBUF[2] = bswap32(buflen);
-    SBUF[0] = bswap32(dvrp_fd);
-    SBUF[3] = bswap32(arglen);
+    SBUF[1] = htobe32(cmd);
+    SBUF[2] = htobe32(buflen);
+    SBUF[0] = htobe32(dvrp_fd);
+    SBUF[3] = htobe32(arglen);
     memcpy(((u8 *)SBUF) + 0x10, arg, arglen);
     cmdack.command = 0x110B;
     cmdack.input_buffer = SBUF;
@@ -774,7 +766,7 @@ int dvrf_df_mkdir(iomanX_iop_file_t *f, const char *path, int mode)
     (void)f;
 
     WaitSema(sema_id);
-    SBUF[0] = bswap32(mode);
+    SBUF[0] = htobe32(mode);
     strcpy((char *)&SBUF[1], path);
     cmdack.command = 0x110E;
     cmdack.input_word_count = 0;
@@ -801,14 +793,14 @@ int dvrf_df_mount(iomanX_iop_file_t *f, const char *fsname, const char *devname,
     (void)f;
 
     WaitSema(sema_id);
-    SBUF[0] = bswap32(flag);
+    SBUF[0] = htobe32(flag);
     fsname_len = strlen(fsname) + 17;
     devname_len = strlen(devname);
     fsname_ = fsname;
     arg_offs = fsname_len + devname_len + 1;
-    SBUF[2] = bswap32(arg_offs);
-    SBUF[1] = bswap32(fsname_len);
-    SBUF[3] = bswap32(arglen);
+    SBUF[2] = htobe32(arg_offs);
+    SBUF[1] = htobe32(fsname_len);
+    SBUF[3] = htobe32(arglen);
     strcpy((char *)&SBUF[4], fsname_);
     strcpy((char *)SBUF + fsname_len, devname);
     memcpy(((u8 *)SBUF) + arg_offs, arg, arglen);
@@ -834,7 +826,7 @@ int dvrf_df_open(iomanX_iop_file_t *f, const char *name, int flags, int mode)
 
     mode_ = mode;
     WaitSema(sema_id);
-    SBUF[0] = bswap32(flags);
+    SBUF[0] = htobe32(flags);
     mode_ = (mode_ << 8) + (mode_ >> 8);
     memcpy(&SBUF[1], &mode_, sizeof(mode_));
     strcpy((char *)&SBUF[1] + 2, name);
@@ -929,7 +921,7 @@ int dvrf_df_readlink(iomanX_iop_file_t *f, const char *path, char *buf, unsigned
     (void)f;
 
     WaitSema(sema_id);
-    SBUF[0] = bswap32(buflen);
+    SBUF[0] = htobe32(buflen);
     strcpy((char *)&SBUF[1], path);
     cmdack.input_buffer_length = strlen(path) + 5;
     cmdack.command = 0x1112;
@@ -982,7 +974,7 @@ int dvrf_df_rename(iomanX_iop_file_t *f, const char *old, const char *new_1)
     old_strlen = strlen(old);
     old_ = old;
     new_offs = old_strlen + 5;
-    SBUF[0] = bswap32(new_offs);
+    SBUF[0] = htobe32(new_offs);
     strcpy((char *)&SBUF[1], old_);
     strcpy((char *)SBUF + new_offs, new_1);
     cmdack.command = 0x1114;
@@ -1034,7 +1026,7 @@ int dvrf_df_symlink(iomanX_iop_file_t *f, const char *old, const char *new_1)
     old_len = strlen(old);
     old_ = old;
     new_offs = old_len + 5;
-    SBUF[0] = bswap32(new_offs);
+    SBUF[0] = htobe32(new_offs);
     strcpy((char *)&SBUF[1], old_);
     strcpy((char *)SBUF + new_offs, new_1);
     cmdack.command = 0x1116;
@@ -1058,7 +1050,7 @@ int dvrf_df_sync(iomanX_iop_file_t *f, const char *dev, int flag)
     (void)f;
 
     WaitSema(sema_id);
-    SBUF[0] = bswap32(flag);
+    SBUF[0] = htobe32(flag);
     strcpy((char *)&SBUF[1], dev);
     cmdack.command = 0x1117;
     cmdack.input_word_count = 0;
@@ -1156,9 +1148,9 @@ finish:
 
 void CopySceStat(iox_stat_t *stat, u8 *dvrp_stat)
 {
-    stat->mode = bswap32(((u32 *)dvrp_stat)[0]);
-    stat->attr = bswap32(((u32 *)dvrp_stat)[1]);
-    stat->size = bswap32(((u32 *)dvrp_stat)[2]);
+    stat->mode = be32toh(((u32 *)dvrp_stat)[0]);
+    stat->attr = be32toh(((u32 *)dvrp_stat)[1]);
+    stat->size = be32toh(((u32 *)dvrp_stat)[2]);
     memcpy(stat->ctime, &((u32 *)dvrp_stat)[3], 6);
     stat->ctime[6] = ((u8 *)dvrp_stat)[19];
     stat->ctime[7] = ((u8 *)dvrp_stat)[18];
@@ -1168,11 +1160,11 @@ void CopySceStat(iox_stat_t *stat, u8 *dvrp_stat)
     memcpy(stat->mtime, &((u32 *)dvrp_stat)[7], 6);
     stat->mtime[6] = ((u8 *)dvrp_stat)[35];
     stat->mtime[7] = ((u8 *)dvrp_stat)[34];
-    stat->hisize = bswap32(((u32 *)dvrp_stat)[9]);
-    stat->private_0 = bswap32(((u32 *)dvrp_stat)[10]);
-    stat->private_1 = bswap32(((u32 *)dvrp_stat)[11]);
-    stat->private_2 = bswap32(((u32 *)dvrp_stat)[12]);
-    stat->private_3 = bswap32(((u32 *)dvrp_stat)[13]);
-    stat->private_4 = bswap32(((u32 *)dvrp_stat)[14]);
-    stat->private_5 = bswap32(((u32 *)dvrp_stat)[15]);
+    stat->hisize = be32toh(((u32 *)dvrp_stat)[9]);
+    stat->private_0 = be32toh(((u32 *)dvrp_stat)[10]);
+    stat->private_1 = be32toh(((u32 *)dvrp_stat)[11]);
+    stat->private_2 = be32toh(((u32 *)dvrp_stat)[12]);
+    stat->private_3 = be32toh(((u32 *)dvrp_stat)[13]);
+    stat->private_4 = be32toh(((u32 *)dvrp_stat)[14]);
+    stat->private_5 = be32toh(((u32 *)dvrp_stat)[15]);
 }
