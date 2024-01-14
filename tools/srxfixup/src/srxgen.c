@@ -109,6 +109,10 @@ static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym,
 			fprintf(stderr, "Error: Cannot find entry symbol %s\n", entrysym);
 			return 1;
 		}
+		else
+		{
+			elf->ehp->e_entry = get_symbol_value(syp, elf);
+		}
 	}
 	else
 	{
@@ -125,11 +129,12 @@ static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym,
 			{
 				fprintf(stderr, "warning: Cannot find entry symbol `start' and `_start'\n");
 			}
-			goto LABEL_12;
+		}
+		else
+		{
+			elf->ehp->e_entry = get_symbol_value(syp, elf);
 		}
 	}
-	elf->ehp->e_entry = get_symbol_value(syp, elf);
-LABEL_12:
 	sh_type = modinfo->shr.sh_type;
 	if ( sh_type == 0x70000080 || sh_type == 0x70000090 )
 	{
@@ -362,95 +367,9 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 		}
 		datal = &relsect->info->data[rp->rel.r_offset - relsect->info->shr.sh_addr];
 		type = rp->type;
-		if ( type == 7 )
+		switch ( type )
 		{
-			fprintf(stderr, "Unexcepted R_MIPS_GPREL16\n");
-			exit(1);
-		}
-		if ( type > 7 )
-		{
-			if ( type <= 22 )
-			{
-				if ( type < 21 )
-				{
-					if ( type == 8 )
-					{
-						fprintf(stderr, "Unexcepted R_MIPS_LITERAL\n");
-						exit(1);
-					}
-					if ( type > 12 )
-					{
-LABEL_53:
-						v17 = rp->type;
-						fprintf(stderr, "unknown relocation type: 0x%x\n", v17);
-						exit(1);
-					}
-				}
-LABEL_52:
-				v16 = rp->type;
-				fprintf(stderr, "unacceptable relocation type: 0x%x\n", v16);
-				exit(1);
-			}
-			if ( type < 30 )
-				goto LABEL_53;
-			if ( type <= 31 )
-				goto LABEL_52;
-			if ( type != 250 )
-				goto LABEL_53;
-			if ( i == entrise + 1 || rp[1].type != 251 )
-			{
-				fprintf(stderr, "R_MIPSSCE_MHI16 without R_MIPSSCE_ADDEND\n");
-				exit(1);
-			}
-			data_3 = (uint16_t)((((startaddr + rp[1].rel.r_offset) >> 15) + 1) >> 1);
-			for ( daddr1 = 1; daddr1; datal += daddr1 )
-			{
-				daddr1 = *(uint16_t *)datal << 16 >> 14;
-				*(uint32_t *)datal &= 0xFFFF0000;
-				*(uint32_t *)datal |= data_3;
-			}
-			++rp;
-			++i;
-		}
-		else
-		{
-			if ( type == 3 )
-				goto LABEL_52;
-			if ( type > 3 )
-			{
-				if ( type == 5 )
-				{
-					if ( i == entrise + 1 || rp[1].type != 6 || rp[1].symptr != rp->symptr )
-					{
-						fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
-						exit(1);
-					}
-					data_4 = startaddr
-								 + (int16_t)*(uint32_t *)&relsect->info->data[rp[1].rel.r_offset - relsect->info->shr.sh_addr]
-								 + (*(uint32_t *)datal << 16);
-					*(uint32_t *)datal &= 0xFFFF0000;
-					*(uint32_t *)datal |= (uint16_t)(((data_4 >> 15) + 1) >> 1);
-				}
-				else if ( type > 5 )
-				{
-					data_5 = startaddr + *(uint32_t *)datal;
-					*(uint32_t *)datal &= 0xFFFF0000;
-					*(uint32_t *)datal |= data_5;
-				}
-				else
-				{
-					if ( rp->symptr->bind )
-					{
-						fprintf(stderr, "R_MIPS_26 Unexcepted bind\n");
-						exit(1);
-					}
-					data_2 = startaddr + ((rp->rel.r_offset & 0xF0000000) | (4 * (*(uint32_t *)datal & 0x3FFFFFF)));
-					*(uint32_t *)datal &= 0xFC000000;
-					*(uint32_t *)datal |= (16 * data_2) >> 6;
-				}
-			}
-			else if ( type == 1 )
-			{
+			case 1:
 				data_1 = startaddr + (int16_t)*(uint32_t *)datal;
 				if ( HIWORD(data_1) )
 				{
@@ -462,15 +381,79 @@ LABEL_52:
 				}
 				*(uint32_t *)datal &= 0xFFFF0000;
 				*(uint32_t *)datal |= (uint16_t)data_1;
-			}
-			else if ( type > 1 )
-			{
+				break;
+			case 2:
 				*(uint32_t *)datal += startaddr;
-			}
-			else if ( type )
-			{
-				goto LABEL_53;
-			}
+				break;
+			case 4:
+				if ( rp->symptr->bind )
+				{
+					fprintf(stderr, "R_MIPS_26 Unexcepted bind\n");
+					exit(1);
+				}
+				data_2 = startaddr + ((rp->rel.r_offset & 0xF0000000) | (4 * (*(uint32_t *)datal & 0x3FFFFFF)));
+				*(uint32_t *)datal &= 0xFC000000;
+				*(uint32_t *)datal |= (16 * data_2) >> 6;
+				break;
+			case 5:
+				if ( i == entrise + 1 || rp[1].type != 6 || rp[1].symptr != rp->symptr )
+				{
+					fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
+					exit(1);
+				}
+				data_4 = startaddr
+							 + (int16_t)*(uint32_t *)&relsect->info->data[rp[1].rel.r_offset - relsect->info->shr.sh_addr]
+							 + (*(uint32_t *)datal << 16);
+				*(uint32_t *)datal &= 0xFFFF0000;
+				*(uint32_t *)datal |= (uint16_t)(((data_4 >> 15) + 1) >> 1);
+				break;
+			case 6:
+				data_5 = startaddr + *(uint32_t *)datal;
+				*(uint32_t *)datal &= 0xFFFF0000;
+				*(uint32_t *)datal |= data_5;
+				break;
+			case 7:
+				fprintf(stderr, "Unexcepted R_MIPS_GPREL16\n");
+				exit(1);
+				return;
+			case 8:
+				fprintf(stderr, "Unexcepted R_MIPS_LITERAL\n");
+				exit(1);
+				return;
+			case 250:
+				if ( i == entrise + 1 || rp[1].type != 251 )
+				{
+					fprintf(stderr, "R_MIPSSCE_MHI16 without R_MIPSSCE_ADDEND\n");
+					exit(1);
+				}
+				data_3 = (uint16_t)((((startaddr + rp[1].rel.r_offset) >> 15) + 1) >> 1);
+				for ( daddr1 = 1; daddr1; datal += daddr1 )
+				{
+					daddr1 = *(uint16_t *)datal << 16 >> 14;
+					*(uint32_t *)datal &= 0xFFFF0000;
+					*(uint32_t *)datal |= data_3;
+				}
+				++rp;
+				++i;
+				break;
+			case 3:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 21:
+			case 22:
+			case 30:
+			case 31:
+				v16 = rp->type;
+				fprintf(stderr, "unacceptable relocation type: 0x%x\n", v16);
+				exit(1);
+				return;
+			default:
+				v17 = rp->type;
+				fprintf(stderr, "unknown relocation type: 0x%x\n", v17);
+				exit(1);
+				return;
 		}
 		++rp;
 	}
@@ -1325,16 +1308,18 @@ static int  create_reserved_symbols(elf_file *elf)
 				sh_size = csyms->segment->size;
 				if ( csyms->shindex <= 65279 )
 					scp = *csyms->segment->scp;
-				goto LABEL_29;
 			}
-			if ( !csyms->sectname )
-				goto LABEL_29;
-			scp = search_section_by_name(elf, csyms->sectname);
-			if ( scp )
+			else if ( csyms->sectname != NULL )
 			{
-				sh_addr = scp->shr.sh_addr;
-				sh_size = scp->shr.sh_size;
-LABEL_29:
+				scp = search_section_by_name(elf, csyms->sectname);
+				if ( scp )
+				{
+					sh_addr = scp->shr.sh_addr;
+					sh_size = scp->shr.sh_size;
+				}
+			}
+			if ( csyms->segment || scp )
+			{
 				if ( sym->sym.st_shndx )
 				{
 					addr = SymbolType[sym->type];
@@ -1595,18 +1580,11 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 		v4 = 0;
 		if ( (rp->symptr->sym.st_shndx && rp->symptr->sym.st_shndx <= 0xFEFFu) || rp->symptr->sym.st_shndx == 0xFF1F )
 			v4 = 1;
-		if ( rp->type > 0x79u )
-		{
-LABEL_91:
-			type = rp->type;
-			fprintf(stderr, "unknown relocation type: 0x%x\n", type);
-			exit(1);
-		}
 		switch ( rp->type )
 		{
 			case 0:
 				rmflag = 1;
-				goto LABEL_92;
+				break;
 			case 1:
 				data_1 = symvalue + (int16_t)*(uint32_t *)daddr_1;
 				if ( HIWORD(data_1) && HIWORD(data_1) != 0xFFFF )
@@ -1621,7 +1599,7 @@ LABEL_91:
 					rp->type = 0;
 					rmflag = 1;
 				}
-				goto LABEL_92;
+				break;
 			case 2:
 				*(uint32_t *)daddr_1 += symvalue;
 				if ( !v4 )
@@ -1629,20 +1607,7 @@ LABEL_91:
 					rp->type = 0;
 					rmflag = 1;
 				}
-				goto LABEL_92;
-			case 3:
-			case 9:
-			case 0xA:
-			case 0xB:
-			case 0xC:
-			case 0x15:
-			case 0x16:
-			case 0x1E:
-			case 0x1F:
-				v22 = rp->type;
-				fprintf(stderr, "unacceptable relocation type: 0x%x\n", v22);
-				exit(1);
-				return;
+				break;
 			case 4:
 				data_2 = *(uint32_t *)daddr_1;
 				if ( rp->symptr->bind )
@@ -1656,7 +1621,7 @@ LABEL_91:
 					rp->type = 0;
 					rmflag = 1;
 				}
-				goto LABEL_92;
+				break;
 			case 5:
 				datah = *(uint32_t *)daddr_1 << 16;
 				for ( j_1 = i_1 + 1; entrise > j_1 && rp[next].type == 5; ++j_1 )
@@ -1738,7 +1703,7 @@ LABEL_91:
 					}
 					rmflag = 1;
 				}
-				goto LABEL_92;
+				break;
 			case 6:
 				data_4 = symvalue + *(uint32_t *)daddr_1;
 				*(uint32_t *)daddr_1 &= 0xFFFF0000;
@@ -1748,7 +1713,7 @@ LABEL_91:
 					rp->type = 0;
 					rmflag = 1;
 				}
-				goto LABEL_92;
+				break;
 			case 7:
 				data_5 = (int16_t)*(uint32_t *)daddr_1;
 				if ( rp->symptr->type == 3 )
@@ -1773,7 +1738,7 @@ LABEL_91:
 				*(uint32_t *)daddr_1 |= (uint16_t)data_5;
 				rp->type = 0;
 				rmflag = 1;
-				goto LABEL_92;
+				break;
 			case 8:
 				if ( rp->symptr->type != 3 )
 				{
@@ -1794,112 +1759,7 @@ LABEL_91:
 				*(uint32_t *)daddr_1 |= (uint16_t)data_6;
 				rp->type = 0;
 				rmflag = 1;
-				goto LABEL_92;
-			case 0xD:
-			case 0xE:
-			case 0xF:
-			case 0x10:
-			case 0x11:
-			case 0x12:
-			case 0x13:
-			case 0x14:
-			case 0x17:
-			case 0x18:
-			case 0x19:
-			case 0x1A:
-			case 0x1B:
-			case 0x1C:
-			case 0x1D:
-			case 0x20:
-			case 0x21:
-			case 0x22:
-			case 0x23:
-			case 0x24:
-			case 0x25:
-			case 0x26:
-			case 0x27:
-			case 0x28:
-			case 0x29:
-			case 0x2A:
-			case 0x2B:
-			case 0x2C:
-			case 0x2D:
-			case 0x2E:
-			case 0x2F:
-			case 0x30:
-			case 0x31:
-			case 0x32:
-			case 0x33:
-			case 0x34:
-			case 0x35:
-			case 0x36:
-			case 0x37:
-			case 0x38:
-			case 0x39:
-			case 0x3A:
-			case 0x3B:
-			case 0x3C:
-			case 0x3D:
-			case 0x3E:
-			case 0x3F:
-			case 0x40:
-			case 0x41:
-			case 0x42:
-			case 0x43:
-			case 0x44:
-			case 0x45:
-			case 0x46:
-			case 0x47:
-			case 0x48:
-			case 0x49:
-			case 0x4A:
-			case 0x4B:
-			case 0x4C:
-			case 0x4D:
-			case 0x4E:
-			case 0x4F:
-			case 0x50:
-			case 0x51:
-			case 0x52:
-			case 0x53:
-			case 0x54:
-			case 0x55:
-			case 0x56:
-			case 0x57:
-			case 0x58:
-			case 0x59:
-			case 0x5A:
-			case 0x5B:
-			case 0x5C:
-			case 0x5D:
-			case 0x5E:
-			case 0x5F:
-			case 0x60:
-			case 0x61:
-			case 0x62:
-			case 0x63:
-			case 0x64:
-			case 0x65:
-			case 0x66:
-			case 0x67:
-			case 0x68:
-			case 0x69:
-			case 0x6A:
-			case 0x6B:
-			case 0x6C:
-			case 0x6D:
-			case 0x6E:
-			case 0x6F:
-			case 0x70:
-			case 0x71:
-			case 0x72:
-			case 0x73:
-			case 0x74:
-			case 0x75:
-			case 0x76:
-			case 0x77:
-			case 0x78:
-				goto LABEL_91;
+				break;
 			case 0x79:
 				if ( target != 2 )
 				{
@@ -1914,17 +1774,34 @@ LABEL_91:
 					rp->type = 0;
 					rmflag = 1;
 				}
-LABEL_92:
-				while ( next > 0 )
-				{
-					rp->rel.r_offset += relsect->info->shr.sh_addr;
-					--rp->symptr->refcount;
-					rp->symptr = *symp;
-					++i_1;
-					++rp;
-					--next;
-				}
 				break;
+			case 3:
+			case 9:
+			case 0xA:
+			case 0xB:
+			case 0xC:
+			case 0x15:
+			case 0x16:
+			case 0x1E:
+			case 0x1F:
+				v22 = rp->type;
+				fprintf(stderr, "unacceptable relocation type: 0x%x\n", v22);
+				exit(1);
+				return;
+			default:
+				type = rp->type;
+				fprintf(stderr, "unknown relocation type: 0x%x\n", type);
+				exit(1);
+				return;
+		}
+		while ( next > 0 )
+		{
+			rp->rel.r_offset += relsect->info->shr.sh_addr;
+			--rp->symptr->refcount;
+			rp->symptr = *symp;
+			++i_1;
+			++rp;
+			--next;
 		}
 	}
 	if ( rmflag > 0 )

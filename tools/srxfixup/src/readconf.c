@@ -552,7 +552,6 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 			{
 				if ( v4 != TC_CreateSymbols )
 				{
-LABEL_43:
 					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
 					return 1;
 				}
@@ -573,7 +572,10 @@ LABEL_43:
 		else
 		{
 			if ( v4 != TC_Segments_name )
-				goto LABEL_43;
+			{
+				fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+				return 1;
+			}
 			entries_1 = get_vector_len(arg);
 			seglist = (SegConf *)calloc(entries_1 + 1, sizeof(SegConf));
 			result->segment_list = seglist;
@@ -692,12 +694,14 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				if ( !ttp1 )
 				{
 					result->file_layout_order = add_stringvector(result->file_layout_order, str);
-					goto LABEL_63;
+					ttp = nttp;
+					break;
 				}
 				if ( ttp1->tkcode == TC_remove )
 				{
 					result->removesection_list = add_stringvector(result->removesection_list, str);
-					goto LABEL_63;
+					ttp = nttp;
+					break;
 				}
 				if ( ttp1->tkcode == TC_segment && ttp1[1].tkcode == TC_VECTOR )
 				{
@@ -721,7 +725,10 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 						result->section_list[nsect].sectflag = 0;
 					}
 					if ( ttp1[2].tkcode != TC_createinfo || ttp1[3].tkcode != TC_VECTOR )
-						goto LABEL_63;
+					{
+						ttp = nttp;
+						break;
+					}
 					get_section_type_flag(ttp1[3].value.subtree, &secttype, &sectflag);
 					if ( secttype && sectflag )
 					{
@@ -730,17 +737,24 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 							result->section_list[nsect - 1].secttype = secttype;
 							result->section_list[nsect - 1].sectflag = sectflag;
 						}
+						seg_2 = NULL;
 						for ( ttp2_2 = ttp1[1].value.subtree; ; ++ttp2_2 )
 						{
 							if ( ttp2_2->tkcode == TC_NULL )
-								goto LABEL_63;
+							{
+								ttp = nttp;
+								break;
+							}
 							seg_2 = lookup_segment(result, ttp2_2->value.lowtoken->str, 1);
 							if ( !seg_2 )
 								break;
 							if ( !seg_2->empty_section )
 								seg_2->empty_section = make_empty_section(str, secttype, sectflag);
 						}
-						return 0;
+						if ( !seg_2 )
+						{
+							return 0;
+						}
 					}
 					else
 					{
@@ -753,15 +767,14 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp1->value.lowtoken->str, ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
 					return 0;
 				}
-			case TC_VECTOR:
-				ttp = ttp->value.subtree;
-				goto LABEL_62;
 			case TC_IOP:
 				result->target = 1;
-				goto LABEL_63;
+				ttp = nttp;
+				break;
 			case TC_EE:
 				result->target = 2;
-				goto LABEL_63;
+				ttp = nttp;
+				break;
 			case TC_Define:
 				if ( !ttp1 )
 				{
@@ -769,7 +782,10 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					return 0;
 				}
 				if ( !gen_define(ttp1, result) )
-					goto LABEL_63;
+				{
+					ttp = nttp;
+					break;
+				}
 				return 0;
 			case TC_Program_header_data:
 				if ( !ttp1 || ttp1->tkcode != TC_STRING )
@@ -787,14 +803,16 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				str2 = (char *)malloc(0x32u);
 				sprintf(str2, "@Program_header_data %s", ttp1->value.lowtoken->str);
 				result->file_layout_order = add_stringvector(result->file_layout_order, str2);
-LABEL_63:
 				ttp = nttp;
 				break;
 			case TC_Segment_data:
 				while ( 2 )
 				{
 					if ( ttp1->tkcode == TC_NULL )
-						goto LABEL_63;
+					{
+						ttp = nttp;
+						break;
+					}
 					seg_3 = lookup_segment(result, ttp1->value.lowtoken->str, 1);
 					if ( seg_3 )
 					{
@@ -805,11 +823,14 @@ LABEL_63:
 					}
 					return 0;
 				}
+				break;
 			case TC_Section_header_table:
 				result->file_layout_order = add_stringvector(result->file_layout_order, "@Section_header_table");
-				goto LABEL_63;
+				ttp = nttp;
+				break;
+			case TC_VECTOR:
+				ttp = ttp->value.subtree;
 			default:
-LABEL_62:
 				fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
 				return 0;
 		}

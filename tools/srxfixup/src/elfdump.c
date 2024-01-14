@@ -255,101 +255,80 @@ void print_elf_sections(elf_file *elf, int flag)
 				(int)(elf->scp[i]->shr.sh_entsize));
 		}
 		sh_type = elf->scp[i]->shr.sh_type;
-		if ( sh_type == 0x70000005 )
+		switch ( sh_type )
 		{
-			print_elf_mips_symbols((elf_mips_symbolic_data *)elf->scp[i]->data, flag);
-			continue;
+			case 2:
+			case 11:
+				print_elf_symtbl(elf->scp[i], flag);
+				continue;
+			case 9:
+				print_elf_reloc(elf->scp[i], flag);
+				continue;
+			case 0x70000005:
+				print_elf_mips_symbols((elf_mips_symbolic_data *)elf->scp[i]->data, flag);
+				continue;
+			case 0x70000080:
+				if ( (flag & 1) != 0 )
+				{
+					data = (Elf32_IopMod *)elf->scp[i]->data;
+					printf(
+						"        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n",
+						data->moduleinfo,
+						data->entry,
+						data->gp_value);
+					printf(
+						"        text_size=0x%08x, data_size=0x%08x, bss_size=0x%08x\n",
+						data->text_size,
+						data->data_size,
+						data->bss_size);
+				}
+				break;
+			case 0x70000090:
+				if ( (flag & 1) != 0 )
+				{
+					v6 = (Elf32_EeMod *)elf->scp[i]->data;
+					printf("        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n", v6->moduleinfo, v6->entry, v6->gp_value);
+					printf(
+						"        text_size=0x%08x, data_size=0x%08x, bss_size=0x%08x\n",
+						v6->text_size,
+						v6->data_size,
+						v6->bss_size);
+					printf("        erx_lib_addr=0x%08x, erx_lib_size=0x%08x\n", v6->erx_lib_addr, v6->erx_lib_size);
+					printf("        erx_stub_addr=0x%08x, erx_stub_size=0x%08x\n", v6->erx_stub_addr, v6->erx_stub_size);
+				}
+				break;
+			case 0x70000006:
+				if ( (flag & 1) != 0 )
+				{
+					v4 = (Elf32_RegInfo *)elf->scp[i]->data;
+					printf(
+						"        gpmask=0x08x, cprmask=%08x,%08x,%08x,%08x\n",
+						v4->ri_gprmask,
+						v4->ri_cprmask[0],
+						v4->ri_cprmask[1],
+						v4->ri_cprmask[3]);
+					printf("        gp=0x%08x\n", v4->ri_gp_value);
+				}
+				break;
+			default:
+				break;
 		}
-		if ( sh_type <= 0x70000005 )
-			break;
-		if ( sh_type == 0x70000080 )
+		if ( elf->scp[i]->data )
 		{
-			if ( (flag & 1) != 0 )
+			if ( (elf->scp[i]->shr.sh_flags & 4) != 0 && elf->ehp->e_machine == 8 )
 			{
-				data = (Elf32_IopMod *)elf->scp[i]->data;
-				printf(
-					"        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n",
-					data->moduleinfo,
-					data->entry,
-					data->gp_value);
-				printf(
-					"        text_size=0x%08x, data_size=0x%08x, bss_size=0x%08x\n",
-					data->text_size,
-					data->data_size,
-					data->bss_size);
+				if ( (elf->ehp->e_flags & 0xF0FF0000) == 0x20920000 )
+					initdisasm(2, -1, 0, 0, 0);
+				else
+					initdisasm(1, -1, 0, 0, 0);
+				print_elf_disasm(elf, elf->scp[i], flag);
 			}
-		}
-		else if ( sh_type > 0x70000080 )
-		{
-			if ( sh_type != 0x70000090 )
-				goto LABEL_44;
-			if ( (flag & 1) != 0 )
-			{
-				v6 = (Elf32_EeMod *)elf->scp[i]->data;
-				printf("        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n", v6->moduleinfo, v6->entry, v6->gp_value);
-				printf(
-					"        text_size=0x%08x, data_size=0x%08x, bss_size=0x%08x\n",
-					v6->text_size,
-					v6->data_size,
-					v6->bss_size);
-				printf("        erx_lib_addr=0x%08x, erx_lib_size=0x%08x\n", v6->erx_lib_addr, v6->erx_lib_size);
-				printf("        erx_stub_addr=0x%08x, erx_stub_size=0x%08x\n", v6->erx_stub_addr, v6->erx_stub_size);
-			}
-		}
-		else
-		{
-			if ( sh_type != 0x70000006 )
-				goto LABEL_44;
-			if ( (flag & 1) != 0 )
-			{
-				v4 = (Elf32_RegInfo *)elf->scp[i]->data;
-				printf(
-					"        gpmask=0x08x, cprmask=%08x,%08x,%08x,%08x\n",
-					v4->ri_gprmask,
-					v4->ri_cprmask[0],
-					v4->ri_cprmask[1],
-					v4->ri_cprmask[3]);
-				printf("        gp=0x%08x\n", v4->ri_gp_value);
-			}
-		}
-LABEL_52:
-		;
-	}
-	if ( sh_type == 9 )
-	{
-		print_elf_reloc(elf->scp[i], flag);
-		goto LABEL_52;
-	}
-	if ( sh_type > 9 )
-	{
-		if ( sh_type == 11 )
-		{
-LABEL_33:
-			print_elf_symtbl(elf->scp[i], flag);
-			goto LABEL_52;
-		}
-	}
-	else if ( sh_type == 2 )
-	{
-		goto LABEL_33;
-	}
-LABEL_44:
-	if ( elf->scp[i]->data )
-	{
-		if ( (elf->scp[i]->shr.sh_flags & 4) != 0 && elf->ehp->e_machine == 8 )
-		{
-			if ( (elf->ehp->e_flags & 0xF0FF0000) == 0x20920000 )
-				initdisasm(2, -1, 0, 0, 0);
 			else
-				initdisasm(1, -1, 0, 0, 0);
-			print_elf_disasm(elf, elf->scp[i], flag);
-		}
-		else
-		{
-			print_elf_datadump(elf, elf->scp[i], flag);
+			{
+				print_elf_datadump(elf, elf->scp[i], flag);
+			}
 		}
 	}
-	goto LABEL_52;
 }
 
 struct name2num R_MIPS_Type[] =
@@ -757,18 +736,10 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 	dumpbuf = (unsigned int *)calloc(1u, scp->shr.sh_size + 4);
 	memcpy(dumpbuf, scp->data, scp->shr.sh_size);
 	sh_type = scp->shr.sh_type;
-	if ( sh_type <= 6 )
-	{
-		if ( sh_type < 4 && sh_type != 1 )
-			goto LABEL_8;
-		goto LABEL_7;
-	}
-	if ( sh_type == 0x70000006 )
+	if ( sh_type == 1 || sh_type == 5 || sh_type == 6 || sh_type == 0x70000006 )
     {
-        LABEL_7:
         swapmemory(dumpbuf, (srxfixup_const_char_ptr_t)"l", (scp->shr.sh_size + 1) >> 2);
     }
-LABEL_8:
 	printf("\n");
 	if ( (flag & 0x10) != 0 )
 	{

@@ -138,15 +138,13 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 		{
 			switch ( elf->scp[i_3]->shr.sh_type )
 			{
+				case 4u:
+				case 9u:
+					elf->scp[i_3]->info = elf->scp[elf->scp[i_3]->shr.sh_info];
 				case 2u:
 				case 5u:
 				case 6u:
 				case 0xBu:
-					goto LABEL_31;
-				case 4u:
-				case 9u:
-					elf->scp[i_3]->info = elf->scp[elf->scp[i_3]->shr.sh_info];
-LABEL_31:
 					elf->scp[i_3]->link = elf->scp[elf->scp[i_3]->shr.sh_link];
 					break;
 				default:
@@ -187,54 +185,52 @@ LABEL_31:
 				for ( i_8 = 0; i_8 < elf->ehp->e_phnum; ++i_8 )
 				{
 					p_type = elf->php[i_8].phdr.p_type;
-					if ( p_type == 0x70000000 )
+					switch ( p_type )
 					{
-						elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-						v18 = search_section(elf, 0x70000006);
-						*elf->php[i_8].scp = v18;
-					}
-					else if ( p_type > 0x70000000 )
-					{
-						if ( p_type == 0x70000080 )
-						{
-							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-							v19 = search_section(elf, 0x70000080);
-							*elf->php[i_8].scp = v19;
-						}
-						else if ( p_type == 0x70000090 )
-						{
-							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-							v20 = search_section(elf, 0x70000090);
-							*elf->php[i_8].scp = v20;
-						}
-					}
-					else if ( p_type == 1 )
-					{
-						v21 = (elf_section **)calloc(count_2, sizeof(elf_section *));
-						elf->php[i_8].scp = v21;
-						s = 1;
-						d = 0;
-						while ( count_2 > s )
-						{
-							p_offset = elf->php[i_8].phdr.p_offset;
-							p_filesz = elf->php[i_8].phdr.p_filesz;
-							sh_type = elf->scp[s]->shr.sh_type;
-							if ( sh_type == 1 )
+						case 1:
+							v21 = (elf_section **)calloc(count_2, sizeof(elf_section *));
+							elf->php[i_8].scp = v21;
+							s = 1;
+							d = 0;
+							while ( count_2 > s )
 							{
-								if ( is_in_range(p_offset, p_filesz, elf->scp[s]->shr.sh_offset)
-									|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
+								p_offset = elf->php[i_8].phdr.p_offset;
+								p_filesz = elf->php[i_8].phdr.p_filesz;
+								sh_type = elf->scp[s]->shr.sh_type;
+								if ( sh_type == 1 )
+								{
+									if ( is_in_range(p_offset, p_filesz, elf->scp[s]->shr.sh_offset)
+										|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
+									{
+										elf->php[i_8].scp[d++] = elf->scp[s];
+									}
+								}
+								else if ( sh_type == 8
+											 && (is_in_range(elf->php[i_8].phdr.p_vaddr, elf->php[i_8].phdr.p_memsz, elf->scp[s]->shr.sh_addr)
+												|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset)) )
 								{
 									elf->php[i_8].scp[d++] = elf->scp[s];
 								}
+								++s;
 							}
-							else if ( sh_type == 8
-										 && (is_in_range(elf->php[i_8].phdr.p_vaddr, elf->php[i_8].phdr.p_memsz, elf->scp[s]->shr.sh_addr)
-											|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset)) )
-							{
-								elf->php[i_8].scp[d++] = elf->scp[s];
-							}
-							++s;
-						}
+							break;
+						case 0x70000000:
+							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
+							v18 = search_section(elf, 0x70000006);
+							*elf->php[i_8].scp = v18;
+							break;
+						case 0x70000080:
+							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
+							v19 = search_section(elf, 0x70000080);
+							*elf->php[i_8].scp = v19;
+							break;
+						case 0x70000090:
+							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
+							v20 = search_section(elf, 0x70000090);
+							*elf->php[i_8].scp = v20;
+							break;
+						default:
+							break;
 					}
 				}
 				return elf;
@@ -245,71 +241,43 @@ LABEL_31:
 			{
 				fseek(fp, pos_3, 0);
 				v10 = elf->scp[i_4]->shr.sh_type;
-				if ( v10 != 8 )
+				switch ( v10 )
 				{
-					if ( v10 <= 8 )
-					{
-						if ( v10 != 3 )
-						{
-							if ( v10 > 3 )
-							{
-								if ( v10 <= 6 )
-									goto LABEL_60;
-							}
-							else
-							{
-								if ( v10 == 1 )
-									goto LABEL_60;
-								if ( v10 == 2 )
-									continue;
-							}
-						}
-LABEL_65:
+					case 1:
+					case 4:
+					case 5:
+					case 6:
+					case 0x70000006:
+						v11 = (uint8_t *)malloc(size);
+						elf->scp[i_4]->data = v11;
+						fread(elf->scp[i_4]->data, size, 1u, fp);
+						swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"l", (unsigned int)size >> 2);
+						break;
+					case 2:
+					case 8:
+					case 0xb:
+						break;
+					case 0x70000005:
+						mips_symbolic = (uint8_t *)read_mips_symbolic(fp);
+						elf->scp[i_4]->data = mips_symbolic;
+						break;
+					case 0x70000080:
+						v12 = (uint8_t *)malloc(size);
+						elf->scp[i_4]->data = v12;
+						fread(elf->scp[i_4]->data, size, 1u, fp);
+						swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
+						break;
+					case 0x70000090:
+						v13 = (uint8_t *)malloc(size);
+						elf->scp[i_4]->data = v13;
+						fread(elf->scp[i_4]->data, size, 1u, fp);
+						swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
+						break;
+					default:
 						v15 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v15;
 						fread(elf->scp[i_4]->data, size, 1u, fp);
-						continue;
-					}
-					if ( v10 == 0x70000005 )
-					{
-						mips_symbolic = (uint8_t *)read_mips_symbolic(fp);
-						elf->scp[i_4]->data = mips_symbolic;
-						continue;
-					}
-					if ( v10 > 0x70000005 )
-					{
-						if ( v10 == 0x70000080 )
-						{
-							v12 = (uint8_t *)malloc(size);
-							elf->scp[i_4]->data = v12;
-							fread(elf->scp[i_4]->data, size, 1u, fp);
-							swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
-							continue;
-						}
-						if ( v10 > 0x70000080 )
-						{
-							if ( v10 == 0x70000090 )
-							{
-								v13 = (uint8_t *)malloc(size);
-								elf->scp[i_4]->data = v13;
-								fread(elf->scp[i_4]->data, size, 1u, fp);
-								swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
-								continue;
-							}
-						}
-						else if ( v10 == 0x70000006 )
-						{
-LABEL_60:
-							v11 = (uint8_t *)malloc(size);
-							elf->scp[i_4]->data = v11;
-							fread(elf->scp[i_4]->data, size, 1u, fp);
-							swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"l", (unsigned int)size >> 2);
-							continue;
-						}
-						goto LABEL_65;
-					}
-					if ( v10 == 10 || (v10 >= 0xA && v10 != 11) )
-						goto LABEL_65;
+						break;
 				}
 			}
 		}
@@ -536,15 +504,13 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 		{
 			switch ( elf->scp[i_2]->shr.sh_type )
 			{
+				case 4u:
+				case 9u:
+					elf->scp[i_2]->shr.sh_info = elf->scp[i_2]->info->number;
 				case 2u:
 				case 5u:
 				case 6u:
 				case 0xBu:
-					goto LABEL_12;
-				case 4u:
-				case 9u:
-					elf->scp[i_2]->shr.sh_info = elf->scp[i_2]->info->number;
-LABEL_12:
 					elf->scp[i_2]->shr.sh_link = elf->scp[i_2]->link->number;
 					break;
 				default:
@@ -586,74 +552,42 @@ LABEL_12:
 			{
 				fseek(fp, pos, 0);
 				sh_type = elf->scp[i_5]->shr.sh_type;
-				if ( sh_type != 8 )
+				switch ( sh_type )
 				{
-					if ( sh_type > 8 )
-					{
-						if ( sh_type == 0x70000005 )
-						{
-							write_mips_symbolic((elf_mips_symbolic_data *)elf->scp[i_5]->data, pos, fp);
-							continue;
-						}
-						if ( sh_type > 0x70000005 )
-						{
-							if ( sh_type == 0x70000080 )
-							{
-								swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
-								fwrite(elf->scp[i_5]->data, size, 1u, fp);
-								swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
-								continue;
-							}
-							if ( sh_type > 0x70000080 )
-							{
-								if ( sh_type == 0x70000090 )
-								{
-									swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
-									fwrite(elf->scp[i_5]->data, size, 1u, fp);
-									swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
-									continue;
-								}
-							}
-							else if ( sh_type == 0x70000006 )
-							{
-LABEL_51:
-								swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"l", size >> 2);
-								fwrite(elf->scp[i_5]->data, size, 1u, fp);
-								swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"l", size >> 2);
-								continue;
-							}
-						}
-						else if ( sh_type != 10 )
-						{
-							if ( sh_type < 0xA )
-							{
-								write_rel(elf, i_5, fp);
-								continue;
-							}
-							if ( sh_type == 11 )
-								goto LABEL_54;
-						}
-					}
-					else if ( sh_type != 3 )
-					{
-						if ( sh_type > 3 )
-						{
-							if ( sh_type <= 6 )
-								goto LABEL_51;
-						}
-						else
-						{
-							if ( sh_type == 1 )
-								goto LABEL_51;
-							if ( sh_type == 2 )
-							{
-LABEL_54:
-								write_symtab(elf, i_5, fp);
-								continue;
-							}
-						}
-					}
-					fwrite(elf->scp[i_5]->data, size, 1u, fp);
+					case 1:
+					case 4:
+					case 5:
+					case 6:
+					case 0x70000006:
+						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"l", size >> 2);
+						fwrite(elf->scp[i_5]->data, size, 1u, fp);
+						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"l", size >> 2);
+						break;
+					case 2:
+					case 11:
+						write_symtab(elf, i_5, fp);
+						break;
+					case 8:
+						break;
+					case 9:
+						write_rel(elf, i_5, fp);
+						break;
+					case 0x70000005:
+						write_mips_symbolic((elf_mips_symbolic_data *)elf->scp[i_5]->data, pos, fp);
+						break;
+					case 0x70000080:
+						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
+						fwrite(elf->scp[i_5]->data, size, 1u, fp);
+						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
+						break;
+					case 0x70000090:
+						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
+						fwrite(elf->scp[i_5]->data, size, 1u, fp);
+						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
+						break;
+					default:
+						fwrite(elf->scp[i_5]->data, size, 1u, fp);
+						break;
 				}
 			}
 		}
