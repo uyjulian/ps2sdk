@@ -24,95 +24,95 @@ typedef int Elf32_SWord;
 typedef struct _Elf32_ehdr
 {
 	unsigned char e_ident[16];
-	short unsigned int e_type;
-	short unsigned int e_machine;
-	unsigned int e_version;
-	unsigned int e_entry;
-	unsigned int e_phoff;
-	unsigned int e_shoff;
-	unsigned int e_flags;
-	short unsigned int e_ehsize;
-	short unsigned int e_phentsize;
-	short unsigned int e_phnum;
-	short unsigned int e_shentsize;
-	short unsigned int e_shnum;
-	short unsigned int e_shstrndx;
+	Elf32_Half e_type;
+	Elf32_Half e_machine;
+	Elf32_Word e_version;
+	Elf32_Addr e_entry;
+	Elf32_Off e_phoff;
+	Elf32_Off e_shoff;
+	Elf32_Word e_flags;
+	Elf32_Half e_ehsize;
+	Elf32_Half e_phentsize;
+	Elf32_Half e_phnum;
+	Elf32_Half e_shentsize;
+	Elf32_Half e_shnum;
+	Elf32_Half e_shstrndx;
 } Elf32_Ehdr;
 typedef struct _Elf32_Phdr
 {
-	unsigned int p_type;
-	unsigned int p_offset;
-	unsigned int p_vaddr;
-	unsigned int p_paddr;
-	unsigned int p_filesz;
-	unsigned int p_memsz;
-	unsigned int p_flags;
-	unsigned int p_align;
+	Elf32_Word p_type;
+	Elf32_Off p_offset;
+	Elf32_Addr p_vaddr;
+	Elf32_Addr p_paddr;
+	Elf32_Word p_filesz;
+	Elf32_Word p_memsz;
+	Elf32_Word p_flags;
+	Elf32_Word p_align;
 } Elf32_Phdr;
 typedef struct _Elf32_Shdr
 {
-	unsigned int sh_name;
-	unsigned int sh_type;
-	unsigned int sh_flags;
-	unsigned int sh_addr;
-	unsigned int sh_offset;
-	unsigned int sh_size;
-	unsigned int sh_link;
-	unsigned int sh_info;
-	unsigned int sh_addralign;
-	unsigned int sh_entsize;
+	Elf32_Word sh_name;
+	Elf32_Word sh_type;
+	Elf32_Word sh_flags;
+	Elf32_Addr sh_addr;
+	Elf32_Off sh_offset;
+	Elf32_Word sh_size;
+	Elf32_Word sh_link;
+	Elf32_Word sh_info;
+	Elf32_Word sh_addralign;
+	Elf32_Word sh_entsize;
 } Elf32_Shdr;
 typedef struct _Elf32_Sym
 {
-	unsigned int st_name;
-	unsigned int st_value;
-	unsigned int st_size;
+	Elf32_Word st_name;
+	Elf32_Addr st_value;
+	Elf32_Word st_size;
 	unsigned char st_info;
 	unsigned char st_other;
-	short unsigned int st_shndx;
+	Elf32_Half st_shndx;
 } Elf32_Sym;
 typedef struct _Elf_Note
 {
-	unsigned int namesz;
-	unsigned int descsz;
-	unsigned int type;
+	Elf32_Word namesz;
+	Elf32_Word descsz;
+	Elf32_Word type;
 	char name[1];
 } Elf_Note;
 typedef struct _Elf32_Rel
 {
-	unsigned int r_offset;
-	unsigned int r_info;
+	Elf32_Addr r_offset;
+	Elf32_Word r_info;
 } Elf32_Rel;
 typedef struct _Elf32_RegInfo
 {
-	unsigned int ri_gprmask;
-	unsigned int ri_cprmask[4];
-	int ri_gp_value;
+	Elf32_Word ri_gprmask;
+	Elf32_Word ri_cprmask[4];
+	Elf32_SWord ri_gp_value;
 } Elf32_RegInfo;
 typedef struct _Elf32_IopMod
 {
-	unsigned int moduleinfo;
-	unsigned int entry;
-	unsigned int gp_value;
-	unsigned int text_size;
-	unsigned int data_size;
-	unsigned int bss_size;
-	short unsigned int moduleversion;
+	Elf32_Word moduleinfo;
+	Elf32_Addr entry;
+	Elf32_Addr gp_value;
+	Elf32_Word text_size;
+	Elf32_Word data_size;
+	Elf32_Word bss_size;
+	Elf32_Half moduleversion;
 	char modulename[1];
 } Elf32_IopMod;
 typedef struct _Elf32_EeMod
 {
-	unsigned int moduleinfo;
-	unsigned int entry;
-	unsigned int gp_value;
-	unsigned int text_size;
-	unsigned int data_size;
-	unsigned int bss_size;
-	unsigned int erx_lib_addr;
-	unsigned int erx_lib_size;
-	unsigned int erx_stub_addr;
-	unsigned int erx_stub_size;
-	short unsigned int moduleversion;
+	Elf32_Word moduleinfo;
+	Elf32_Addr entry;
+	Elf32_Addr gp_value;
+	Elf32_Word text_size;
+	Elf32_Word data_size;
+	Elf32_Word bss_size;
+	Elf32_Addr erx_lib_addr;
+	Elf32_Word erx_lib_size;
+	Elf32_Addr erx_stub_addr;
+	Elf32_Word erx_stub_size;
+	Elf32_Half moduleversion;
 	char modulename[1];
 } Elf32_EeMod;
 typedef struct _hdrr
