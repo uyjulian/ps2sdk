@@ -310,7 +310,7 @@ void  getrs(unsigned int data, Operand *opr)
 void  getrt(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_reg;
-	opr->reg = BYTE2(data) & 0x1F;
+	opr->reg = (data >> 16) & 0x1F;
 }
 
 void  getrd(unsigned int data, Operand *opr)
@@ -352,7 +352,7 @@ void  getfs(unsigned int data, Operand *opr)
 void  getft(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
-	opr->reg = BYTE2(data) & 0x1F;
+	opr->reg = (data >> 16) & 0x1F;
 }
 
 void  getfd(unsigned int data, Operand *opr)
@@ -443,10 +443,10 @@ void  Rsseimm(Disasm_result *result)
 	unsigned int imm;
 
 	getrs(result->data, result->operands);
-	if ( SLOWORD(result->data) < 0 )
-		imm = LOWORD(result->data) - 0x10000;
+	if ( (int16_t)(result->data & 0xFFFF) < 0 )
+		imm = (result->data & 0xFFFF) - 0x10000;
 	else
-		imm = LOWORD(result->data);
+		imm = (result->data & 0xFFFF);
 	result->operands[1].tag = OprTag_imm;
 	result->operands[1].data = imm;
 }
@@ -457,10 +457,10 @@ void  Rtrsseimm(Disasm_result *result)
 
 	getrt(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
-	if ( SLOWORD(result->data) < 0 )
-		imm = LOWORD(result->data) - 0x10000;
+	if ( (int16_t)(result->data & 0xFFFF) < 0 )
+		imm = (result->data & 0xFFFF) - 0x10000;
 	else
-		imm = LOWORD(result->data);
+		imm = (result->data & 0xFFFF);
 	result->operands[2].tag = OprTag_imm;
 	result->operands[2].data = imm;
 }
@@ -470,28 +470,28 @@ void  Rtrsimm(Disasm_result *result)
 	getrt(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
 	result->operands[2].tag = OprTag_imm;
-	result->operands[2].data = LOWORD(result->data);
+	result->operands[2].data = (result->data & 0xFFFF);
 }
 
 void  Rdimm(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	result->operands[1].tag = OprTag_imm;
-	result->operands[1].data = LOWORD(result->data);
+	result->operands[1].data = (result->data & 0xFFFF);
 }
 
 void  Rsimm(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	result->operands[1].tag = OprTag_imm;
-	result->operands[1].data = LOWORD(result->data);
+	result->operands[1].data = (result->data & 0xFFFF);
 }
 
 void  Rtimm(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	result->operands[1].tag = OprTag_imm;
-	result->operands[1].data = LOWORD(result->data);
+	result->operands[1].data = (result->data & 0xFFFF);
 }
 
 void  Rsrtbroff(Disasm_result *result)
@@ -511,10 +511,10 @@ void  Rtoffbase(Disasm_result *result)
 {
 	unsigned int off;
 
-	if ( SLOWORD(result->data) < 0 )
-		off = LOWORD(result->data) - 0x10000;
+	if ( (int16_t)(result->data & 0xFFFF) < 0 )
+		off = (result->data & 0xFFFF) - 0x10000;
 	else
-		off = LOWORD(result->data);
+		off = (result->data & 0xFFFF);
 	getrt(result->data, result->operands);
 	result->operands[1].tag = OprTag_regoffset;
 	result->operands[1].data = off;

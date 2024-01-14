@@ -402,7 +402,7 @@ void print_elf_disasm(elf_file *elf, elf_section *scp, int flag)
 		if ( rel[i].rp && rel[i].rp->type == R_MIPSSCE_MHI16 )
 		{
 			j = i;
-			for ( d = SLOWORD(codes[i]); d; d = SLOWORD(codes[j]) )
+			for ( d = (int16_t)(codes[i] & 0xFFFF); d; d = (int16_t)(codes[j] & 0xFFFF) )
 			{
 				j += d;
 				rel[j].rid = rel[i].rid;
@@ -598,7 +598,7 @@ static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 	unsigned int off1;
 
 	addr = address;
-	LOBYTE(addr) = address & 0xF0;
+	addr &= 0xF0;
 	off2 = addr;
 	off1 = 0;
 	while ( size > off1 )
@@ -624,7 +624,7 @@ static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 			printf("  ");
 		if ( (off2 & 0xF) == 14 )
 			printf("\n");
-		LOBYTE(off2) = off2 + 2;
+		off2 += 2;
 	}
 }
 
@@ -635,7 +635,7 @@ static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 	unsigned int addr;
 
 	v4 = address;
-	LOBYTE(v4) = address & 0xF0;
+	v4 &= 0xF0;
 	addr = v4;
 	off1 = 0;
 	while ( size > off1 )
@@ -657,7 +657,7 @@ static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 		printf("--------  ");
 		if ( (addr & 0xF) == 12 )
 			printf("\n");
-		LOBYTE(addr) = addr + 4;
+		addr += 4;
 	}
 }
 

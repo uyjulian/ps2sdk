@@ -371,9 +371,9 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 		{
 			case R_MIPS_16:
 				data_1 = startaddr + (int16_t)*(uint32_t *)datal;
-				if ( HIWORD(data_1) )
+				if ( (uint16_t)(data_1 >> 16) )
 				{
-					if ( HIWORD(data_1) != 0xFFFF )
+					if ( (uint16_t)(data_1 >> 16) != 0xFFFF )
 					{
 						fprintf(stderr, "REFHALF data overflow\n");
 						exit(1);
@@ -1332,7 +1332,7 @@ static int  create_reserved_symbols(elf_file *elf)
 					sym->bind = csyms->bind;
 					if ( !sym->type )
 						sym->type = csyms->type;
-					sym->sym.st_info = 16 * LOBYTE(csyms->bind) + (csyms->type & 0xF);
+					sym->sym.st_info = ((csyms->bind & 0xFF) << 4) + (csyms->type & 0xF);
 					if ( csyms->shindex > 0xFEFF )
 					{
 						sym->sym.st_shndx = csyms->shindex;
@@ -1375,7 +1375,7 @@ static int  create_reserved_symbols(elf_file *elf)
 				if ( !sym->type )
 					sym->type = csyms->type;
 				sym->bind = csyms->bind;
-				sym->sym.st_info = 16 * LOBYTE(csyms->bind) + (csyms->type & 0xF);
+				sym->sym.st_info = ((csyms->bind & 0xFF) << 4) + (csyms->type & 0xF);
 			}
 		}
 	}
@@ -1587,7 +1587,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				break;
 			case R_MIPS_16:
 				data_1 = symvalue + (int16_t)*(uint32_t *)daddr_1;
-				if ( HIWORD(data_1) && HIWORD(data_1) != 0xFFFF )
+				if ( (uint16_t)(data_1 >> 16) && (uint16_t)(data_1 >> 16) != 0xFFFF )
 				{
 					fprintf(stderr, "REFHALF data overflow\n");
 					exit(1);
@@ -1729,7 +1729,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 					fprintf(stderr, "R_MIPS_GPREL16 unknown case abort\n");
 					exit(1);
 				}
-				if ( HIWORD(data_5) && HIWORD(data_5) != 0xFFFF )
+				if ( (uint16_t)(data_5 >> 16) && (uint16_t)(data_5 >> 16) != 0xFFFF )
 				{
 					fprintf(stderr, "R_MIPS_GPREL16 data overflow\n");
 					exit(1);
@@ -1750,7 +1750,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 					- ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_addr
 					- gpvalue
 					+ (int16_t)*(uint32_t *)daddr_1;
-				if ( HIWORD(data_6) && HIWORD(data_6) != 0xFFFF )
+				if ( (uint16_t)(data_6 >> 16) && (uint16_t)(data_6 >> 16) != 0xFFFF )
 				{
 					fprintf(stderr, "R_MIPS_LITERAL data overflow\n");
 					exit(1);

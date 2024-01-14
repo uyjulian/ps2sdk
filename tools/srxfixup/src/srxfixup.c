@@ -297,7 +297,7 @@ static void display_module_info(elf_file *elf)
 			printf(
 				"name:%s version:%d.%d\n",
 				iopmodinfo->modulename,
-				HIBYTE(iopmodinfo->moduleversion),
+				(uint8_t)(iopmodinfo->moduleversion >> 24),
 				(uint8_t)iopmodinfo->moduleversion);
 	}
 	modsect_2 = search_section(elf, SHT_SCE_EEMOD);
@@ -310,7 +310,7 @@ static void display_module_info(elf_file *elf)
 			printf(
 				"name:%s version:%d.%d\n",
 				eemodinfo->modulename,
-				HIBYTE(eemodinfo->moduleversion),
+				(uint8_t)(eemodinfo->moduleversion >> 24),
 				(uint8_t)eemodinfo->moduleversion);
 	}
 }

@@ -612,15 +612,15 @@ static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag)
 		}
 		else if ( !strcmp(info, "ALLOC") )
 		{
-			LOBYTE(flag) = flag | 2;
+			flag |= 2;
 		}
 		else if ( !strcmp(info, "EXECINSTR") )
 		{
-			LOBYTE(flag) = flag | 4;
+			flag |= 4;
 		}
 		else if ( !strcmp(info, "WRITE") )
 		{
-			LOBYTE(flag) = flag | 1;
+			flag |= 1;
 		}
 		++ttp;
 	}

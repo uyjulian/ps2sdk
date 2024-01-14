@@ -338,7 +338,7 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 	{
 		fread(&result[i], sp_x->shr.sh_entsize, 1u, fp);
 		swapmemory(&result[i], (srxfixup_const_char_ptr_t)"ll", 1);
-		result[i].type = LOBYTE(result[i].rel.r_info);
+		result[i].type = result[i].rel.r_info & 0xFF;
 		result[i].symptr = symp[result[i].rel.r_info >> 8];
 		++result[i].symptr->refcount;
 	}
@@ -662,7 +662,7 @@ static void write_rel(elf_file *elf, int sctindex, FILE *fp)
 			fprintf(stderr, " relocation entry have no symbol\nabort\n");
 			exit(1);
 		}
-		rel.r_info = (rp[i].symptr->number << 8) + LOBYTE(rp[i].type);
+		rel.r_info = (rp[i].symptr->number << 8) + (rp[i].type & 0xFF);
 		swapmemory(&rel, (srxfixup_const_char_ptr_t)"ll", 1);
 		fwrite(&rel, 8u, 1u, fp);
 	}
