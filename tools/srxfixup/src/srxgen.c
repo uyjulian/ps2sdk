@@ -75,7 +75,7 @@ int  convert_rel2srx(elf_file *elf, srxfixup_const_char_ptr_t entrysym, int need
 	if ( check_undef_symboles(elf) )
 		return 1;
 	symbol_value_update(elf);
-	seginfo = lookup_segment(tp, (srxfixup_const_char_ptr_t)"GLOBALDATA", 1)->addr + 0x7FF0;
+	seginfo = lookup_segment(tp, "GLOBALDATA", 1)->addr + 0x7FF0;
 	rebuild_relocation(elf, seginfo);
 	if ( check_irx12(elf, cause_irx1) )
 		return 1;
@@ -116,9 +116,9 @@ static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym,
 	}
 	else
 	{
-		syp = search_global_symbol((srxfixup_const_char_ptr_t)"start", elf);
+		syp = search_global_symbol("start", elf);
 		if ( !syp )
-			syp = search_global_symbol((srxfixup_const_char_ptr_t)"_start", elf);
+			syp = search_global_symbol("_start", elf);
 		if ( !is_defined_symbol(syp) )
 		{
 			if ( modinfo->shr.sh_type == SHT_SCE_EEMOD )
@@ -619,7 +619,7 @@ static void  modify_eemod(elf_file *elf, elf_section *eemod)
 		return;
 	}
 	moddata = (Elf32_EeMod *)eemod->data;
-	scp_1 = search_section_by_name(elf, (srxfixup_const_char_ptr_t)".erx.lib");
+	scp_1 = search_section_by_name(elf, ".erx.lib");
 	if ( scp_1 )
 	{
 		moddata->erx_lib_addr = scp_1->shr.sh_addr;
@@ -630,7 +630,7 @@ static void  modify_eemod(elf_file *elf, elf_section *eemod)
 		moddata->erx_lib_addr = -1;
 		moddata->erx_lib_size = 0;
 	}
-	scp_2 = search_section_by_name(elf, (srxfixup_const_char_ptr_t)".erx.stub");
+	scp_2 = search_section_by_name(elf, ".erx.stub");
 	if ( scp_2 )
 	{
 		moddata->erx_stub_addr = scp_2->shr.sh_addr;
@@ -957,10 +957,10 @@ static void  update_modinfo(elf_file *elf)
 	elf_section *scp_2;
 
 	tp = (Srx_gen_table *)elf->optdata;
-	seginfo = lookup_segment(tp, (srxfixup_const_char_ptr_t)"TEXT", 1);
-	seginfo_4 = lookup_segment(tp, (srxfixup_const_char_ptr_t)"DATA", 1);
-	seginfo_8 = lookup_segment(tp, (srxfixup_const_char_ptr_t)"BSS", 1);
-	seginfo_12 = lookup_segment(tp, (srxfixup_const_char_ptr_t)"GLOBALDATA", 1);
+	seginfo = lookup_segment(tp, "TEXT", 1);
+	seginfo_4 = lookup_segment(tp, "DATA", 1);
+	seginfo_8 = lookup_segment(tp, "BSS", 1);
+	seginfo_12 = lookup_segment(tp, "GLOBALDATA", 1);
 	if ( !seginfo || !seginfo_4 || !seginfo_8 || !seginfo_12 )
 	{
 		fprintf(stderr, "TEXT,DATA,BSS,GLOBALDATA segment missing abort");
@@ -1478,7 +1478,7 @@ static void  setup_module_info(elf_file *elf, elf_section *modsect, srxfixup_con
 	buflen = (strlen((const char *)section_data - woff + 4) + 15) & 0xFFFFFFFC;
 	buf = (char *)malloc(buflen);
 	memcpy(buf, modnamep, buflen);
-	swapmemory(buf, (srxfixup_const_char_ptr_t)"l", buflen >> 2);
+	swapmemory(buf, "l", buflen >> 2);
 	name = &buf[woff];
 	if ( modsect->shr.sh_type == SHT_SCE_IOPMOD )
 	{

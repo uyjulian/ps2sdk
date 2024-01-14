@@ -65,9 +65,9 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 	elf = (elf_file *)calloc(1u, sizeof(elf_file));
 	elf->ehp = (Elf32_Ehdr *)malloc(sizeof(Elf32_Ehdr));
 	fread(elf->ehp, sizeof(Elf32_Ehdr), 1u, fp);
-	swapmemory(elf->ehp, (srxfixup_const_char_ptr_t)"ccccccccccccccccsslllllssssss", 1);
+	swapmemory(elf->ehp, "ccccccccccccccccsslllllssssss", 1);
 	ident = *(uint32_t *)elf->ehp->e_ident;
-	swapmemory(&ident, (srxfixup_const_char_ptr_t)"l", 1);
+	swapmemory(&ident, "l", 1);
 	if ( ident != 0x464C457F )
 	{
 		fprintf(stderr, "%s: not elf format\n", filename);
@@ -118,7 +118,7 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 		for ( i_1 = 0; count_1 > i_1; ++i_1 )
 		{
 			fread(&elf->php[i_1], sizeof(Elf32_Phdr), 1u, fp);
-			swapmemory(&elf->php[i_1], (srxfixup_const_char_ptr_t)"llllllll", 1);
+			swapmemory(&elf->php[i_1], "llllllll", 1);
 		}
 	}
 	if ( elf->ehp->e_shnum && elf->ehp->e_shentsize )
@@ -132,7 +132,7 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 		{
 			elf->scp[i_2] = (elf_section *)calloc(1u, sizeof(elf_section));
 			fread(elf->scp[i_2], sizeof(Elf32_Shdr), 1u, fp);
-			swapmemory(elf->scp[i_2], (srxfixup_const_char_ptr_t)"llllllllll", 1);
+			swapmemory(elf->scp[i_2], "llllllllll", 1);
 		}
 		for ( i_3 = 0; count_2 > i_3; ++i_3 )
 		{
@@ -251,7 +251,7 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 						v11 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v11;
 						fread(elf->scp[i_4]->data, size, 1u, fp);
-						swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"l", (unsigned int)size >> 2);
+						swapmemory(elf->scp[i_4]->data, "l", (unsigned int)size >> 2);
 						break;
 					case SHT_SYMTAB:
 					case SHT_NOBITS:
@@ -265,13 +265,13 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 						v12 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v12;
 						fread(elf->scp[i_4]->data, size, 1u, fp);
-						swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
+						swapmemory(elf->scp[i_4]->data, "lllllls", 1);
 						break;
 					case SHT_SCE_EEMOD:
 						v13 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v13;
 						fread(elf->scp[i_4]->data, size, 1u, fp);
-						swapmemory(elf->scp[i_4]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
+						swapmemory(elf->scp[i_4]->data, "lllllllllls", 1);
 						break;
 					default:
 						v15 = (uint8_t *)malloc(size);
@@ -308,7 +308,7 @@ static void read_symtab(elf_file *elf, int sctindex, FILE *fp)
 	{
 		result[i] = (elf_syment *)calloc(1u, sizeof(elf_syment));
 		fread(result[i], sp_x->shr.sh_entsize, 1u, fp);
-		swapmemory(result[i], (srxfixup_const_char_ptr_t)"lllccs", 1);
+		swapmemory(result[i], "lllccs", 1);
 		result[i]->bind = result[i]->sym.st_info >> 4;
 		result[i]->type = result[i]->sym.st_info & 0xF;
 		result[i]->name = 0;
@@ -337,7 +337,7 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 	for ( i = 0; entrise > i; ++i )
 	{
 		fread(&result[i], sp_x->shr.sh_entsize, 1u, fp);
-		swapmemory(&result[i], (srxfixup_const_char_ptr_t)"ll", 1);
+		swapmemory(&result[i], "ll", 1);
 		result[i].type = result[i].rel.r_info & 0xFF;
 		result[i].symptr = symp[result[i].rel.r_info >> 8];
 		++result[i].symptr->refcount;
@@ -350,7 +350,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 
 	sycb = (elf_mips_symbolic_data *)malloc(sizeof(elf_mips_symbolic_data));
 	fread(sycb, sizeof(hdrr), 1u, fp);
-	swapmemory(sycb, (srxfixup_const_char_ptr_t)"sslllllllllllllllllllllll", 1);
+	swapmemory(sycb, "sslllllllllllllllllllllll", 1);
 	if ( sycb->head.cbLineOffset > 0 )
 	{
 		size_t size_1;
@@ -368,7 +368,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbDn_Ptr = (char *)malloc(size_2);
 		fseek(fp, sycb->head.cbDnOffset, 0);
 		fread(sycb->cbDn_Ptr, size_2, 1u, fp);
-		swapmemory(sycb->cbDn_Ptr, (srxfixup_const_char_ptr_t)"ll", sycb->head.idnMax);
+		swapmemory(sycb->cbDn_Ptr, "ll", sycb->head.idnMax);
 	}
 	if ( sycb->head.cbPdOffset > 0 )
 	{
@@ -378,7 +378,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbPd_Ptr = (char *)malloc(size_3);
 		fseek(fp, sycb->head.cbPdOffset, 0);
 		fread(sycb->cbPd_Ptr, size_3, 1u, fp);
-		swapmemory(sycb->cbPd_Ptr, (srxfixup_const_char_ptr_t)"lllllllllsslll", sycb->head.ipdMax);
+		swapmemory(sycb->cbPd_Ptr, "lllllllllsslll", sycb->head.ipdMax);
 	}
 	if ( sycb->head.cbSymOffset > 0 )
 	{
@@ -388,7 +388,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbSym_Ptr = (char *)malloc(size_4);
 		fseek(fp, sycb->head.cbSymOffset, 0);
 		fread(sycb->cbSym_Ptr, size_4, 1u, fp);
-		swapmemory(sycb->cbSym_Ptr, (srxfixup_const_char_ptr_t)"lll", sycb->head.isymMax);
+		swapmemory(sycb->cbSym_Ptr, "lll", sycb->head.isymMax);
 	}
 	if ( sycb->head.cbOptOffset > 0 )
 	{
@@ -398,7 +398,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbOpt_Ptr = (char *)malloc(size_5);
 		fseek(fp, sycb->head.cbOptOffset, 0);
 		fread(sycb->cbOpt_Ptr, size_5, 1u, fp);
-		swapmemory(sycb->cbOpt_Ptr, (srxfixup_const_char_ptr_t)"lll", sycb->head.ioptMax);
+		swapmemory(sycb->cbOpt_Ptr, "lll", sycb->head.ioptMax);
 	}
 	if ( sycb->head.cbAuxOffset > 0 )
 	{
@@ -408,7 +408,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbAux_Ptr = (char *)malloc(size_6);
 		fseek(fp, sycb->head.cbAuxOffset, 0);
 		fread(sycb->cbAux_Ptr, size_6, 1u, fp);
-		swapmemory(sycb->cbAux_Ptr, (srxfixup_const_char_ptr_t)"l", sycb->head.iauxMax);
+		swapmemory(sycb->cbAux_Ptr, "l", sycb->head.iauxMax);
 	}
 	if ( sycb->head.cbSsOffset > 0 )
 	{
@@ -436,7 +436,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbFd_Ptr = (char *)malloc(size_9);
 		fseek(fp, sycb->head.cbFdOffset, 0);
 		fread(sycb->cbFd_Ptr, size_9, 1u, fp);
-		swapmemory(sycb->cbFd_Ptr, (srxfixup_const_char_ptr_t)"llllllllllsslllllll", sycb->head.ifdMax);
+		swapmemory(sycb->cbFd_Ptr, "llllllllllsslllllll", sycb->head.ifdMax);
 	}
 	if ( sycb->head.cbRfdOffset > 0 )
 	{
@@ -446,7 +446,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbRfd_Ptr = (char *)malloc(size_A);
 		fseek(fp, sycb->head.cbRfdOffset, 0);
 		fread(sycb->cbRfd_Ptr, size_A, 1u, fp);
-		swapmemory(sycb->cbRfd_Ptr, (srxfixup_const_char_ptr_t)"l", sycb->head.crfd);
+		swapmemory(sycb->cbRfd_Ptr, "l", sycb->head.crfd);
 	}
 	if ( sycb->head.cbExtOffset > 0 )
 	{
@@ -456,7 +456,7 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		sycb->cbExt_Ptr = (char *)malloc(size_B);
 		fseek(fp, sycb->head.cbExtOffset, 0);
 		fread(sycb->cbExt_Ptr, size_B, 1u, fp);
-		swapmemory(sycb->cbExt_Ptr, (srxfixup_const_char_ptr_t)"sslll", sycb->head.iextMax);
+		swapmemory(sycb->cbExt_Ptr, "sslll", sycb->head.iextMax);
 	}
 	return sycb;
 }
@@ -520,18 +520,18 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 				elf->ehp->e_shstrndx = elf->scp[i_2]->number;
 		}
 	}
-	swapmemory(elf->ehp, (srxfixup_const_char_ptr_t)"ccccccccccccccccsslllllssssss", 1);
+	swapmemory(elf->ehp, "ccccccccccccccccsslllllssssss", 1);
 	fwrite(elf->ehp, 0x34u, 1u, fp);
-	swapmemory(elf->ehp, (srxfixup_const_char_ptr_t)"ccccccccccccccccsslllllssssss", 1);
+	swapmemory(elf->ehp, "ccccccccccccccccsslllllssssss", 1);
 	if ( elf->ehp->e_phnum && elf->ehp->e_phentsize )
 	{
 		count_1 = elf->ehp->e_phnum;
 		fseek(fp, elf->ehp->e_phoff, 0);
 		for ( i_3 = 0; count_1 > i_3; ++i_3 )
 		{
-			swapmemory(&elf->php[i_3], (srxfixup_const_char_ptr_t)"llllllll", 1);
+			swapmemory(&elf->php[i_3], "llllllll", 1);
 			fwrite(&elf->php[i_3], 0x20u, 1u, fp);
-			swapmemory(&elf->php[i_3], (srxfixup_const_char_ptr_t)"llllllll", 1);
+			swapmemory(&elf->php[i_3], "llllllll", 1);
 		}
 	}
 	if ( elf->ehp->e_shnum && elf->ehp->e_shentsize )
@@ -540,9 +540,9 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 		fseek(fp, elf->ehp->e_shoff, 0);
 		for ( i_4 = 0; count_2 > i_4; ++i_4 )
 		{
-			swapmemory(elf->scp[i_4], (srxfixup_const_char_ptr_t)"llllllllll", 1);
+			swapmemory(elf->scp[i_4], "llllllllll", 1);
 			fwrite(elf->scp[i_4], 0x28u, 1u, fp);
-			swapmemory(elf->scp[i_4], (srxfixup_const_char_ptr_t)"llllllllll", 1);
+			swapmemory(elf->scp[i_4], "llllllllll", 1);
 		}
 		for ( i_5 = 0; count_2 > i_5; ++i_5 )
 		{
@@ -559,9 +559,9 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 					case SHT_HASH:
 					case SHT_DYNAMIC:
 					case SHT_MIPS_REGINFO:
-						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"l", size >> 2);
+						swapmemory(elf->scp[i_5]->data, "l", size >> 2);
 						fwrite(elf->scp[i_5]->data, size, 1u, fp);
-						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"l", size >> 2);
+						swapmemory(elf->scp[i_5]->data, "l", size >> 2);
 						break;
 					case SHT_SYMTAB:
 					case SHT_DYNSYM:
@@ -576,14 +576,14 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 						write_mips_symbolic((elf_mips_symbolic_data *)elf->scp[i_5]->data, pos, fp);
 						break;
 					case SHT_SCE_IOPMOD:
-						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
+						swapmemory(elf->scp[i_5]->data, "lllllls", 1);
 						fwrite(elf->scp[i_5]->data, size, 1u, fp);
-						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllls", 1);
+						swapmemory(elf->scp[i_5]->data, "lllllls", 1);
 						break;
 					case SHT_SCE_EEMOD:
-						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
+						swapmemory(elf->scp[i_5]->data, "lllllllllls", 1);
 						fwrite(elf->scp[i_5]->data, size, 1u, fp);
-						swapmemory(elf->scp[i_5]->data, (srxfixup_const_char_ptr_t)"lllllllllls", 1);
+						swapmemory(elf->scp[i_5]->data, "lllllllllls", 1);
 						break;
 					default:
 						fwrite(elf->scp[i_5]->data, size, 1u, fp);
@@ -636,7 +636,7 @@ static void write_symtab(elf_file *elf, int sctindex, FILE *fp)
 		memcpy(&sym, syp[i], sizeof(sym));
 		if ( syp[i]->shptr )
 			sym.st_shndx = syp[i]->shptr->number;
-		swapmemory(&sym, (srxfixup_const_char_ptr_t)"lllccs", 1);
+		swapmemory(&sym, "lllccs", 1);
 		fwrite(&sym, 0x10u, 1u, fp);
 	}
 }
@@ -663,7 +663,7 @@ static void write_rel(elf_file *elf, int sctindex, FILE *fp)
 			exit(1);
 		}
 		rel.r_info = (rp[i].symptr->number << 8) + (rp[i].type & 0xFF);
-		swapmemory(&rel, (srxfixup_const_char_ptr_t)"ll", 1);
+		swapmemory(&rel, "ll", 1);
 		fwrite(&rel, 8u, 1u, fp);
 	}
 }
@@ -691,9 +691,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		sycb->head.cbDnOffset = pos;
 		pos += size_2;
 		fseek(fp, sycb->head.cbDnOffset, 0);
-		swapmemory(sycb->cbDn_Ptr, (srxfixup_const_char_ptr_t)"ll", sycb->head.idnMax);
+		swapmemory(sycb->cbDn_Ptr, "ll", sycb->head.idnMax);
 		fwrite(sycb->cbDn_Ptr, size_2, 1u, fp);
-		swapmemory(sycb->cbDn_Ptr, (srxfixup_const_char_ptr_t)"ll", sycb->head.idnMax);
+		swapmemory(sycb->cbDn_Ptr, "ll", sycb->head.idnMax);
 	}
 	if ( sycb->head.cbPdOffset > 0 )
 	{
@@ -703,9 +703,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		sycb->head.cbPdOffset = pos;
 		pos += size_3;
 		fseek(fp, sycb->head.cbPdOffset, 0);
-		swapmemory(sycb->cbPd_Ptr, (srxfixup_const_char_ptr_t)"lllllllllsslll", sycb->head.ipdMax);
+		swapmemory(sycb->cbPd_Ptr, "lllllllllsslll", sycb->head.ipdMax);
 		fwrite(sycb->cbPd_Ptr, size_3, 1u, fp);
-		swapmemory(sycb->cbPd_Ptr, (srxfixup_const_char_ptr_t)"lllllllllsslll", sycb->head.ipdMax);
+		swapmemory(sycb->cbPd_Ptr, "lllllllllsslll", sycb->head.ipdMax);
 	}
 	if ( sycb->head.cbSymOffset > 0 )
 	{
@@ -715,9 +715,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		sycb->head.cbSymOffset = pos;
 		pos += size_4;
 		fseek(fp, sycb->head.cbSymOffset, 0);
-		swapmemory(sycb->cbSym_Ptr, (srxfixup_const_char_ptr_t)"lll", sycb->head.isymMax);
+		swapmemory(sycb->cbSym_Ptr, "lll", sycb->head.isymMax);
 		fwrite(sycb->cbSym_Ptr, size_4, 1u, fp);
-		swapmemory(sycb->cbSym_Ptr, (srxfixup_const_char_ptr_t)"lll", sycb->head.isymMax);
+		swapmemory(sycb->cbSym_Ptr, "lll", sycb->head.isymMax);
 	}
 	if ( sycb->head.cbOptOffset > 0 )
 	{
@@ -726,9 +726,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		size_5 = 12 * sycb->head.ioptMax;
 		pos += size_5;
 		fseek(fp, sycb->head.cbOptOffset, 0);
-		swapmemory(sycb->cbOpt_Ptr, (srxfixup_const_char_ptr_t)"lll", sycb->head.ioptMax);
+		swapmemory(sycb->cbOpt_Ptr, "lll", sycb->head.ioptMax);
 		fwrite(sycb->cbOpt_Ptr, size_5, 1u, fp);
-		swapmemory(sycb->cbOpt_Ptr, (srxfixup_const_char_ptr_t)"lll", sycb->head.ioptMax);
+		swapmemory(sycb->cbOpt_Ptr, "lll", sycb->head.ioptMax);
 	}
 	if ( sycb->head.cbAuxOffset > 0 )
 	{
@@ -738,9 +738,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		sycb->head.cbAuxOffset = pos;
 		pos += size_6;
 		fseek(fp, sycb->head.cbAuxOffset, 0);
-		swapmemory(sycb->cbAux_Ptr, (srxfixup_const_char_ptr_t)"l", sycb->head.iauxMax);
+		swapmemory(sycb->cbAux_Ptr, "l", sycb->head.iauxMax);
 		fwrite(sycb->cbAux_Ptr, size_6, 1u, fp);
-		swapmemory(sycb->cbAux_Ptr, (srxfixup_const_char_ptr_t)"l", sycb->head.iauxMax);
+		swapmemory(sycb->cbAux_Ptr, "l", sycb->head.iauxMax);
 	}
 	if ( sycb->head.cbSsOffset > 0 )
 	{
@@ -770,9 +770,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		sycb->head.cbFdOffset = pos;
 		pos += size_9;
 		fseek(fp, sycb->head.cbFdOffset, 0);
-		swapmemory(sycb->cbFd_Ptr, (srxfixup_const_char_ptr_t)"llllllllllsslllllll", sycb->head.ifdMax);
+		swapmemory(sycb->cbFd_Ptr, "llllllllllsslllllll", sycb->head.ifdMax);
 		fwrite(sycb->cbFd_Ptr, size_9, 1u, fp);
-		swapmemory(sycb->cbFd_Ptr, (srxfixup_const_char_ptr_t)"llllllllllsslllllll", sycb->head.ifdMax);
+		swapmemory(sycb->cbFd_Ptr, "llllllllllsslllllll", sycb->head.ifdMax);
 	}
 	if ( sycb->head.cbRfdOffset > 0 )
 	{
@@ -782,9 +782,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		sycb->head.cbRfdOffset = pos;
 		pos += size_A;
 		fseek(fp, sycb->head.cbRfdOffset, 0);
-		swapmemory(sycb->cbRfd_Ptr, (srxfixup_const_char_ptr_t)"l", sycb->head.crfd);
+		swapmemory(sycb->cbRfd_Ptr, "l", sycb->head.crfd);
 		fwrite(sycb->cbRfd_Ptr, size_A, 1u, fp);
-		swapmemory(sycb->cbRfd_Ptr, (srxfixup_const_char_ptr_t)"l", sycb->head.crfd);
+		swapmemory(sycb->cbRfd_Ptr, "l", sycb->head.crfd);
 	}
 	if ( sycb->head.cbExtOffset > 0 )
 	{
@@ -793,14 +793,14 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 		size_B = 16 * sycb->head.iextMax;
 		sycb->head.cbExtOffset = pos;
 		fseek(fp, sycb->head.cbExtOffset, 0);
-		swapmemory(sycb->cbExt_Ptr, (srxfixup_const_char_ptr_t)"sslll", sycb->head.iextMax);
+		swapmemory(sycb->cbExt_Ptr, "sslll", sycb->head.iextMax);
 		fwrite(sycb->cbExt_Ptr, size_B, 1u, fp);
-		swapmemory(sycb->cbExt_Ptr, (srxfixup_const_char_ptr_t)"sslll", sycb->head.iextMax);
+		swapmemory(sycb->cbExt_Ptr, "sslll", sycb->head.iextMax);
 	}
 	fseek(fp, basepos, 0);
-	swapmemory(sycb, (srxfixup_const_char_ptr_t)"sslllllllllllllllllllllll", 1);
+	swapmemory(sycb, "sslllllllllllllllllllllll", 1);
 	fwrite(sycb, 0x60u, 1u, fp);
-	swapmemory(sycb, (srxfixup_const_char_ptr_t)"sslllllllllllllllllllllll", 1);
+	swapmemory(sycb, "sslllllllllllllllllllllll", 1);
 }
 
 void add_section(elf_file *elf, elf_section *scp)

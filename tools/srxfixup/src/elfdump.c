@@ -688,17 +688,17 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 	sh_type = scp->shr.sh_type;
 	if ( sh_type == SHT_PROGBITS || sh_type == SHT_HASH || sh_type == SHT_DYNAMIC || sh_type == SHT_MIPS_REGINFO )
     {
-        swapmemory(dumpbuf, (srxfixup_const_char_ptr_t)"l", (scp->shr.sh_size + 1) >> 2);
+        swapmemory(dumpbuf, "l", (scp->shr.sh_size + 1) >> 2);
     }
 	printf("\n");
 	if ( (flag & 0x10) != 0 )
 	{
-		dumpb((srxfixup_const_char_ptr_t)"", 0, scp->shr.sh_size, (uint8_t *)dumpbuf);
+		dumpb("", 0, scp->shr.sh_size, (uint8_t *)dumpbuf);
 		printf("\n");
 	}
 	if ( (flag & 0x20) != 0 )
 	{
-		dumph((srxfixup_const_char_ptr_t)"          ", 0, scp->shr.sh_size, (uint16_t *)dumpbuf);
+		dumph("          ", 0, scp->shr.sh_size, (uint16_t *)dumpbuf);
 		printf("\n");
 	}
 	if ( (flag & 0xC0) != 0 )
@@ -710,7 +710,7 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 				v4 = 16;
 			else
 				v4 = scp->shr.sh_size - offset;
-			dumpw((srxfixup_const_char_ptr_t)"          ", offset, v4, &dumpbuf[offset / 4]);
+			dumpw("          ", offset, v4, &dumpbuf[offset / 4]);
 			if ( (flag & 0x80u) != 0 )
 			{
 				for ( i = 0; i <= 15 && scp->shr.sh_size > offset + i; i += 4 )
@@ -731,7 +731,7 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 						{
 							v6 = rel.rp->symptr->name;
 							if ( !v6 )
-								v6 = (srxfixup_const_char_ptr_t)"";
+								v6 = "";
 							v12 = v6;
 							v10 = rel.rp->rel.r_info >> 8;
 							rpbase_ = num2name(R_MIPS_Type, rel.rp->type);
