@@ -121,7 +121,7 @@ static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym,
 			syp = search_global_symbol((srxfixup_const_char_ptr_t)"_start", elf);
 		if ( !is_defined_symbol(syp) )
 		{
-			if ( modinfo->shr.sh_type == 0x70000090 )
+			if ( modinfo->shr.sh_type == SHT_SCE_EEMOD )
 			{
 				elf->ehp->e_entry = -1;
 			}
@@ -136,7 +136,7 @@ static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym,
 		}
 	}
 	sh_type = modinfo->shr.sh_type;
-	if ( sh_type == 0x70000080 || sh_type == 0x70000090 )
+	if ( sh_type == SHT_SCE_IOPMOD || sh_type == SHT_SCE_EEMOD )
 	{
 		*((uint32_t *)modinfo->data + 1) = elf->ehp->e_entry;
 	}
@@ -253,7 +253,7 @@ int  layout_srx_file(elf_file *elf)
 	writeback_file_order_list(elf, neworder);
 	for ( slotp_2 = neworder; slotp_2->type != 100; ++slotp_2 )
 	{
-		if ( slotp_2->type == 3 && slotp_2->d.php->phdr.p_type == 1 && max_seg_align < slotp_2->align )
+		if ( slotp_2->type == 3 && slotp_2->d.php->phdr.p_type == PT_LOAD && max_seg_align < slotp_2->align )
 		{
 			align = slotp_2->align;
 			fprintf(stderr, "Program Header Entry: unsupported align %d\n", align);
@@ -283,8 +283,8 @@ void  strip_elf(elf_file *elf)
 	int d;
 	int s;
 
-	remove_section(elf, 0x70000005);
-	scp = search_section(elf, 2);
+	remove_section(elf, SHT_MIPS_DEBUG);
+	scp = search_section(elf, SHT_SYMTAB);
 	if ( scp == NULL )
 	{
 		return;
@@ -369,7 +369,7 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 		type = rp->type;
 		switch ( type )
 		{
-			case 1:
+			case R_MIPS_16:
 				data_1 = startaddr + (int16_t)*(uint32_t *)datal;
 				if ( HIWORD(data_1) )
 				{
@@ -382,11 +382,11 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 				*(uint32_t *)datal &= 0xFFFF0000;
 				*(uint32_t *)datal |= (uint16_t)data_1;
 				break;
-			case 2:
+			case R_MIPS_32:
 				*(uint32_t *)datal += startaddr;
 				break;
-			case 4:
-				if ( rp->symptr->bind )
+			case R_MIPS_26:
+				if ( rp->symptr->bind != STB_LOCAL )
 				{
 					fprintf(stderr, "R_MIPS_26 Unexcepted bind\n");
 					exit(1);
@@ -395,8 +395,8 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 				*(uint32_t *)datal &= 0xFC000000;
 				*(uint32_t *)datal |= (16 * data_2) >> 6;
 				break;
-			case 5:
-				if ( i == entrise + 1 || rp[1].type != 6 || rp[1].symptr != rp->symptr )
+			case R_MIPS_HI16:
+				if ( i == entrise + 1 || rp[1].type != R_MIPS_LO16 || rp[1].symptr != rp->symptr )
 				{
 					fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
 					exit(1);
@@ -407,21 +407,21 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 				*(uint32_t *)datal &= 0xFFFF0000;
 				*(uint32_t *)datal |= (uint16_t)(((data_4 >> 15) + 1) >> 1);
 				break;
-			case 6:
+			case R_MIPS_LO16:
 				data_5 = startaddr + *(uint32_t *)datal;
 				*(uint32_t *)datal &= 0xFFFF0000;
 				*(uint32_t *)datal |= data_5;
 				break;
-			case 7:
+			case R_MIPS_GPREL16:
 				fprintf(stderr, "Unexcepted R_MIPS_GPREL16\n");
 				exit(1);
 				return;
-			case 8:
+			case R_MIPS_LITERAL:
 				fprintf(stderr, "Unexcepted R_MIPS_LITERAL\n");
 				exit(1);
 				return;
-			case 250:
-				if ( i == entrise + 1 || rp[1].type != 251 )
+			case R_MIPSSCE_MHI16:
+				if ( i == entrise + 1 || rp[1].type != R_MIPSSCE_ADDEND )
 				{
 					fprintf(stderr, "R_MIPSSCE_MHI16 without R_MIPSSCE_ADDEND\n");
 					exit(1);
@@ -436,15 +436,15 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 				++rp;
 				++i;
 				break;
-			case 3:
-			case 9:
-			case 10:
-			case 11:
-			case 12:
-			case 21:
-			case 22:
-			case 30:
-			case 31:
+			case R_MIPS_REL32:
+			case R_MIPS_GOT16:
+			case R_MIPS_PC16:
+			case R_MIPS_CALL16:
+			case R_MIPS_GPREL32:
+			case R_MIPS_GOTHI16:
+			case R_MIPS_GOTLO16:
+			case R_MIPS_CALLHI16:
+			case R_MIPS_CALLLO16:
 				v16 = rp->type;
 				fprintf(stderr, "unacceptable relocation type: 0x%x\n", v16);
 				exit(1);
@@ -480,7 +480,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 	d = 1;
 	while ( s < elf->ehp->e_shnum )
 	{
-		if ( elf->scp[s]->shr.sh_type == 9 )
+		if ( elf->scp[s]->shr.sh_type == SHT_REL )
 			fixlocation_an_rel(elf->scp[s], startaddr);
 		else
 			elf->scp[d++] = elf->scp[s];
@@ -488,7 +488,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 	}
 	elf->ehp->e_shnum = d;
 	elf->ehp->e_entry += startaddr;
-	modsect_1 = search_section(elf, 0x70000080);
+	modsect_1 = search_section(elf, SHT_SCE_IOPMOD);
 	if ( modsect_1 )
 	{
 		Elf32_IopMod *iopmodinfo;
@@ -499,7 +499,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 		iopmodinfo->entry += startaddr;
 		iopmodinfo->gp_value += startaddr;
 	}
-	modsect_2 = search_section(elf, 0x70000090);
+	modsect_2 = search_section(elf, SHT_SCE_EEMOD);
 	if ( modsect_2 )
 	{
 		Elf32_EeMod *eemodinfo;
@@ -512,7 +512,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 	}
 	for ( i = 0; i < elf->ehp->e_phnum; ++i )
 	{
-		if ( elf->php[i].phdr.p_type == 1 )
+		if ( elf->php[i].phdr.p_type == PT_LOAD )
 		{
 			elf->php[i].phdr.p_vaddr = startaddr;
 			elf->php[i].phdr.p_paddr = startaddr;
@@ -524,10 +524,10 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 		unsigned int sh_type;
 
 		sh_type = elf->scp[j]->shr.sh_type;
-		if ( sh_type == 1 || sh_type == 8 )
+		if ( sh_type == SHT_PROGBITS || sh_type == SHT_NOBITS )
 			elf->scp[j]->shr.sh_addr += startaddr;
 	}
-	scp = search_section(elf, 2);
+	scp = search_section(elf, SHT_SYMTAB);
 	if ( scp == NULL )
 	{
 		return;
@@ -536,9 +536,9 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 	syp = (elf_syment **)scp->data;
 	for ( k = 1; entrise > k; ++k )
 	{
-		if ( syp[k]->sym.st_shndx == 0xFF1F || (syp[k]->sym.st_shndx && syp[k]->sym.st_shndx <= 0xFEFFu) )
+		if ( syp[k]->sym.st_shndx == SHN_RADDR || (syp[k]->sym.st_shndx && syp[k]->sym.st_shndx <= 0xFEFFu) )
 			syp[k]->sym.st_value += startaddr;
-		if ( syp[k]->sym.st_shndx == 0xFF1F )
+		if ( syp[k]->sym.st_shndx == SHN_RADDR )
 			syp[k]->sym.st_shndx = -15;
 	}
 }
@@ -550,7 +550,7 @@ static void  save_org_addrs(elf_file *elf)
 	elf_section *reginfosec;
 	int i;
 
-	reginfosec = search_section(elf, 0x70000006);
+	reginfosec = search_section(elf, SHT_MIPS_REGINFO);
 	if ( reginfosec )
 		data = (Elf32_RegInfo *)reginfosec->data;
 	else
@@ -580,7 +580,7 @@ static elf_section * add_iopmod(elf_file *elf)
 	iopmodp->moduleinfo = -1;
 	modsect->name = strdup(".iopmod");
 	modsect->data = (uint8_t *)iopmodp;
-	modsect->shr.sh_type = 0x70000080;
+	modsect->shr.sh_type = SHT_SCE_IOPMOD;
 	modsect->shr.sh_size = iopmod_size(iopmodp);
 	modsect->shr.sh_addralign = 4;
 	modsect->shr.sh_entsize = 0;
@@ -600,7 +600,7 @@ static elf_section * add_eemod(elf_file *elf)
 	eemodp->moduleinfo = -1;
 	modsect->name = strdup(".eemod");
 	modsect->data = (uint8_t *)eemodp;
-	modsect->shr.sh_type = 0x70000090;
+	modsect->shr.sh_type = SHT_SCE_EEMOD;
 	modsect->shr.sh_size = eemod_size(eemodp);
 	modsect->shr.sh_addralign = 4;
 	modsect->shr.sh_entsize = 0;
@@ -614,7 +614,7 @@ static void  modify_eemod(elf_file *elf, elf_section *eemod)
 	elf_section *scp_2;
 	Elf32_EeMod *moddata;
 
-	if ( eemod->shr.sh_type != 0x70000090 )
+	if ( eemod->shr.sh_type != SHT_SCE_EEMOD )
 	{
 		return;
 	}
@@ -682,7 +682,7 @@ static void  define_special_section_symbols(elf_file *elf)
 	Srx_gen_table *tp;
 
 	tp = (Srx_gen_table *)(elf->optdata);
-	scp = search_section(elf, 2);
+	scp = search_section(elf, SHT_SYMTAB);
 	if ( scp == NULL )
 	{
 		return;
@@ -694,7 +694,7 @@ static void  define_special_section_symbols(elf_file *elf)
 	for ( i = 1; entrise > i; ++i )
 	{
 		sym = syp[i];
-		if ( sym->bind == 1 && !sym->sym.st_shndx )
+		if ( sym->bind == STB_GLOBAL && !sym->sym.st_shndx )
 		{
 			v3 = strlen(bos_str);
 			if ( !strncmp(bos_str, sym->name, v3) )
@@ -724,7 +724,7 @@ static void  create_need_section(elf_file *elf)
 	Srx_gen_table *tp;
 
 	tp = (Srx_gen_table *)elf->optdata;
-	scp = search_section(elf, 2);
+	scp = search_section(elf, SHT_SYMTAB);
 	if ( scp == NULL )
 	{
 		return;
@@ -867,17 +867,17 @@ static void  create_phdr(elf_file *elf)
 			elf->php[j].phdr.p_align = 4;
 			if ( !strcmp(".iopmod", phip[j].d.section_name) )
 			{
-				elf->php[j].phdr.p_type = 0x70000080;
+				elf->php[j].phdr.p_type = PT_SCE_IOPMOD;
 				elf->php[j].phdr.p_filesz = 28;
 				elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-				*elf->php[j].scp = search_section(elf, 0x70000080);
+				*elf->php[j].scp = search_section(elf, SHT_SCE_IOPMOD);
 			}
 			else if ( !strcmp(".eemod", phip[j].d.section_name) )
 			{
-				elf->php[j].phdr.p_type = 0x70000090;
+				elf->php[j].phdr.p_type = PT_SCE_EEMOD;
 				elf->php[j].phdr.p_filesz = 44;
 				elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-				*elf->php[j].scp = search_section(elf, 0x70000090);
+				*elf->php[j].scp = search_section(elf, SHT_SCE_EEMOD);
 			}
 			else
 			{
@@ -887,7 +887,7 @@ static void  create_phdr(elf_file *elf)
 		}
 		else if ( sw == 2 )
 		{
-			elf->php[j].phdr.p_type = 1;
+			elf->php[j].phdr.p_type = PT_LOAD;
 			elf->php[j].phdr.p_flags = 7;
 			elf->php[j].phdr.p_align = 16;
 		}
@@ -966,7 +966,7 @@ static void  update_modinfo(elf_file *elf)
 		fprintf(stderr, "TEXT,DATA,BSS,GLOBALDATA segment missing abort");
 		exit(1);
 	}
-	scp_1 = search_section(elf, 0x70000080);
+	scp_1 = search_section(elf, SHT_SCE_IOPMOD);
 	if ( scp_1 )
 	{
 		Elf32_IopMod *imp;
@@ -978,7 +978,7 @@ static void  update_modinfo(elf_file *elf)
 		imp->bss_size = seginfo_8->size;
 		imp->gp_value = seginfo_12->addr + 0x7FF0;
 	}
-	scp_2 = search_section(elf, 0x70000090);
+	scp_2 = search_section(elf, SHT_SCE_EEMOD);
 	if ( scp_2 )
 	{
 		Elf32_EeMod *emp;
@@ -996,7 +996,7 @@ static void  update_mdebug(elf_file *elf)
 {
 	elf_section *scp;
 
-	scp = search_section(elf, 0x70000005);
+	scp = search_section(elf, SHT_MIPS_DEBUG);
 	if ( scp )
 		scp->shr.sh_addr = 0;
 }
@@ -1053,7 +1053,7 @@ static void  update_programheader(elf_file *elf)
 					memcpy(&scp[nsect_2], segp[nseg_2]->scp, segp[nseg_2]->nsect * sizeof(elf_section *));
 					nsect_2 += segp[nseg_2++]->nsect;
 				}
-				for ( s = 0; nsect_2 > s && scp[s]->shr.sh_type == 1; ++s )
+				for ( s = 0; nsect_2 > s && scp[s]->shr.sh_type == SHT_PROGBITS; ++s )
 				{
 					if ( (signed int)scp[s]->shr.sh_addralign > align )
 						align = scp[s]->shr.sh_addralign;
@@ -1160,7 +1160,7 @@ static int  layout_srx_memory(elf_file *elf)
 		{
 			for ( s_3 = 1;
 						sections > s_3
-				 && (!scp[s_3] || (scp[s_3]->shr.sh_type != 9 && scp[s_3]->shr.sh_type != 4) || scp[s_2] != scp[s_3]->info);
+				 && (!scp[s_3] || (scp[s_3]->shr.sh_type != SHT_RELA && scp[s_3]->shr.sh_type != SHT_REL) || scp[s_2] != scp[s_3]->info);
 						++s_3 );
 			r = scp[s_2]->name;
 			if ( sections > s_3 )
@@ -1223,10 +1223,10 @@ static int  check_undef_symboles_an_reloc(elf_section *relsect)
 			if ( rp->symptr->sym.st_shndx )
 			{
 				if ( rp->symptr->sym.st_shndx > 0xFEFFu
-					&& rp->symptr->sym.st_shndx != 0xFFF1
-					&& rp->symptr->sym.st_shndx != 0xFF1F )
+					&& rp->symptr->sym.st_shndx != SHN_ABS
+					&& rp->symptr->sym.st_shndx != SHN_RADDR )
 				{
-					if ( rp->symptr->sym.st_shndx == 0xFFF2 )
+					if ( rp->symptr->sym.st_shndx == SHN_COMMON )
 					{
 						name = rp->symptr->name;
 						fprintf(stderr, "  unallocated variable `%s'\n", name);
@@ -1240,7 +1240,7 @@ static int  check_undef_symboles_an_reloc(elf_section *relsect)
 					++undefcount;
 				}
 			}
-			else if ( rp->symptr->bind != 2 )
+			else if ( rp->symptr->bind != STB_WEAK )
 			{
 				v6 = rp->symptr->name;
 				fprintf(stderr, "  undefined reference to `%s'\n", v6);
@@ -1262,7 +1262,7 @@ static int  check_undef_symboles(elf_file *elf)
 	err = 0;
 	for ( s = 1; s < elf->ehp->e_shnum; ++s )
 	{
-		if ( elf->scp[s]->shr.sh_type == 9 )
+		if ( elf->scp[s]->shr.sh_type == SHT_REL )
 			err += check_undef_symboles_an_reloc(elf->scp[s]);
 	}
 	return err;
@@ -1285,7 +1285,7 @@ static int  create_reserved_symbols(elf_file *elf)
 
 	tp = (Srx_gen_table *)elf->optdata;
 	csyms_ = 0;
-	if ( !search_section(elf, 2) )
+	if ( !search_section(elf, SHT_SYMTAB) )
 		return 1;
 	for ( csyms = tp->create_symbols; csyms->name; ++csyms )
 	{
@@ -1370,7 +1370,7 @@ static int  create_reserved_symbols(elf_file *elf)
 				}
 				continue;
 			}
-			if ( csyms->bind == 2 && (sym->bind == 1 || sym->bind == 2) && !sym->sym.st_shndx )
+			if ( csyms->bind == STB_WEAK && (sym->bind == STB_GLOBAL || sym->bind == STB_WEAK) && !sym->sym.st_shndx )
 			{
 				if ( !sym->type )
 					sym->type = csyms->type;
@@ -1391,15 +1391,15 @@ static void  symbol_value_update(elf_file *elf)
 	int target;
 
 	target = ((Srx_gen_table *)(elf->optdata))->target;
-	if ( elf->ehp->e_type != 1 )
+	if ( elf->ehp->e_type != ET_REL )
 	{
 		return;
 	}
 	if ( target == 1 )
-		elf->ehp->e_type = 0xFF80;
+		elf->ehp->e_type = ET_SCE_IOPRELEXEC;
 	if ( target == 2 )
-		elf->ehp->e_type = 0xFF91;
-	scp = search_section(elf, 2);
+		elf->ehp->e_type = ET_SCE_EERELEXEC2;
+	scp = search_section(elf, SHT_SYMTAB);
 	if ( scp == NULL )
 	{
 		return;
@@ -1426,7 +1426,7 @@ static void  rebuild_relocation(elf_file *elf, unsigned int gpvalue)
 	}
 	for ( s = 1; s < elf->ehp->e_shnum; ++s )
 	{
-		if ( elf->scp[s]->shr.sh_type == 9 )
+		if ( elf->scp[s]->shr.sh_type == SHT_REL )
 			rebuild_an_relocation(elf->scp[s], gpvalue, ((Srx_gen_table *)(elf->optdata))->target);
 	}
 }
@@ -1435,18 +1435,18 @@ static int  check_irx12(elf_file *elf, int cause_irx1)
 {
 	int s;
 
-	if ( elf->ehp->e_type != 0xFF80 )
+	if ( elf->ehp->e_type != ET_SCE_IOPRELEXEC )
 		return 0;
 	for ( s = 1; s < elf->ehp->e_shnum; ++s )
 	{
-		if ( elf->scp[s]->shr.sh_type == 9 && relocation_is_version2(elf->scp[s]) )
+		if ( elf->scp[s]->shr.sh_type == SHT_REL && relocation_is_version2(elf->scp[s]) )
 		{
 			if ( cause_irx1 )
 			{
 				fprintf(stderr, "R_MIPS_LO16 without R_MIPS_HI16\n");
 				return 1;
 			}
-			elf->ehp->e_type = 0xFF81;
+			elf->ehp->e_type = ET_SCE_IOPRELEXEC2;
 		}
 	}
 	return 0;
@@ -1480,7 +1480,7 @@ static void  setup_module_info(elf_file *elf, elf_section *modsect, srxfixup_con
 	memcpy(buf, modnamep, buflen);
 	swapmemory(buf, (srxfixup_const_char_ptr_t)"l", buflen >> 2);
 	name = &buf[woff];
-	if ( modsect->shr.sh_type == 0x70000080 )
+	if ( modsect->shr.sh_type == SHT_SCE_IOPMOD )
 	{
 		Elf32_IopMod *iopmodp_1;
 		Elf32_IopMod *iopmodp_2;
@@ -1493,7 +1493,7 @@ static void  setup_module_info(elf_file *elf, elf_section *modsect, srxfixup_con
 		modsect->data = (uint8_t *)iopmodp_2;
 		modsect->shr.sh_size = iopmod_size(iopmodp_2);
 	}
-	if ( modsect->shr.sh_type == 0x70000090 )
+	if ( modsect->shr.sh_type == SHT_SCE_EEMOD )
 	{
 		Elf32_EeMod *eemodp_1;
 		Elf32_EeMod *eemodp_2;
@@ -1578,14 +1578,14 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 		if ( rp->symptr->sym.st_shndx )
 			symvalue = rp->symptr->sym.st_value;
 		v4 = 0;
-		if ( (rp->symptr->sym.st_shndx && rp->symptr->sym.st_shndx <= 0xFEFFu) || rp->symptr->sym.st_shndx == 0xFF1F )
+		if ( (rp->symptr->sym.st_shndx && rp->symptr->sym.st_shndx <= 0xFEFFu) || rp->symptr->sym.st_shndx == SHN_RADDR )
 			v4 = 1;
 		switch ( rp->type )
 		{
-			case 0:
+			case R_MIPS_NONE:
 				rmflag = 1;
 				break;
-			case 1:
+			case R_MIPS_16:
 				data_1 = symvalue + (int16_t)*(uint32_t *)daddr_1;
 				if ( HIWORD(data_1) && HIWORD(data_1) != 0xFFFF )
 				{
@@ -1596,21 +1596,21 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				*(uint32_t *)daddr_1 |= (uint16_t)data_1;
 				if ( !v4 )
 				{
-					rp->type = 0;
+					rp->type = R_MIPS_NONE;
 					rmflag = 1;
 				}
 				break;
-			case 2:
+			case R_MIPS_32:
 				*(uint32_t *)daddr_1 += symvalue;
 				if ( !v4 )
 				{
-					rp->type = 0;
+					rp->type = R_MIPS_NONE;
 					rmflag = 1;
 				}
 				break;
-			case 4:
+			case R_MIPS_26:
 				data_2 = *(uint32_t *)daddr_1;
-				if ( rp->symptr->bind )
+				if ( rp->symptr->bind != STB_LOCAL )
 					data_33 = data_2 << 6 >> 4;
 				else
 					data_33 = ((relsect->info->shr.sh_addr + rp->rel.r_offset) & 0xF0000000) | (4 * (data_2 & 0x3FFFFFF));
@@ -1618,13 +1618,13 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				*(uint32_t *)daddr_1 |= (16 * (symvalue + data_33)) >> 6;
 				if ( !v4 )
 				{
-					rp->type = 0;
+					rp->type = R_MIPS_NONE;
 					rmflag = 1;
 				}
 				break;
-			case 5:
+			case R_MIPS_HI16:
 				datah = *(uint32_t *)daddr_1 << 16;
-				for ( j_1 = i_1 + 1; entrise > j_1 && rp[next].type == 5; ++j_1 )
+				for ( j_1 = i_1 + 1; entrise > j_1 && rp[next].type == R_MIPS_HI16; ++j_1 )
 				{
 					if ( rp[next].symptr != rp->symptr )
 					{
@@ -1646,7 +1646,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 					}
 					++next;
 				}
-				if ( j_1 == entrise + 1 || rp[next].type != 6 || rp[next].symptr != rp->symptr )
+				if ( j_1 == entrise + 1 || rp[next].type != R_MIPS_LO16 || rp[next].symptr != rp->symptr )
 				{
 					fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
 					exit(1);
@@ -1658,7 +1658,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 					*(uint32_t *)daddr_1 |= (uint16_t)(((data32_1 >> 15) + 1) >> 1);
 					if ( !v4 )
 					{
-						rp->type = 0;
+						rp->type = R_MIPS_NONE;
 						rmflag = 1;
 					}
 				}
@@ -1678,13 +1678,13 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 							}
 							*(uint32_t *)daddr_2 |= (uint16_t)(step >> 2);
 						}
-						rp[j_2].type = 0;
+						rp[j_2].type = R_MIPS_NONE;
 						--rp[j_2].symptr->refcount;
 						rp[j_2].symptr = *symp;
 					}
-					rp->type = 250;
+					rp->type = R_MIPSSCE_MHI16;
 					rp->rel.r_offset += relsect->info->shr.sh_addr;
-					rp[1].type = 251;
+					rp[1].type = R_MIPSSCE_ADDEND;
 					rp[1].rel.r_offset = data32_1;
 					rmflag = 1;
 					rp += next;
@@ -1699,32 +1699,32 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 						daddr_3 = (void *)&relsect->info->data[rp[j_3].rel.r_offset];
 						*(uint32_t *)daddr_3 &= 0xFFFF0000;
 						*(uint32_t *)daddr_3 |= data32_2;
-						rp[j_3].type = 0;
+						rp[j_3].type = R_MIPS_NONE;
 					}
 					rmflag = 1;
 				}
 				break;
-			case 6:
+			case R_MIPS_LO16:
 				data_4 = symvalue + *(uint32_t *)daddr_1;
 				*(uint32_t *)daddr_1 &= 0xFFFF0000;
 				*(uint32_t *)daddr_1 |= data_4;
 				if ( !v4 )
 				{
-					rp->type = 0;
+					rp->type = R_MIPS_NONE;
 					rmflag = 1;
 				}
 				break;
-			case 7:
+			case R_MIPS_GPREL16:
 				data_5 = (int16_t)*(uint32_t *)daddr_1;
-				if ( rp->symptr->type == 3 )
+				if ( rp->symptr->type == STT_SECTION )
 				{
 					data_5 += ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_gp_value + symvalue - ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_addr - gpvalue;
 				}
-				else if ( rp->symptr->bind == 1 || (rp->symptr->bind == 2 && rp->symptr->sym.st_shndx) )
+				else if ( rp->symptr->bind == STB_GLOBAL || (rp->symptr->bind == STB_WEAK && rp->symptr->sym.st_shndx) )
 				{
 					data_5 += symvalue - gpvalue;
 				}
-				else if ( rp->symptr->bind != 2 || rp->symptr->sym.st_shndx )
+				else if ( rp->symptr->bind != STB_WEAK || rp->symptr->sym.st_shndx )
 				{
 					fprintf(stderr, "R_MIPS_GPREL16 unknown case abort\n");
 					exit(1);
@@ -1736,11 +1736,11 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				}
 				*(uint32_t *)daddr_1 &= 0xFFFF0000;
 				*(uint32_t *)daddr_1 |= (uint16_t)data_5;
-				rp->type = 0;
+				rp->type = R_MIPS_NONE;
 				rmflag = 1;
 				break;
-			case 8:
-				if ( rp->symptr->type != 3 )
+			case R_MIPS_LITERAL:
+				if ( rp->symptr->type != STT_SECTION )
 				{
 					fprintf(stderr, "R_MIPS_LITERAL unknown case abort\n");
 					exit(1);
@@ -1757,10 +1757,10 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				}
 				*(uint32_t *)daddr_1 &= 0xFFFF0000;
 				*(uint32_t *)daddr_1 |= (uint16_t)data_6;
-				rp->type = 0;
+				rp->type = R_MIPS_NONE;
 				rmflag = 1;
 				break;
-			case 0x79:
+			case R_MIPS_DVP_27_S4:
 				if ( target != 2 )
 				{
 					fprintf(stderr, "R_MIPS_DVP_27_S4 can use only for EE.\n");
@@ -1771,19 +1771,19 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				*(uint32_t *)daddr_1 |= data_7 & 0x7FFFFFF0;
 				if ( !v4 )
 				{
-					rp->type = 0;
+					rp->type = R_MIPS_NONE;
 					rmflag = 1;
 				}
 				break;
-			case 3:
-			case 9:
-			case 0xA:
-			case 0xB:
-			case 0xC:
-			case 0x15:
-			case 0x16:
-			case 0x1E:
-			case 0x1F:
+			case R_MIPS_REL32:
+			case R_MIPS_GOT16:
+			case R_MIPS_PC16:
+			case R_MIPS_CALL16:
+			case R_MIPS_GPREL32:
+			case R_MIPS_GOTHI16:
+			case R_MIPS_GOTLO16:
+			case R_MIPS_CALLHI16:
+			case R_MIPS_CALLLO16:
 				v22 = rp->type;
 				fprintf(stderr, "unacceptable relocation type: 0x%x\n", v22);
 				exit(1);
@@ -1847,16 +1847,16 @@ int  relocation_is_version2(elf_section *relsect)
 	rp = (elf_rel *)relsect->data;
 	for ( i = 0; entrise > i; ++i )
 	{
-		if ( rp->type == 6 )
+		if ( rp->type == R_MIPS_LO16 )
 			return 1;
-		if ( rp->type == 5 )
+		if ( rp->type == R_MIPS_HI16 )
 		{
-			if ( i == entrise + 1 || rp[1].type != 6 || rp[1].symptr != rp->symptr )
+			if ( i == entrise + 1 || rp[1].type != R_MIPS_LO16 || rp[1].symptr != rp->symptr )
 				return 1;
 			++rp;
 			++i;
 		}
-		if ( rp->type == 250 || rp->type == 251 )
+		if ( rp->type == R_MIPSSCE_MHI16 || rp->type == R_MIPSSCE_ADDEND )
 			return 1;
 		++rp;
 	}

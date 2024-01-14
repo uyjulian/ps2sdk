@@ -39,45 +39,40 @@ void print_elf(elf_file *elf, int flag)
 	}
 }
 
-struct name2num Ei_class_name[] = { { "ELFCLASSNONE", 0 }, { "ELFCLASS32", 1 }, { "ELFCLASS64", 2 }, { NULL, 0 } };
+struct name2num Ei_class_name[] =
+{
+#define X(d) { #d, d },
+	XEACH_Ei_class_name_enum()
+#undef X
+	{ NULL, 0 },
+};
 struct name2num E_type_name[] =
 {
-	{ "ET_NONE", 0 },
-	{ "ET_REL", 1 },
-	{ "ET_EXEC", 2 },
-	{ "ET_DYN", 3 },
-	{ "ET_CORE", 4 },
-	{ "ET_SCE_IOPRELEXEC", 0xFF80 },
-	{ "ET_SCE_IOPRELEXEC2", 0xFF81 },
-	{ "ET_SCE_EERELEXEC", 0xFF90 },
-	{ "ET_SCE_EERELEXEC2", 0xFF91 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_E_type_name_enum()
+#undef X
+	{ NULL, 0 },
 };
 struct name2num Ei_data_name[] =
 {
-	{ "ELFDATANONE", 0 },
-	{ "ELFDATA2LSB", 1 },
-	{ "ELFDATA2MSB", 2 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_Ei_data_name_enum()
+#undef X
+	{ NULL, 0 },
 };
-struct name2num E_version_name[] = { { "EV_NONE", 0 }, { "EV_CURRENT", 1 }, { NULL, 0 } };
+struct name2num E_version_name[] =
+{
+#define X(d) { #d, d },
+	XEACH_E_version_name_enum()
+#undef X
+	{ NULL, 0 },
+};
 struct name2num E_machine_name[] =
 {
-	{ "EM_NONE", 0 },
-	{ "EM_M32", 1 },
-	{ "EM_SPARC", 2 },
-	{ "EM_386", 3 },
-	{ "EM_68K", 4 },
-	{ "EM_88K", 5 },
-	{ "EM_860", 7 },
-	{ "EM_MIPS", 8 },
-	{ "EM_MIPS_RS4_BE", 10 },
-	{ "EM_SPARC64", 11 },
-	{ "EM_PARISC", 15 },
-	{ "EM_SPARC32PLUS", 18 },
-	{ "EM_PPC", 20 },
-	{ "EM_SH", 42 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_E_machine_name_enum()
+#undef X
+	{ NULL, 0 },
 };
 
 void print_elf_ehdr(elf_file *elf, int flag)
@@ -128,18 +123,10 @@ void print_elf_ehdr(elf_file *elf, int flag)
 
 struct name2num P_type_name[] =
 {
-	{ "PT_NULL", 0 },
-	{ "PT_LOAD", 1 },
-	{ "PT_DYNAMIC", 2 },
-	{ "PT_INTERP", 3 },
-	{ "PT_NOTE", 4 },
-	{ "PT_SHLIB", 5 },
-	{ "PT_PHDR", 6 },
-	{ "PT_MIPS_REGINFO", 0x70000000 },
-	{ "PT_MIPS_RTPROC", 0x70000001 },
-	{ "PT_SCE_IOPMOD", 0x70000080 },
-	{ "PT_SCE_EEMOD", 0x70000090 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_P_type_name_enum()
+#undef X
+	{ NULL, 0 },
 };
 
 void print_elf_phdr(elf_file *elf, int flag)
@@ -185,27 +172,10 @@ void print_elf_phdr(elf_file *elf, int flag)
 
 struct name2num S_type_name[] =
 {
-	{ "SHT_NULL", 0 },
-	{ "SHT_PROGBITS", 1 },
-	{ "SHT_SYMTAB", 2 },
-	{ "SHT_STRTAB", 3 },
-	{ "SHT_RELA", 4 },
-	{ "SHT_HASH", 5 },
-	{ "SHT_DYNAMIC", 6 },
-	{ "SHT_NOTE", 7 },
-	{ "SHT_NOBITS", 8 },
-	{ "SHT_REL", 9 },
-	{ "SHT_SHLIB", 10 },
-	{ "SHT_DYNSYM", 11 },
-	{ "SHT_MIPS_LIBLIST", 0x70000000 },
-	{ "SHT_MIPS_CONFLICT", 0x70000002 },
-	{ "SHT_MIPS_GPTAB", 0x70000003 },
-	{ "SHT_MIPS_UCODE", 0x70000004 },
-	{ "SHT_MIPS_DEBUG", 0x70000005 },
-	{ "SHT_MIPS_REGINFO", 0x70000006 },
-	{ "SHT_SCE_IOPMOD", 0x70000080 },
-	{ "SHT_SCE_EEMOD", 0x70000090 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_S_type_name_enum()
+#undef X
+	{ NULL, 0 },
 };
 
 void print_elf_sections(elf_file *elf, int flag)
@@ -227,7 +197,7 @@ void print_elf_sections(elf_file *elf, int flag)
 	{
 		if ( i >= elf->ehp->e_shnum )
 			return;
-		if ( (flag & 1) != 0 || ((flag & 2) != 0 && elf->scp[i]->shr.sh_type == 9) )
+		if ( (flag & 1) != 0 || ((flag & 2) != 0 && elf->scp[i]->shr.sh_type == SHT_REL) )
 		{
 			v3 = num2name(S_type_name, elf->scp[i]->shr.sh_type);
 			printf(" %2d: %-12s sh_name=0x%04x sh_type=%s\n", i, elf->scp[i]->name, elf->scp[i]->shr.sh_name, v3);
@@ -257,17 +227,17 @@ void print_elf_sections(elf_file *elf, int flag)
 		sh_type = elf->scp[i]->shr.sh_type;
 		switch ( sh_type )
 		{
-			case 2:
-			case 11:
+			case SHT_SYMTAB:
+			case SHT_DYNSYM:
 				print_elf_symtbl(elf->scp[i], flag);
 				continue;
-			case 9:
+			case SHT_REL:
 				print_elf_reloc(elf->scp[i], flag);
 				continue;
-			case 0x70000005:
+			case SHT_MIPS_DEBUG:
 				print_elf_mips_symbols((elf_mips_symbolic_data *)elf->scp[i]->data, flag);
 				continue;
-			case 0x70000080:
+			case SHT_SCE_IOPMOD:
 				if ( (flag & 1) != 0 )
 				{
 					data = (Elf32_IopMod *)elf->scp[i]->data;
@@ -283,7 +253,7 @@ void print_elf_sections(elf_file *elf, int flag)
 						data->bss_size);
 				}
 				break;
-			case 0x70000090:
+			case SHT_SCE_EEMOD:
 				if ( (flag & 1) != 0 )
 				{
 					v6 = (Elf32_EeMod *)elf->scp[i]->data;
@@ -297,7 +267,7 @@ void print_elf_sections(elf_file *elf, int flag)
 					printf("        erx_stub_addr=0x%08x, erx_stub_size=0x%08x\n", v6->erx_stub_addr, v6->erx_stub_size);
 				}
 				break;
-			case 0x70000006:
+			case SHT_MIPS_REGINFO:
 				if ( (flag & 1) != 0 )
 				{
 					v4 = (Elf32_RegInfo *)elf->scp[i]->data;
@@ -315,7 +285,7 @@ void print_elf_sections(elf_file *elf, int flag)
 		}
 		if ( elf->scp[i]->data )
 		{
-			if ( (elf->scp[i]->shr.sh_flags & 4) != 0 && elf->ehp->e_machine == 8 )
+			if ( (elf->scp[i]->shr.sh_flags & 4) != 0 && elf->ehp->e_machine == EM_MIPS )
 			{
 				if ( (elf->ehp->e_flags & 0xF0FF0000) == 0x20920000 )
 					initdisasm(2, -1, 0, 0, 0);
@@ -333,30 +303,10 @@ void print_elf_sections(elf_file *elf, int flag)
 
 struct name2num R_MIPS_Type[] =
 {
-	{ "R_MIPS_NONE", 0 },
-	{ "R_MIPS_16", 1 },
-	{ "R_MIPS_32", 2 },
-	{ "R_MIPS_REL32", 3 },
-	{ "R_MIPS_26", 4 },
-	{ "R_MIPS_HI16", 5 },
-	{ "R_MIPS_LO16", 6 },
-	{ "R_MIPS_GPREL16", 7 },
-	{ "R_MIPS_LITERAL", 8 },
-	{ "R_MIPS_GOT16", 9 },
-	{ "R_MIPS_PC16", 10 },
-	{ "R_MIPS_CALL16", 11 },
-	{ "R_MIPS_GPREL32", 12 },
-	{ "R_MIPS_GOTHI16", 21 },
-	{ "R_MIPS_GOTLO16", 22 },
-	{ "R_MIPS_CALLHI16", 30 },
-	{ "R_MIPS_CALLLO16", 31 },
-	{ "R_MIPS_DVP_11_PCREL", 120 },
-	{ "R_MIPS_DVP_27_S4", 121 },
-	{ "R_MIPS_DVP_11_S4", 122 },
-	{ "R_MIPS_DVP_U15_S3", 123 },
-	{ "R_MIPSSCE_MHI16", 250 },
-	{ "R_MIPSSCE_ADDEND", 251 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_R_MIPS_Type_enum()
+#undef X
+	{ NULL, 0 },
 };
 
 void print_elf_reloc(elf_section *scp, int flag)
@@ -383,7 +333,7 @@ void print_elf_reloc(elf_section *scp, int flag)
 
 		symshp = num2name(R_MIPS_Type, rp[i].type);
 		printf("   %3d: 0x%06x  0x%02x %-16s ", i, rp[i].rel.r_offset, rp[i].type, symshp);
-		if ( rp[i].symptr->type == 3 )
+		if ( rp[i].symptr->type == STT_SECTION )
 		{
 			printf("0x%03x[%s]\n", rp[i].rel.r_info >> 8, rp[i].symptr->shptr->name);
 		}
@@ -449,7 +399,7 @@ void print_elf_disasm(elf_file *elf, elf_section *scp, int flag)
 	}
 	for ( i = 0; (int)steps > i; ++i )
 	{
-		if ( rel[i].rp && rel[i].rp->type == 250 )
+		if ( rel[i].rp && rel[i].rp->type == R_MIPSSCE_MHI16 )
 		{
 			j = i;
 			for ( d = SLOWORD(codes[i]); d; d = SLOWORD(codes[j]) )
@@ -481,7 +431,7 @@ void print_elf_disasm(elf_file *elf, elf_section *scp, int flag)
 				rp = rel[i].mhrp;
 				strcat(pb, ">");
 			}
-			if ( rp->symptr->type == 3 )
+			if ( rp->symptr->type == STT_SECTION )
 			{
 				name = rp->symptr->shptr->name;
 				rp_ = rp->rel.r_info >> 8;
@@ -497,13 +447,13 @@ void print_elf_disasm(elf_file *elf, elf_section *scp, int flag)
 				v16 = v6;
 				v13 = rp->rel.r_info >> 8;
 				v11 = num2name(R_MIPS_Type, rp->type);
-				if ( rp->symptr->bind )
+				if ( rp->symptr->bind != STB_LOCAL )
 				{
-					if ( rp->symptr->bind == 1 )
+					if ( rp->symptr->bind == STB_GLOBAL )
 					{
 						v7 = 69;
 					}
-					else if ( rp->symptr->bind == 2 )
+					else if ( rp->symptr->bind == STB_WEAK )
 					{
 						v7 = 119;
 					}
@@ -538,7 +488,7 @@ static void search_rel_section(elf_file *elf, elf_section *scp, elf_rel **result
 	for ( i = 1; i < elf->ehp->e_shnum; ++i )
 	{
 		relscp = elf->scp[i];
-		if ( relscp->shr.sh_type == 9 && scp == relscp->info )
+		if ( relscp->shr.sh_type == SHT_REL && scp == relscp->info )
 			break;
 	}
 	if ( i < elf->ehp->e_shnum )
@@ -546,10 +496,10 @@ static void search_rel_section(elf_file *elf, elf_section *scp, elf_rel **result
 		*result = (elf_rel *)relscp->data;
 		*relentries = relscp->shr.sh_size / relscp->shr.sh_entsize;
 		*baseoff = 0;
-		if ( elf->ehp->e_type == 0xFF80
-			|| elf->ehp->e_type == 0xFF81
-			|| elf->ehp->e_type == 0xFF90
-			|| elf->ehp->e_type == 0xFF91 )
+		if ( elf->ehp->e_type == ET_SCE_IOPRELEXEC
+			|| elf->ehp->e_type == ET_SCE_IOPRELEXEC2
+			|| elf->ehp->e_type == ET_SCE_EERELEXEC
+			|| elf->ehp->e_type == ET_SCE_EERELEXEC2 )
 		{
 			*baseoff = scp->shr.sh_addr;
 		}
@@ -570,7 +520,7 @@ static void search_rel_data(elf_rel *rpbase, int relentries, unsigned int addr, 
 	result->rp = 0;
 	for ( j = 0; relentries > j; ++j )
 	{
-		if ( rpbase[j].type != 251 && addr == rpbase[j].rel.r_offset )
+		if ( rpbase[j].type != R_MIPSSCE_ADDEND && addr == rpbase[j].rel.r_offset )
 		{
 			result->rid = j;
 			result->rp = &rpbase[j];
@@ -736,7 +686,7 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 	dumpbuf = (unsigned int *)calloc(1u, scp->shr.sh_size + 4);
 	memcpy(dumpbuf, scp->data, scp->shr.sh_size);
 	sh_type = scp->shr.sh_type;
-	if ( sh_type == 1 || sh_type == 5 || sh_type == 6 || sh_type == 0x70000006 )
+	if ( sh_type == SHT_PROGBITS || sh_type == SHT_HASH || sh_type == SHT_DYNAMIC || sh_type == SHT_MIPS_REGINFO )
     {
         swapmemory(dumpbuf, (srxfixup_const_char_ptr_t)"l", (scp->shr.sh_size + 1) >> 2);
     }
@@ -770,7 +720,7 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 					{
 						printf("                  +%02x:", i);
 						printf(" [%3d]", rel.rid);
-						if ( rel.rp->symptr->type == 3 )
+						if ( rel.rp->symptr->type == STT_SECTION )
 						{
 							name = rel.rp->symptr->shptr->name;
 							rel_ = rel.rp->rel.r_info >> 8;
@@ -785,13 +735,13 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 							v12 = v6;
 							v10 = rel.rp->rel.r_info >> 8;
 							rpbase_ = num2name(R_MIPS_Type, rel.rp->type);
-							if ( rel.rp->symptr->bind )
+							if ( rel.rp->symptr->bind != STB_LOCAL )
 							{
-								if ( rel.rp->symptr->bind == 1 )
+								if ( rel.rp->symptr->bind == STB_GLOBAL )
 								{
 									v7 = 69;
 								}
-								else if ( rel.rp->symptr->bind == 2 )
+								else if ( rel.rp->symptr->bind == STB_WEAK )
 								{
 									v7 = 119;
 								}
@@ -818,32 +768,24 @@ void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
 
 struct name2num SymbolBinding[] =
 {
-	{ "STB_LOCAL", 0 },
-	{ "STB_GLOBAL", 1 },
-	{ "STB_WEAK", 2 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_SymbolBinding_enum()
+#undef X
+	{ NULL, 0 },
 };
 struct name2num SymbolType[] =
 {
-	{ "STT_NOTYPE", 0 },
-	{ "STT_OBJECT", 1 },
-	{ "STT_FUNC", 2 },
-	{ "STT_SECTION", 3 },
-	{ "STT_FILE", 4 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_SymbolType_enum()
+#undef X
+	{ NULL, 0 },
 };
 struct name2num SymbolSpSection[] =
 {
-	{ "SHN_UNDEF", 0 },
-	{ "SHN_MIPS_ACOMMON", 0xFF00 },
-	{ "SHN_MIPS_TEXT", 0xFF01 },
-	{ "SHN_MIPS_DATA", 0xFF02 },
-	{ "SHN_MIPS_SCOMMON", 0xFF03 },
-	{ "SHN_MIPS_SUNDEFINED", 0xFF04 },
-	{ "SHN_RADDR", 0xFF1F },
-	{ "SHN_ABS", 0xFFF1 },
-	{ "SHN_COMMON", 0xFFF2 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_SymbolSpSection_enum()
+#undef X
+	{ NULL, 0 },
 };
 
 void print_elf_symtbl(elf_section *scp, int flag)
@@ -915,68 +857,17 @@ static srxfixup_const_char_ptr_t num2name(struct name2num *table, int num)
 
 struct name2num SymbolTypes[] =
 {
-	{ "stNil", 0 },
-	{ "stGlobal", 1 },
-	{ "stStatic", 2 },
-	{ "stParam", 3 },
-	{ "stLocal", 4 },
-	{ "stLabel", 5 },
-	{ "stProc", 6 },
-	{ "stBlock", 7 },
-	{ "stEnd", 8 },
-	{ "stMember", 9 },
-	{ "stTypedef", 10 },
-	{ "stFile", 11 },
-	{ "stRegReloc", 12 },
-	{ "stForward", 13 },
-	{ "stStaticProc", 14 },
-	{ "stConstant", 15 },
-	{ "stStaParam", 16 },
-	{ "stStruct", 26 },
-	{ "stUnion", 27 },
-	{ "stEnum", 28 },
-	{ "stIndirect", 34 },
-	{ "stStr", 60 },
-	{ "stNumber", 61 },
-	{ "stExpr", 62 },
-	{ "stType", 63 },
-	{ "stMax", 64 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_SymbolTypes_enum()
+#undef X
+	{ NULL, 0 },
 };
 struct name2num StorageClasse[] =
 {
-	{ "scNil", 0 },
-	{ "scText", 1 },
-	{ "scData", 2 },
-	{ "scBss", 3 },
-	{ "scRegister", 4 },
-	{ "scAbs", 5 },
-	{ "scUndef", 6 },
-	{ "scUndefined", 6 },
-	{ "scCdbLocal", 7 },
-	{ "scBits", 8 },
-	{ "scCdbSystem", 9 },
-	{ "scDbx", 9 },
-	{ "scRegImage", 10 },
-	{ "scInfo", 11 },
-	{ "scUserStruct", 12 },
-	{ "scSData", 13 },
-	{ "scSBss", 14 },
-	{ "scRData", 15 },
-	{ "scVar", 16 },
-	{ "scCommon", 17 },
-	{ "scSCommon", 18 },
-	{ "scVarRegister", 19 },
-	{ "scVariant", 20 },
-	{ "scSUndefined", 21 },
-	{ "scInit", 22 },
-	{ "scBasedVar", 23 },
-	{ "scXData", 24 },
-	{ "scPData", 25 },
-	{ "scFini", 26 },
-	{ "scRConst", 27 },
-	{ "scMax", 32 },
-	{ NULL, 0 }
+#define X(d) { #d, d },
+	XEACH_StorageClasse_enum()
+#undef X
+	{ NULL, 0 },
 };
 
 void print_elf_mips_symbols(elf_mips_symbolic_data *symbol, int flag)

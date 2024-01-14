@@ -526,6 +526,403 @@ extern const char *ee_defaultconf;
 // iopfixconf.c
 extern const char *iop_defaultconf;
 
+enum Ei_class_name_enum
+{
+	ELFCLASSNONE = 0,
+	ELFCLASS32 = 1,
+	ELFCLASS64 = 2,
+};
+
+#define XEACH_Ei_class_name_enum() \
+	X(ELFCLASSNONE) \
+	X(ELFCLASS32) \
+	X(ELFCLASS64)
+
+enum E_type_name_enum
+{
+	ET_NONE = 0,
+	ET_REL = 1,
+	ET_EXEC = 2,
+	ET_DYN = 3,
+	ET_CORE = 4,
+	ET_SCE_IOPRELEXEC = 0xFF80,
+	ET_SCE_IOPRELEXEC2 = 0xFF81,
+	ET_SCE_EERELEXEC = 0xFF90,
+	ET_SCE_EERELEXEC2 = 0xFF91,
+};
+
+#define XEACH_E_type_name_enum() \
+	X(ET_NONE) \
+	X(ET_REL) \
+	X(ET_EXEC) \
+	X(ET_DYN) \
+	X(ET_CORE) \
+	X(ET_SCE_IOPRELEXEC) \
+	X(ET_SCE_IOPRELEXEC2) \
+	X(ET_SCE_EERELEXEC) \
+	X(ET_SCE_EERELEXEC2)
+
+enum Ei_data_name_enum
+{
+	ELFDATANONE = 0,
+	ELFDATA2LSB = 1,
+	ELFDATA2MSB = 2,
+};
+
+#define XEACH_Ei_data_name_enum() \
+	X(ELFDATANONE) \
+	X(ELFDATA2LSB) \
+	X(ELFDATA2MSB)
+
+enum E_version_name_enum
+{
+	EV_NONE = 0,
+	EV_CURRENT = 1,
+};
+
+#define XEACH_E_version_name_enum() \
+	X(EV_NONE) \
+	X(EV_CURRENT)
+
+enum E_machine_name_enum
+{
+	EM_NONE = 0,
+	EM_M32 = 1,
+	EM_SPARC = 2,
+	EM_386 = 3,
+	EM_68K = 4,
+	EM_88K = 5,
+	EM_860 = 7,
+	EM_MIPS = 8,
+	EM_MIPS_RS4_BE = 10,
+	EM_SPARC64 = 11,
+	EM_PARISC = 15,
+	EM_SPARC32PLUS = 18,
+	EM_PPC = 20,
+	EM_SH = 42,
+};
+
+#define XEACH_E_machine_name_enum() \
+	X(EM_NONE) \
+	X(EM_M32) \
+	X(EM_SPARC) \
+	X(EM_386) \
+	X(EM_68K) \
+	X(EM_88K) \
+	X(EM_860) \
+	X(EM_MIPS) \
+	X(EM_MIPS_RS4_BE) \
+	X(EM_SPARC64) \
+	X(EM_PARISC) \
+	X(EM_SPARC32PLUS) \
+	X(EM_PPC) \
+	X(EM_SH)
+
+enum P_type_name_enum
+{
+	PT_NULL = 0,
+	PT_LOAD = 1,
+	PT_DYNAMIC = 2,
+	PT_INTERP = 3,
+	PT_NOTE = 4,
+	PT_SHLIB = 5,
+	PT_PHDR = 6,
+	PT_MIPS_REGINFO = 0x70000000,
+	PT_MIPS_RTPROC = 0x70000001,
+	PT_SCE_IOPMOD = 0x70000080,
+	PT_SCE_EEMOD = 0x70000090,
+};
+
+#define XEACH_P_type_name_enum() \
+	X(PT_NULL) \
+	X(PT_LOAD) \
+	X(PT_DYNAMIC) \
+	X(PT_INTERP) \
+	X(PT_NOTE) \
+	X(PT_SHLIB) \
+	X(PT_PHDR) \
+	X(PT_MIPS_REGINFO) \
+	X(PT_MIPS_RTPROC) \
+	X(PT_SCE_IOPMOD) \
+	X(PT_SCE_EEMOD)
+
+enum S_type_name_enum
+{
+	SHT_NULL = 0,
+	SHT_PROGBITS = 1,
+	SHT_SYMTAB = 2,
+	SHT_STRTAB = 3,
+	SHT_RELA = 4,
+	SHT_HASH = 5,
+	SHT_DYNAMIC = 6,
+	SHT_NOTE = 7,
+	SHT_NOBITS = 8,
+	SHT_REL = 9,
+	SHT_SHLIB = 10,
+	SHT_DYNSYM = 11,
+	SHT_MIPS_LIBLIST = 0x70000000,
+	SHT_MIPS_CONFLICT = 0x70000002,
+	SHT_MIPS_GPTAB = 0x70000003,
+	SHT_MIPS_UCODE = 0x70000004,
+	SHT_MIPS_DEBUG = 0x70000005,
+	SHT_MIPS_REGINFO = 0x70000006,
+	SHT_SCE_IOPMOD = 0x70000080,
+	SHT_SCE_EEMOD = 0x70000090,
+};
+
+#define XEACH_S_type_name_enum() \
+	X(SHT_NULL) \
+	X(SHT_PROGBITS) \
+	X(SHT_SYMTAB) \
+	X(SHT_STRTAB) \
+	X(SHT_RELA) \
+	X(SHT_HASH) \
+	X(SHT_DYNAMIC) \
+	X(SHT_NOTE) \
+	X(SHT_NOBITS) \
+	X(SHT_REL) \
+	X(SHT_SHLIB) \
+	X(SHT_DYNSYM) \
+	X(SHT_MIPS_LIBLIST) \
+	X(SHT_MIPS_CONFLICT) \
+	X(SHT_MIPS_GPTAB) \
+	X(SHT_MIPS_UCODE) \
+	X(SHT_MIPS_DEBUG) \
+	X(SHT_MIPS_REGINFO) \
+	X(SHT_SCE_IOPMOD) \
+	X(SHT_SCE_EEMOD)
+
+enum R_MIPS_Type_enum
+{
+	R_MIPS_NONE = 0,
+	R_MIPS_16 = 1,
+	R_MIPS_32 = 2,
+	R_MIPS_REL32 = 3,
+	R_MIPS_26 = 4,
+	R_MIPS_HI16 = 5,
+	R_MIPS_LO16 = 6,
+	R_MIPS_GPREL16 = 7,
+	R_MIPS_LITERAL = 8,
+	R_MIPS_GOT16 = 9,
+	R_MIPS_PC16 = 10,
+	R_MIPS_CALL16 = 11,
+	R_MIPS_GPREL32 = 12,
+	R_MIPS_GOTHI16 = 21,
+	R_MIPS_GOTLO16 = 22,
+	R_MIPS_CALLHI16 = 30,
+	R_MIPS_CALLLO16 = 31,
+	R_MIPS_DVP_11_PCREL = 120,
+	R_MIPS_DVP_27_S4 = 121,
+	R_MIPS_DVP_11_S4 = 122,
+	R_MIPS_DVP_U15_S3 = 123,
+	R_MIPSSCE_MHI16 = 250,
+	R_MIPSSCE_ADDEND = 251,
+};
+
+#define XEACH_R_MIPS_Type_enum() \
+	X(R_MIPS_NONE) \
+	X(R_MIPS_16) \
+	X(R_MIPS_32) \
+	X(R_MIPS_REL32) \
+	X(R_MIPS_26) \
+	X(R_MIPS_HI16) \
+	X(R_MIPS_LO16) \
+	X(R_MIPS_GPREL16) \
+	X(R_MIPS_LITERAL) \
+	X(R_MIPS_GOT16) \
+	X(R_MIPS_PC16) \
+	X(R_MIPS_CALL16) \
+	X(R_MIPS_GPREL32) \
+	X(R_MIPS_GOTHI16) \
+	X(R_MIPS_GOTLO16) \
+	X(R_MIPS_CALLHI16) \
+	X(R_MIPS_CALLLO16) \
+	X(R_MIPS_DVP_11_PCREL) \
+	X(R_MIPS_DVP_27_S4) \
+	X(R_MIPS_DVP_11_S4) \
+	X(R_MIPS_DVP_U15_S3) \
+	X(R_MIPSSCE_MHI16) \
+	X(R_MIPSSCE_ADDEND)
+
+enum SymbolBinding_enum
+{
+	STB_LOCAL = 0,
+	STB_GLOBAL = 1,
+	STB_WEAK = 2,
+};
+
+#define XEACH_SymbolBinding_enum() \
+	X(STB_LOCAL) \
+	X(STB_GLOBAL) \
+	X(STB_WEAK)
+
+enum SymbolType_enum
+{
+	STT_NOTYPE = 0,
+	STT_OBJECT = 1,
+	STT_FUNC = 2,
+	STT_SECTION = 3,
+	STT_FILE = 4,
+};
+
+#define XEACH_SymbolType_enum() \
+	X(STT_NOTYPE) \
+	X(STT_OBJECT) \
+	X(STT_FUNC) \
+	X(STT_SECTION) \
+	X(STT_FILE)
+
+enum SymbolSpSection_enum
+{
+	SHN_UNDEF = 0,
+	SHN_MIPS_ACOMMON = 0xFF00,
+	SHN_MIPS_TEXT = 0xFF01,
+	SHN_MIPS_DATA = 0xFF02,
+	SHN_MIPS_SCOMMON = 0xFF03,
+	SHN_MIPS_SUNDEFINED = 0xFF04,
+	SHN_RADDR = 0xFF1F,
+	SHN_ABS = 0xFFF1,
+	SHN_COMMON = 0xFFF2,
+};
+
+#define XEACH_SymbolSpSection_enum() \
+	X(SHN_UNDEF) \
+	X(SHN_MIPS_ACOMMON) \
+	X(SHN_MIPS_TEXT) \
+	X(SHN_MIPS_DATA) \
+	X(SHN_MIPS_SCOMMON) \
+	X(SHN_MIPS_SUNDEFINED) \
+	X(SHN_RADDR) \
+	X(SHN_ABS) \
+	X(SHN_COMMON)
+
+enum SymbolTypes_enum
+{
+	stNil = 0,
+	stGlobal = 1,
+	stStatic = 2,
+	stParam = 3,
+	stLocal = 4,
+	stLabel = 5,
+	stProc = 6,
+	stBlock = 7,
+	stEnd = 8,
+	stMember = 9,
+	stTypedef = 10,
+	stFile = 11,
+	stRegReloc = 12,
+	stForward = 13,
+	stStaticProc = 14,
+	stConstant = 15,
+	stStaParam = 16,
+	stStruct = 26,
+	stUnion = 27,
+	stEnum = 28,
+	stIndirect = 34,
+	stStr = 60,
+	stNumber = 61,
+	stExpr = 62,
+	stType = 63,
+	stMax = 64,
+};
+
+#define XEACH_SymbolTypes_enum() \
+	X(stNil) \
+	X(stGlobal) \
+	X(stStatic) \
+	X(stParam) \
+	X(stLocal) \
+	X(stLabel) \
+	X(stProc) \
+	X(stBlock) \
+	X(stEnd) \
+	X(stMember) \
+	X(stTypedef) \
+	X(stFile) \
+	X(stRegReloc) \
+	X(stForward) \
+	X(stStaticProc) \
+	X(stConstant) \
+	X(stStaParam) \
+	X(stStruct) \
+	X(stUnion) \
+	X(stEnum) \
+	X(stIndirect) \
+	X(stStr) \
+	X(stNumber) \
+	X(stExpr) \
+	X(stType) \
+	X(stMax)
+
+enum StorageClasse_enum
+{
+	scNil = 0,
+	scText = 1,
+	scData = 2,
+	scBss = 3,
+	scRegister = 4,
+	scAbs = 5,
+	scUndef = 6,
+	scUndefined = 6,
+	scCdbLocal = 7,
+	scBits = 8,
+	scCdbSystem = 9,
+	scDbx = 9,
+	scRegImage = 10,
+	scInfo = 11,
+	scUserStruct = 12,
+	scSData = 13,
+	scSBss = 14,
+	scRData = 15,
+	scVar = 16,
+	scCommon = 17,
+	scSCommon = 18,
+	scVarRegister = 19,
+	scVariant = 20,
+	scSUndefined = 21,
+	scInit = 22,
+	scBasedVar = 23,
+	scXData = 24,
+	scPData = 25,
+	scFini = 26,
+	scRConst = 27,
+	scMax = 32,
+};
+
+#define XEACH_StorageClasse_enum() \
+	X(scNil) \
+	X(scText) \
+	X(scData) \
+	X(scBss) \
+	X(scRegister) \
+	X(scAbs) \
+	X(scUndef) \
+	X(scUndefined) \
+	X(scCdbLocal) \
+	X(scBits) \
+	X(scCdbSystem) \
+	X(scDbx) \
+	X(scRegImage) \
+	X(scInfo) \
+	X(scUserStruct) \
+	X(scSData) \
+	X(scSBss) \
+	X(scRData) \
+	X(scVar) \
+	X(scCommon) \
+	X(scSCommon) \
+	X(scVarRegister) \
+	X(scVariant) \
+	X(scSUndefined) \
+	X(scInit) \
+	X(scBasedVar) \
+	X(scXData) \
+	X(scPData) \
+	X(scFini) \
+	X(scRConst) \
+	X(scMax)
+
+
 
 // Some convenience macros to make partial accesses nicer
 #define LAST_IND(x,part_type)    (sizeof(x)/sizeof(part_type) - 1)

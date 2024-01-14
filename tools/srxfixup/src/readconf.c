@@ -406,11 +406,11 @@ static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp
 {
 	if ( !strcmp("GLOBAL", ttp[1].value.lowtoken->str) )
 	{
-		result->bind = 1;
+		result->bind = STB_GLOBAL;
 	}
 	else if ( !strcmp("LOCAL", ttp[1].value.lowtoken->str) )
 	{
-		result->bind = 0;
+		result->bind = STB_LOCAL;
 	}
 	else
 	{
@@ -419,14 +419,14 @@ static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp
 			fprintf(stderr, "Unsupported bind '%s' for '%s'\n", ttp[1].value.lowtoken->str, ttp->value.lowtoken->str);
 			return 1;
 		}
-		result->bind = 2;
+		result->bind = STB_WEAK;
 	}
 	if ( strcmp("OBJECT", ttp[2].value.lowtoken->str) != 0 )
 	{
 		fprintf(stderr, "Unsupported type '%s' for '%s'\n", ttp[2].value.lowtoken->str, ttp->value.lowtoken->str);
 		return 1;
 	}
-	result->type = 1;
+	result->type = STT_OBJECT;
 	result->segment = lookup_segment(conf, ttp[3].value.lowtoken->str, 0);
 	if ( !result->segment && ttp[3].value.lowtoken->str[0] == '.' )
 	{

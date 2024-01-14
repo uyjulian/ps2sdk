@@ -221,7 +221,7 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 	elf->optdata = (void *)srxgen_1;
-	if ( elf->ehp->e_type == 1 )
+	if ( elf->ehp->e_type == ET_REL )
 	{
 		int v7;
 
@@ -231,10 +231,10 @@ int main(int argc, char **argv)
 		if ( convert_rel2srx(elf, entrysym, v7, irx1_flag) )
 			exit(1);
 	}
-	else if ( elf->ehp->e_type != 0xFF80
-				 && elf->ehp->e_type != 0xFF81
-				 && elf->ehp->e_type != 0xFF91
-				 && elf->ehp->e_type != 2 )
+	else if ( elf->ehp->e_type != ET_SCE_IOPRELEXEC
+				 && elf->ehp->e_type != ET_SCE_IOPRELEXEC2
+				 && elf->ehp->e_type != ET_SCE_EERELEXEC2
+				 && elf->ehp->e_type != ET_EXEC )
 	{
 		e_type = elf->ehp->e_type;
 		fprintf(stderr, "Error: '%s' is unsupport Type Elf file(type=%x)\n", source, e_type);
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 	}
 	if ( dispmod_flag )
 		display_module_info(elf);
-	if ( elf->ehp->e_type == 0xFF80 || elf->ehp->e_type == 0xFF81 || elf->ehp->e_type == 0xFF91 )
+	if ( elf->ehp->e_type == ET_SCE_IOPRELEXEC || elf->ehp->e_type == ET_SCE_IOPRELEXEC2 || elf->ehp->e_type == ET_SCE_EERELEXEC2 )
 	{
 		if ( br_conv )
 			convert_relative_branch(elf);
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 	}
 	if ( ffile || startaddr != -1 )
 	{
-		if ( elf->ehp->e_type == 0xFF80 || elf->ehp->e_type == 0xFF81 || elf->ehp->e_type == 0xFF91 )
+		if ( elf->ehp->e_type == ET_SCE_IOPRELEXEC || elf->ehp->e_type == ET_SCE_IOPRELEXEC2 || elf->ehp->e_type == ET_SCE_EERELEXEC2 )
 		{
 			elf->ehp->e_type = 2;
 			fixlocation_elf(elf, startaddr);
@@ -287,7 +287,7 @@ static void display_module_info(elf_file *elf)
 	elf_section *modsect_1;
 	elf_section *modsect_2;
 
-	modsect_1 = search_section(elf, 0x70000080);
+	modsect_1 = search_section(elf, SHT_SCE_IOPMOD);
 	if ( modsect_1 )
 	{
 		Elf32_IopMod *iopmodinfo;
@@ -300,7 +300,7 @@ static void display_module_info(elf_file *elf)
 				HIBYTE(iopmodinfo->moduleversion),
 				(uint8_t)iopmodinfo->moduleversion);
 	}
-	modsect_2 = search_section(elf, 0x70000090);
+	modsect_2 = search_section(elf, SHT_SCE_EEMOD);
 	if ( modsect_2 )
 	{
 		Elf32_EeMod *eemodinfo;
@@ -360,13 +360,13 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		type = rp->type;
 		if ( type )
 		{
-			if ( type == 4 )
+			if ( type == R_MIPS_26 )
 			{
 				uint32_t raddr;
 				unsigned int data;
 
 				data = *(uint32_t *)daddr;
-				if ( rp->symptr->bind )
+				if ( rp->symptr->bind != STB_LOCAL )
 				{
 					fprintf(stderr, "R_MIPS_26 Unexcepted bind\n");
 					exit(1);
@@ -381,13 +381,13 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 					if ( data >> 26 == 2 )
 					{
 						*(uint32_t *)daddr = jaddr | 0x10000000;
-						rp->type = 0;
+						rp->type = R_MIPS_NONE;
 						++rmcount;
 					}
 					else if ( data >> 26 == 3 )
 					{
 						*(uint32_t *)daddr = jaddr | 0x4110000;
-						rp->type = 0;
+						rp->type = R_MIPS_NONE;
 						++rmcount;
 					}
 				}
@@ -431,7 +431,7 @@ static void convert_relative_branch(elf_file *elf)
 	}
 	for ( i = 1; i < elf->ehp->e_shnum; ++i )
 	{
-		if ( elf->scp[i]->shr.sh_type == 9 )
+		if ( elf->scp[i]->shr.sh_type == SHT_REL )
 			convert_relative_branch_an_section(elf->scp[i]);
 	}
 }
