@@ -78,6 +78,8 @@ IOP_OBJS := $(IOP_OBJS:%=$(IOP_OBJS_DIR)%)
 
 IOP_BIN_ELF := $(IOP_BIN:.irx=.notiopmod.elf)
 
+IOP_BIN_STRIPPED_ELF := $(IOP_BIN:.irx=.notiopmod.stripped.elf)
+
 # Externally defined variables: IOP_BIN, IOP_OBJS, IOP_LIB
 
 # These macros can be used to simplify certain build rules.
@@ -133,7 +135,11 @@ $(IOP_BIN_ELF): $(IOP_OBJS) $(IOP_LIB_ARCHIVES) $(IOP_ADDITIONAL_DEPS)
 	$(DIR_GUARD)
 	$(IOP_C_COMPILE) -T$(IOP_LINKFILE) $(IOP_OPTFLAGS) -o $@ $(IOP_OBJS) $(IOP_LDFLAGS) $(IOP_LIB_ARCHIVES) $(IOP_LIBS)
 
-$(IOP_BIN): $(IOP_BIN_ELF) $(PS2SDKSRC)/tools/srxfixup/bin/srxfixup
+$(IOP_BIN_STRIPPED_ELF): $(IOP_BIN_ELF)
+	$(DIR_GUARD)
+	$(IOP_STRIP) --strip-debug -o $@ $<
+
+$(IOP_BIN): $(IOP_BIN_STRIPPED_ELF) $(PS2SDKSRC)/tools/srxfixup/bin/srxfixup
 	$(PS2SDKSRC)/tools/srxfixup/bin/srxfixup --irx1 -o $@ $<
 
 $(IOP_LIB): $(IOP_OBJS)
