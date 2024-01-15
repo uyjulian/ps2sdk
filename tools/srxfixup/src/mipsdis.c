@@ -2,7 +2,7 @@
 #include "all_include.h"
 
 static int regnmsw[5] = { 1, 1, 0, 1, 0 };
-static srxfixup_const_char_ptr_t REGNAME[2][32] =
+static const char * REGNAME[2][32] =
 {
 	{
 		"$0",
@@ -73,7 +73,7 @@ static srxfixup_const_char_ptr_t REGNAME[2][32] =
 		"ra"
 	}
 };
-static srxfixup_const_char_ptr_t REGC0_iop[2][32] =
+static const char * REGC0_iop[2][32] =
 {
 	{
 		"$0",
@@ -144,7 +144,7 @@ static srxfixup_const_char_ptr_t REGC0_iop[2][32] =
 		"$31"
 	}
 };
-static srxfixup_const_char_ptr_t REGC0_ee[2][32] =
+static const char * REGC0_ee[2][32] =
 {
 	{
 		"$0",
@@ -215,7 +215,7 @@ static srxfixup_const_char_ptr_t REGC0_ee[2][32] =
 		"$31"
 	}
 };
-static srxfixup_const_char_ptr_t REGC1[2][32] =
+static const char * REGC1[2][32] =
 {
 	{
 		"$f0",
@@ -290,7 +290,7 @@ static srxfixup_const_char_ptr_t REGC1[2][32] =
 typedef void (*Operand_func)(Disasm_result *result);
 typedef struct _opcode_table_entry 
 {
-	srxfixup_const_char_ptr_t mnemonic; 
+	const char * mnemonic; 
 	struct _opcode_table *subtable; 
 	Operand_func opfunc;
 } Opcode_table_entry;

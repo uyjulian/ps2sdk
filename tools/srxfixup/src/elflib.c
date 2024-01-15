@@ -11,11 +11,11 @@ static void write_symtab(elf_file *elf, int sctindex, FILE *fp);
 static void write_rel(elf_file *elf, int sctindex, FILE *fp);
 static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE *fp);
 static void reorder_an_symtab(elf_file *elf, elf_section *scp);
-static int search_string_table(srxfixup_const_char_ptr_t tbltop, int endindex, srxfixup_const_char_ptr_t str);
+static int search_string_table(const char * tbltop, int endindex, const char * str);
 static void rebuild_a_symbol_name_strings(elf_section *scp);
 static int comp_Elf_file_slot(const void *a1, const void *a2);
 
-elf_file *read_elf(srxfixup_const_char_ptr_t filename)
+elf_file *read_elf(const char * filename)
 {
 	int ident;
 	elf_file *elf;
@@ -552,7 +552,7 @@ int layout_elf_file(elf_file *elf)
 	return 0;
 }
 
-int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
+int write_elf(elf_file *elf, const char * filename)
 {
 	FILE *fp;
 
@@ -928,7 +928,7 @@ elf_section *remove_section(elf_file *elf, Elf32_Word shtype)
 	return rmsec;
 }
 
-elf_section *remove_section_by_name(elf_file *elf, srxfixup_const_char_ptr_t secname)
+elf_section *remove_section_by_name(elf_file *elf, const char * secname)
 {
 	elf_section *rmsec;
 	int s;
@@ -963,7 +963,7 @@ elf_section *search_section(elf_file *elf, Elf32_Word stype)
 	return 0;
 }
 
-elf_section *search_section_by_name(elf_file *elf, srxfixup_const_char_ptr_t secname)
+elf_section *search_section_by_name(elf_file *elf, const char * secname)
 {
 	int i;
 
@@ -991,7 +991,7 @@ unsigned int *get_section_data(elf_file *elf, unsigned int addr)
 	return 0;
 }
 
-elf_syment *search_global_symbol(srxfixup_const_char_ptr_t name, elf_file *elf)
+elf_syment *search_global_symbol(const char * name, elf_file *elf)
 {
 	int entrise;
 	int i;
@@ -1022,7 +1022,7 @@ int is_defined_symbol(const elf_syment *sym)
 	return sym->sym.st_shndx == SHN_ABS;
 }
 
-elf_syment *add_symbol(elf_file *elf, srxfixup_const_char_ptr_t name, int bind, int type, int value, elf_section *scp, int st_shndx)
+elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int value, elf_section *scp, int st_shndx)
 {
 	int entrise;
 	elf_syment *sym;
@@ -1175,7 +1175,7 @@ void rebuild_section_name_strings(elf_file *elf)
 	}
 }
 
-static int search_string_table(srxfixup_const_char_ptr_t tbltop, int endindex, srxfixup_const_char_ptr_t str)
+static int search_string_table(const char * tbltop, int endindex, const char * str)
 {
 	int idx;
 

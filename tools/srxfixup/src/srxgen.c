@@ -7,17 +7,17 @@ typedef struct _sect_org_data
 	unsigned int org_gp_value;
 } Sect_org_data;
 
-static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym, elf_section *modinfo, int needoutput);
-static Elf_file_slot * search_order_slots(srxfixup_const_char_ptr_t ordstr, const elf_file *elf, Elf_file_slot *order);
+static int  setup_start_entry(elf_file *elf, const char * entrysym, elf_section *modinfo, int needoutput);
+static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *elf, Elf_file_slot *order);
 static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr);
 static void  save_org_addrs(elf_file *elf);
 static elf_section * add_iopmod(elf_file *elf);
 static elf_section * add_eemod(elf_file *elf);
 static void  modify_eemod(elf_file *elf, elf_section *eemod);
-static void  add_reserved_symbol_table(Srx_gen_table *tp, srxfixup_const_char_ptr_t name, int bind, int type, SegConf *segment, srxfixup_const_char_ptr_t sectname, int shindex, int base);
+static void  add_reserved_symbol_table(Srx_gen_table *tp, const char * name, int bind, int type, SegConf *segment, const char * sectname, int shindex, int base);
 static void  define_special_section_symbols(elf_file *elf);
 static void  create_need_section(elf_file *elf);
-static int  sect_name_match(srxfixup_const_char_ptr_t pattern, srxfixup_const_char_ptr_t name);
+static int  sect_name_match(const char * pattern, const char * name);
 static int  reorder_section_table(elf_file *elf);
 static void  create_phdr(elf_file *elf);
 static void  check_change_bit(int oldbit, int newbit, int *up, int *down);
@@ -29,19 +29,19 @@ static void  update_mdebug(elf_file *elf);
 static void  update_programheader(elf_file *elf);
 static void  remove_unuse_section(elf_file *elf);
 static int  layout_srx_memory(elf_file *elf);
-static CreateSymbolConf * is_reserve_symbol(Srx_gen_table *tp, srxfixup_const_char_ptr_t name);
+static CreateSymbolConf * is_reserve_symbol(Srx_gen_table *tp, const char * name);
 static int  check_undef_symboles_an_reloc(elf_section *relsect);
 static int  check_undef_symboles(elf_file *elf);
 static int  create_reserved_symbols(elf_file *elf);
 static void  symbol_value_update(elf_file *elf);
 static void  rebuild_relocation(elf_file *elf, unsigned int gpvalue);
 static int  check_irx12(elf_file *elf, int cause_irx1);
-static void  setup_module_info(elf_file *elf, elf_section *modsect, srxfixup_const_char_ptr_t modulesymbol);
+static void  setup_module_info(elf_file *elf, elf_section *modsect, const char * modulesymbol);
 static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, int target);
 static int  iopmod_size(const Elf32_IopMod *modinfo);
 static int  eemod_size(const Elf32_EeMod *modinfo);
 
-int  convert_rel2srx(elf_file *elf, srxfixup_const_char_ptr_t entrysym, int needoutput, int cause_irx1)
+int  convert_rel2srx(elf_file *elf, const char * entrysym, int needoutput, int cause_irx1)
 {
 	Srx_gen_table *tp;
 	elf_section *modinfo;
@@ -93,7 +93,7 @@ int  convert_rel2srx(elf_file *elf, srxfixup_const_char_ptr_t entrysym, int need
 	return layout_srx_file(elf);
 }
 
-static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym, elf_section *modinfo, int needoutput)
+static int  setup_start_entry(elf_file *elf, const char * entrysym, elf_section *modinfo, int needoutput)
 {
 	const elf_syment *syp;
 
@@ -143,7 +143,7 @@ static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym,
 	return 0;
 }
 
-static Elf_file_slot * search_order_slots(srxfixup_const_char_ptr_t ordstr, const elf_file *elf, Elf_file_slot *order)
+static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *elf, Elf_file_slot *order)
 {
 	if ( !strcmp(ordstr, "@Section_header_table") )
 	{
@@ -205,7 +205,7 @@ int  layout_srx_file(elf_file *elf)
 	Elf_file_slot *nslotp;
 	Elf_file_slot *neworder;
 	Elf_file_slot *order;
-	srxfixup_const_char_ptr_t *ordstr;
+	const char * *ordstr;
 	int max_seg_align;
 	int error;
 	int maxslot;
@@ -304,7 +304,7 @@ void  strip_elf(elf_file *elf)
 	scp->shr.sh_size = d * scp->shr.sh_entsize;
 }
 
-SegConf * lookup_segment(Srx_gen_table *conf, srxfixup_const_char_ptr_t segname, int msgsw)
+SegConf * lookup_segment(Srx_gen_table *conf, const char * segname, int msgsw)
 {
 	SegConf *i;
 
@@ -636,7 +636,7 @@ static void  modify_eemod(elf_file *elf, elf_section *eemod)
 	}
 }
 
-static void  add_reserved_symbol_table(Srx_gen_table *tp, srxfixup_const_char_ptr_t name, int bind, int type, SegConf *segment, srxfixup_const_char_ptr_t sectname, int shindex, int base)
+static void  add_reserved_symbol_table(Srx_gen_table *tp, const char * name, int bind, int type, SegConf *segment, const char * sectname, int shindex, int base)
 {
 	CreateSymbolConf *newent_1;
 	CreateSymbolConf *newent_2;
@@ -760,7 +760,7 @@ static void  create_need_section(elf_file *elf)
 	}
 }
 
-static int  sect_name_match(srxfixup_const_char_ptr_t pattern, srxfixup_const_char_ptr_t name)
+static int  sect_name_match(const char * pattern, const char * name)
 {
 	while ( *pattern && *name && *pattern != '*' )
 	{
@@ -785,7 +785,7 @@ static int  sect_name_match(srxfixup_const_char_ptr_t pattern, srxfixup_const_ch
 
 static int  reorder_section_table(elf_file *elf)
 {
-	srxfixup_const_char_ptr_t *secorder;
+	const char * *secorder;
 	int sections;
 	elf_section **scp;
 	int d;
@@ -1054,7 +1054,7 @@ static void  update_programheader(elf_file *elf)
 
 static void  remove_unuse_section(elf_file *elf)
 {
-	srxfixup_const_char_ptr_t *sectnames;
+	const char * *sectnames;
 	int sections;
 	elf_section **dscp;
 	int d;
@@ -1164,7 +1164,7 @@ static int  layout_srx_memory(elf_file *elf)
 	return error;
 }
 
-static CreateSymbolConf * is_reserve_symbol(Srx_gen_table *tp, srxfixup_const_char_ptr_t name)
+static CreateSymbolConf * is_reserve_symbol(Srx_gen_table *tp, const char * name)
 {
 	CreateSymbolConf *csyms;
 
@@ -1238,7 +1238,7 @@ static int  check_undef_symboles(elf_file *elf)
 	return err;
 }
 
-static srxfixup_const_char_ptr_t SymbolType[] = { "STT_NOTYPE", "STT_OBJECT", "STT_FUNC", "STT_SECTION", "STT_FILE" };
+static const char * SymbolType[] = { "STT_NOTYPE", "STT_OBJECT", "STT_FUNC", "STT_SECTION", "STT_FILE" };
 static int  create_reserved_symbols(elf_file *elf)
 {
 	int csyms_;
@@ -1425,7 +1425,7 @@ static int  check_irx12(elf_file *elf, int cause_irx1)
 	return 0;
 }
 
-static void  setup_module_info(elf_file *elf, elf_section *modsect, srxfixup_const_char_ptr_t modulesymbol)
+static void  setup_module_info(elf_file *elf, elf_section *modsect, const char * modulesymbol)
 {
 	unsigned int *section_data;
 	int i;

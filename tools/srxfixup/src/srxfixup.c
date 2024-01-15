@@ -2,14 +2,14 @@
 #include "all_include.h"
 
 const char head = '\0';
-srxfixup_const_char_ptr_t force_to_data_0 = NULL;
-srxfixup_const_char_ptr_t conffile;
-srxfixup_const_char_ptr_t ofile = NULL;
-srxfixup_const_char_ptr_t rfile = NULL;
-srxfixup_const_char_ptr_t pfile;
-srxfixup_const_char_ptr_t ffile = NULL;
+const char * force_to_data_0 = NULL;
+const char * conffile;
+const char * ofile = NULL;
+const char * rfile = NULL;
+const char * pfile;
+const char * ffile = NULL;
 unsigned int startaddr;
-srxfixup_const_char_ptr_t entrysym = NULL;
+const char * entrysym = NULL;
 unsigned int verbose = 0;
 unsigned int dumpflag = 0;
 unsigned int dispmod_flag = 0;
@@ -52,7 +52,7 @@ static void display_module_info(elf_file *elf);
 static void convert_relative_branch_an_section(elf_section *relsect);
 static void convert_relative_branch(elf_file *elf);
 
-void usage(srxfixup_const_char_ptr_t myname)
+void usage(const char * myname)
 {
 	printf(
 		"IOP/EE relocatable object converter\n"
@@ -95,7 +95,7 @@ void usage(srxfixup_const_char_ptr_t myname)
 		);
 }
 
-void stripusage(srxfixup_const_char_ptr_t myname)
+void stripusage(const char * myname)
 {
 	printf(
 		"%s\n"
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 	elf_file *elf;
 	const char *myname_1;
 	const char *myname_2;
-	srxfixup_const_char_ptr_t source;
+	const char * source;
 
 	myname_1 = rindex(*argv, '/');
 	if ( !myname_1 )

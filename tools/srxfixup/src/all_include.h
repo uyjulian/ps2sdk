@@ -12,8 +12,6 @@
 
 // Type definitions
 
-typedef const char * srxfixup_const_char_ptr_t;
-
 // srxfixup.c, elflib.c, elfdump.c, srxgen.c, readconf.c
 
 typedef short unsigned int Elf32_Half;
@@ -253,7 +251,7 @@ typedef struct _elf_section
 {
 	Elf32_Shdr shr;
 	uint8_t *data;
-	srxfixup_const_char_ptr_t name;
+	const char * name;
 	int number;
 	struct _elf_section *link;
 	struct _elf_section *info;
@@ -262,7 +260,7 @@ typedef struct _elf_section
 typedef struct _syment
 {
 	Elf32_Sym sym;
-	srxfixup_const_char_ptr_t name;
+	const char * name;
 	int number;
 	int bind;
 	int type;
@@ -309,9 +307,9 @@ typedef struct _elf_file_slot
 
 typedef struct _segconf
 {
-	srxfixup_const_char_ptr_t name;
+	const char * name;
 	int bitid;
-	srxfixup_const_char_ptr_t *sect_name_patterns; 
+	const char * *sect_name_patterns; 
 	elf_section *empty_section; 
 	int nsect; 
 	elf_section **scp; 
@@ -323,24 +321,24 @@ typedef struct _pheader_info
 	int sw; 
 	union __anon_struct_42
 	{
-		srxfixup_const_char_ptr_t section_name;
+		const char * section_name;
 		SegConf **segment_list;
 	} d;
 } PheaderInfo;
 typedef struct _sectconf
 {
-	srxfixup_const_char_ptr_t sect_name_pattern; 
+	const char * sect_name_pattern; 
 	unsigned int flag; 
 	int secttype; 
 	int sectflag;
 } SectConf;
 typedef struct _crtsymconf
 {
-	srxfixup_const_char_ptr_t name; 
+	const char * name; 
 	int bind; 
 	int type; 
 	SegConf *segment; 
-	srxfixup_const_char_ptr_t sectname; 
+	const char * sectname; 
 	int shindex; 
 	int seflag;
 } CreateSymbolConf;
@@ -351,9 +349,9 @@ typedef struct _srx_gen_table
 	CreateSymbolConf *create_symbols; 
 	PheaderInfo *program_header_order; 
 	SectConf *section_list; 
-	srxfixup_const_char_ptr_t *removesection_list; 
-	srxfixup_const_char_ptr_t *section_table_order; 
-	srxfixup_const_char_ptr_t *file_layout_order;
+	const char * *removesection_list; 
+	const char * *section_table_order; 
+	const char * *file_layout_order;
 } Srx_gen_table;
 
 // anaarg.c, srxfixup.c
@@ -361,11 +359,11 @@ typedef struct _srx_gen_table
 typedef struct _opt_strings 
 {
 	struct _opt_strings *next; 
-	srxfixup_const_char_ptr_t string;
+	const char * string;
 } Opt_strings;
 typedef struct _opttable 
 {
-	srxfixup_const_char_ptr_t option; 
+	const char * option; 
 	int havearg; 
 	char vartype; 
 	void *var;
@@ -426,18 +424,18 @@ extern void print_elf_symtbl(const elf_section *scp, int flag);
 extern void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag);
 
 // elflib.c
-extern elf_file *read_elf(srxfixup_const_char_ptr_t filename);
+extern elf_file *read_elf(const char * filename);
 extern int layout_elf_file(elf_file *elf);
-extern int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename);
+extern int write_elf(elf_file *elf, const char * filename);
 extern void add_section(elf_file *elf, elf_section *scp);
 extern elf_section *remove_section(elf_file *elf, Elf32_Word shtype);
-extern elf_section *remove_section_by_name(elf_file *elf, srxfixup_const_char_ptr_t secname);
+extern elf_section *remove_section_by_name(elf_file *elf, const char * secname);
 extern elf_section *search_section(elf_file *elf, Elf32_Word stype);
-extern elf_section *search_section_by_name(elf_file *elf, srxfixup_const_char_ptr_t secname);
+extern elf_section *search_section_by_name(elf_file *elf, const char * secname);
 extern unsigned int *get_section_data(elf_file *elf, unsigned int addr);
-extern elf_syment *search_global_symbol(srxfixup_const_char_ptr_t name, elf_file *elf);
+extern elf_syment *search_global_symbol(const char * name, elf_file *elf);
 extern int is_defined_symbol(const elf_syment *sym);
-extern elf_syment *add_symbol(elf_file *elf, srxfixup_const_char_ptr_t name, int bind, int type, int value, elf_section *scp, int st_shndx);
+extern elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int value, elf_section *scp, int st_shndx);
 extern unsigned int get_symbol_value(const elf_syment *sym, const elf_file *elf);
 extern void reorder_symtab(elf_file *elf);
 extern int adjust_align(int value, int align);
@@ -496,7 +494,7 @@ extern void  format_operand(const Operand *opr, char *buf);
 extern void  format_disasm(Disasm_result *dis, char *buf);
 
 // readconf.c
-extern Srx_gen_table * read_conf(srxfixup_const_char_ptr_t indata, srxfixup_const_char_ptr_t infile, int dumpopt);
+extern Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt);
 
 // ring.c
 extern SLink * add_ring_top(SLink *tailp, SLink *elementp);
@@ -505,20 +503,20 @@ extern SLink * joint_ring(SLink *tailp, SLink *otherring);
 extern SLink * ring_to_liner(SLink *tailp);
 
 // srxfixup.c
-extern void usage(srxfixup_const_char_ptr_t myname);
-extern void stripusage(srxfixup_const_char_ptr_t myname);
+extern void usage(const char * myname);
+extern void stripusage(const char * myname);
 
 // srxgen.c
-extern int  convert_rel2srx(elf_file *elf, srxfixup_const_char_ptr_t entrysym, int needoutput, int cause_irx1);
+extern int  convert_rel2srx(elf_file *elf, const char * entrysym, int needoutput, int cause_irx1);
 extern int  layout_srx_file(elf_file *elf);
 extern void  strip_elf(elf_file *elf);
-extern SegConf * lookup_segment(Srx_gen_table *conf, srxfixup_const_char_ptr_t segname, int msgsw);
+extern SegConf * lookup_segment(Srx_gen_table *conf, const char * segname, int msgsw);
 extern void  fixlocation_elf(elf_file *elf, unsigned int startaddr);
 extern int  relocation_is_version2(elf_section *relsect);
 extern void  dump_srx_gen_table(Srx_gen_table *tp);
 
 // swapmem.c
-extern void  swapmemory(void *aaddr, srxfixup_const_char_ptr_t format, int times);
+extern void  swapmemory(void *aaddr, const char * format, int times);
 
 // eefixconf.c
 extern const char *ee_defaultconf;

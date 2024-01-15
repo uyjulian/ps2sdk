@@ -9,16 +9,16 @@ struct rellink
 };
 struct name2num 
 {
-	srxfixup_const_char_ptr_t name; 
+	const char * name; 
 	int num;
 };
 
 static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, int *relentries, unsigned int *baseoff);
 static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int addr, struct rellink *result);
-static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint8_t *data);
-static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint16_t *data);
-static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint32_t *data);
-static srxfixup_const_char_ptr_t num2name(struct name2num *table, int num);
+static void dumpb(const char * head, unsigned int address, unsigned int size, const uint8_t *data);
+static void dumph(const char * head, unsigned int address, unsigned int size, const uint16_t *data);
+static void dumpw(const char * head, unsigned int address, unsigned int size, const uint32_t *data);
+static const char * num2name(struct name2num *table, int num);
 
 void print_elf(const elf_file *elf, int flag)
 {
@@ -494,7 +494,7 @@ static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int 
 	}
 }
 
-static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint8_t *data)
+static void dumpb(const char * head, unsigned int address, unsigned int size, const uint8_t *data)
 {
 	char cbuf[20];
 	unsigned int addr;
@@ -556,7 +556,7 @@ static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 	}
 }
 
-static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint16_t *data)
+static void dumph(const char * head, unsigned int address, unsigned int size, const uint16_t *data)
 {
 	unsigned int addr;
 	unsigned int off2;
@@ -593,7 +593,7 @@ static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 	}
 }
 
-static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint32_t *data)
+static void dumpw(const char * head, unsigned int address, unsigned int size, const uint32_t *data)
 {
 	unsigned int v4;
 	unsigned int off1;
@@ -783,7 +783,7 @@ void print_elf_symtbl(const elf_section *scp, int flag)
 	printf("\n");
 }
 
-static srxfixup_const_char_ptr_t num2name(struct name2num *table, int num)
+static const char * num2name(struct name2num *table, int num)
 {
 	static char buf_28[30];
 
