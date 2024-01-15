@@ -18,7 +18,7 @@ static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int 
 static void dumpb(const char * head, unsigned int address, unsigned int size, const uint8_t *data);
 static void dumph(const char * head, unsigned int address, unsigned int size, const uint16_t *data);
 static void dumpw(const char * head, unsigned int address, unsigned int size, const uint32_t *data);
-static const char * num2name(struct name2num *table, int num);
+static const char * num2name(const struct name2num *table, int num);
 
 void print_elf(const elf_file *elf, int flag)
 {
@@ -39,35 +39,35 @@ void print_elf(const elf_file *elf, int flag)
 	}
 }
 
-struct name2num Ei_class_name[] =
+static const struct name2num Ei_class_name[] =
 {
 #define X(d) { #d, d },
 	XEACH_Ei_class_name_enum()
 #undef X
 	{ NULL, 0 },
 };
-struct name2num E_type_name[] =
+static const struct name2num E_type_name[] =
 {
 #define X(d) { #d, d },
 	XEACH_E_type_name_enum()
 #undef X
 	{ NULL, 0 },
 };
-struct name2num Ei_data_name[] =
+static const struct name2num Ei_data_name[] =
 {
 #define X(d) { #d, d },
 	XEACH_Ei_data_name_enum()
 #undef X
 	{ NULL, 0 },
 };
-struct name2num E_version_name[] =
+static const struct name2num E_version_name[] =
 {
 #define X(d) { #d, d },
 	XEACH_E_version_name_enum()
 #undef X
 	{ NULL, 0 },
 };
-struct name2num E_machine_name[] =
+static const struct name2num E_machine_name[] =
 {
 #define X(d) { #d, d },
 	XEACH_E_machine_name_enum()
@@ -121,7 +121,7 @@ void print_elf_ehdr(const elf_file *elf, int flag)
 		elf->ehp->e_shstrndx);
 }
 
-struct name2num P_type_name[] =
+static const struct name2num P_type_name[] =
 {
 #define X(d) { #d, d },
 	XEACH_P_type_name_enum()
@@ -171,7 +171,7 @@ void print_elf_phdr(const elf_file *elf, int flag)
 	}
 }
 
-struct name2num S_type_name[] =
+static const struct name2num S_type_name[] =
 {
 #define X(d) { #d, d },
 	XEACH_S_type_name_enum()
@@ -301,7 +301,7 @@ void print_elf_sections(const elf_file *elf, int flag)
 	}
 }
 
-struct name2num R_MIPS_Type[] =
+static const struct name2num R_MIPS_Type[] =
 {
 #define X(d) { #d, d },
 	XEACH_R_MIPS_Type_enum()
@@ -714,21 +714,21 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
 	free(dumpbuf);
 }
 
-struct name2num SymbolBinding[] =
+static const struct name2num SymbolBinding[] =
 {
 #define X(d) { #d, d },
 	XEACH_SymbolBinding_enum()
 #undef X
 	{ NULL, 0 },
 };
-struct name2num SymbolType[] =
+static const struct name2num SymbolType[] =
 {
 #define X(d) { #d, d },
 	XEACH_SymbolType_enum()
 #undef X
 	{ NULL, 0 },
 };
-struct name2num SymbolSpSection[] =
+static const struct name2num SymbolSpSection[] =
 {
 #define X(d) { #d, d },
 	XEACH_SymbolSpSection_enum()
@@ -783,7 +783,7 @@ void print_elf_symtbl(const elf_section *scp, int flag)
 	printf("\n");
 }
 
-static const char * num2name(struct name2num *table, int num)
+static const char * num2name(const struct name2num *table, int num)
 {
 	static char buf_28[30];
 
@@ -798,14 +798,14 @@ static const char * num2name(struct name2num *table, int num)
 	return buf_28;
 }
 
-struct name2num SymbolTypes[] =
+static const struct name2num SymbolTypes[] =
 {
 #define X(d) { #d, d },
 	XEACH_SymbolTypes_enum()
 #undef X
 	{ NULL, 0 },
 };
-struct name2num StorageClasse[] =
+static const struct name2num StorageClasse[] =
 {
 #define X(d) { #d, d },
 	XEACH_StorageClasse_enum()
@@ -952,7 +952,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 			symr *syp_1;
 			int i_4;
 
-			syp_1 = (symr *)&symbol->cbSym_Ptr[12 * fdrp->isymBase];
+			syp_1 = (symr *)&symbol->cbSym_Ptr[sizeof(symr) * fdrp->isymBase];
 			printf("      Local symbols\n");
 			for ( i_4 = 0; fdrp->csym > i_4; ++i_4 )
 			{
@@ -985,8 +985,8 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 			const symr *syp_2;
 			int i_5;
 
-			syp_2 = (symr *)&symbol->cbSym_Ptr[12 * fdrp->isymBase];
-			pdrp_2 = (pdr *)&symbol->cbPd_Ptr[52 * fdrp->ipdFirst];
+			syp_2 = (symr *)&symbol->cbSym_Ptr[sizeof(symr) * fdrp->isymBase];
+			pdrp_2 = (pdr *)&symbol->cbPd_Ptr[sizeof(pdr) * fdrp->ipdFirst];
 			printf("      Procedures\n");
 			for ( i_5 = 0; i_5 < fdrp->cpd; ++i_5 )
 			{
@@ -1015,7 +1015,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 			int i_6;
 
 			printf("      Auxillary symbol entries\n");
-			ip_1 = (unsigned int *)&symbol->cbAux_Ptr[4 * fdrp->iauxBase];
+			ip_1 = (unsigned int *)&symbol->cbAux_Ptr[sizeof(unsigned int) * fdrp->iauxBase];
 			for ( i_6 = 0; fdrp->caux > i_6; ++i_6 )
 				printf("      %3d: 0x%08lx \n", i_6, (unsigned long)(*ip_1++));
 		}
@@ -1025,7 +1025,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 			int i_7;
 
 			printf("      File indirect entries\n");
-			ip_2 = (unsigned int *)&symbol->cbRfd_Ptr[4 * fdrp->rfdBase];
+			ip_2 = (unsigned int *)&symbol->cbRfd_Ptr[sizeof(unsigned int) * fdrp->rfdBase];
 			for ( i_7 = 0; fdrp->crfd > i_7; ++i_7 )
 				printf("      %3d: 0x%08lx \n", i_7, (unsigned long)(*ip_2++));
 		}

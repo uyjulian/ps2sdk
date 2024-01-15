@@ -1,22 +1,19 @@
 
 #include "all_include.h"
 
-const char head = '\0';
-const char * force_to_data_0 = NULL;
-const char * conffile;
-const char * ofile = NULL;
-const char * rfile = NULL;
-const char * pfile;
-const char * ffile = NULL;
-unsigned int startaddr;
-const char * entrysym = NULL;
-unsigned int verbose = 0;
-unsigned int dumpflag = 0;
-unsigned int dispmod_flag = 0;
-int irx1_flag = 0;
-int br_conv = 0;
-int print_config = 0;
-Opttable opttable[] =
+static const char * force_to_data_0 = NULL;
+static const char * ofile = NULL;
+static const char * rfile = NULL;
+static const char * ffile = NULL;
+static unsigned int startaddr;
+static const char * entrysym = NULL;
+static unsigned int verbose = 0;
+static unsigned int dumpflag = 0;
+static unsigned int dispmod_flag = 0;
+static int irx1_flag = 0;
+static int br_conv = 0;
+static int print_config = 0;
+static const Opttable opttable[] =
 {
 	{ "-v", 0, 'f', &verbose },
 	{ "-d", 0, 'f', &dumpflag },
@@ -33,7 +30,7 @@ Opttable opttable[] =
 	{ "--print-internal-config", 0, 'f', &print_config },
 	{ NULL, 0, '\0', NULL },
 };
-Opttable stripopttable[] =
+static const Opttable stripopttable[] =
 {
 	{ "-v", 0, 'f', &verbose },
 	{ "-d", 0, 'f', &dumpflag },

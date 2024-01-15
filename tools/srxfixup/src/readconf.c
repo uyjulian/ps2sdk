@@ -123,24 +123,20 @@ Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 		free(fbuf);
 		return 0;
 	}
-	else
-	{
-		TokenTree *tokentree;
-		Srx_gen_table *srx_gen_table;
+	TokenTree *tokentree;
+	Srx_gen_table *srx_gen_table;
 
-		split_conf(lowtokens, (char *)&lowtokens[fsize + 1], fbuf);
-		free(fbuf);
-		tokentree = make_conf_tree(lowtokens);
-		srx_gen_table = make_srx_gen_table(tokentree);
-		free(tokentree);
-		if ( check_srx_gen_table(srx_gen_table) )
-		{
-			free(srx_gen_table);
-			return 0;
-		}
-		else
-			return srx_gen_table;
+	split_conf(lowtokens, (char *)&lowtokens[fsize + 1], fbuf);
+	free(fbuf);
+	tokentree = make_conf_tree(lowtokens);
+	srx_gen_table = make_srx_gen_table(tokentree);
+	free(tokentree);
+	if ( check_srx_gen_table(srx_gen_table) )
+	{
+		free(srx_gen_table);
+		return 0;
 	}
+	return srx_gen_table;
 }
 
 static int  bgetc(struct fstrbuf *fb)

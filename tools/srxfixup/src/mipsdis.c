@@ -1,8 +1,50 @@
 
 #include "all_include.h"
 
+static void  getrs(unsigned int data, Operand *opr);
+static void  getrt(unsigned int data, Operand *opr);
+static void  getrd(unsigned int data, Operand *opr);
+static void  getc0rd_iop(unsigned int data, Operand *opr);
+static void  getc0rd_ee(unsigned int data, Operand *opr);
+static void  getczrd(unsigned int data, Operand *opr);
+static void  getshamt(unsigned int data, Operand *opr);
+static void  getfs(unsigned int data, Operand *opr);
+static void  getft(unsigned int data, Operand *opr);
+static void  getfd(unsigned int data, Operand *opr);
+static void  getczfs(unsigned int data, Operand *opr);
+static void  getbroff(unsigned int addr, unsigned int data, Operand *opr);
+static void  Rs(Disasm_result *result);
+static void  Rd(Disasm_result *result);
+static void  Rdrs(Disasm_result *result);
+static void  Rsrt(Disasm_result *result);
+static void  Rtc0rd_iop(Disasm_result *result);
+static void  Rtc0rd_ee(Disasm_result *result);
+static void  Rtczrd(Disasm_result *result);
+static void  Rdrsrt(Disasm_result *result);
+static void  Rdrtrs(Disasm_result *result);
+static void  Rdrtshamt(Disasm_result *result);
+static void  Rsseimm(Disasm_result *result);
+static void  Rtrsseimm(Disasm_result *result);
+static void  Rtrsimm(Disasm_result *result);
+#if 0
+static void  Rdimm(Disasm_result *result);
+static void  Rsimm(Disasm_result *result);
+#endif
+static void  Rtimm(Disasm_result *result);
+static void  Rsrtbroff(Disasm_result *result);
+static void  Rsbroff(Disasm_result *result);
+static void  Rtoffbase(Disasm_result *result);
+static void  Fdfs(Disasm_result *result);
+static void  Fsft(Disasm_result *result);
+static void  Fdfsft(Disasm_result *result);
+static void  Rtczfs(Disasm_result *result);
+static void  Code20(Disasm_result *result);
+static void  Jtarget(Disasm_result *result);
+static void  Cofun(Disasm_result *result);
+static void  Bcft(Disasm_result *result);
+
 static int regnmsw[5] = { 1, 1, 0, 1, 0 };
-static const char * REGNAME[2][32] =
+static const char * const REGNAME[2][32] =
 {
 	{
 		"$0",
@@ -73,7 +115,7 @@ static const char * REGNAME[2][32] =
 		"ra"
 	}
 };
-static const char * REGC0_iop[2][32] =
+static const char * const REGC0_iop[2][32] =
 {
 	{
 		"$0",
@@ -144,7 +186,7 @@ static const char * REGC0_iop[2][32] =
 		"$31"
 	}
 };
-static const char * REGC0_ee[2][32] =
+static const char * const REGC0_ee[2][32] =
 {
 	{
 		"$0",
@@ -215,7 +257,7 @@ static const char * REGC0_ee[2][32] =
 		"$31"
 	}
 };
-static const char * REGC1[2][32] =
+static const char * const REGC1[2][32] =
 {
 	{
 		"$f0",
@@ -291,83 +333,83 @@ typedef void (*Operand_func)(Disasm_result *result);
 typedef struct _opcode_table_entry 
 {
 	const char * mnemonic; 
-	struct _opcode_table *subtable; 
+	const struct _opcode_table *subtable; 
 	Operand_func opfunc;
 } Opcode_table_entry;
 typedef struct _opcode_table 
 {
 	int bit_pos; 
 	unsigned int bit_mask; 
-	Opcode_table_entry *entries;
+	const Opcode_table_entry *entries;
 } Opcode_table;
 
-void  getrs(unsigned int data, Operand *opr)
+static void  getrs(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_reg;
 	opr->reg = (data >> 21) & 0x1F;
 }
 
-void  getrt(unsigned int data, Operand *opr)
+static void  getrt(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_reg;
 	opr->reg = (data >> 16) & 0x1F;
 }
 
-void  getrd(unsigned int data, Operand *opr)
+static void  getrd(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_reg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-void  getc0rd_iop(unsigned int data, Operand *opr)
+static void  getc0rd_iop(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c0reg_iop;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-void  getc0rd_ee(unsigned int data, Operand *opr)
+static void  getc0rd_ee(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c0reg_ee;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-void  getczrd(unsigned int data, Operand *opr)
+static void  getczrd(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_czreg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-void  getshamt(unsigned int data, Operand *opr)
+static void  getshamt(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_shamt;
 	opr->data = (data >> 6) & 0x1F;
 }
 
-void  getfs(unsigned int data, Operand *opr)
+static void  getfs(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-void  getft(unsigned int data, Operand *opr)
+static void  getft(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 16) & 0x1F;
 }
 
-void  getfd(unsigned int data, Operand *opr)
+static void  getfd(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 6) & 0x1F;
 }
 
-void  getczfs(unsigned int data, Operand *opr)
+static void  getczfs(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-void  getbroff(unsigned int addr, unsigned int data, Operand *opr)
+static void  getbroff(unsigned int addr, unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_jtarget;
 	if ( (data & 0x8000) != 0 )
@@ -377,68 +419,68 @@ void  getbroff(unsigned int addr, unsigned int data, Operand *opr)
 	opr->data += 4 + addr;
 }
 
-void  Rs(Disasm_result *result)
+static void  Rs(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 }
 
-void  Rd(Disasm_result *result)
+static void  Rd(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 }
 
-void  Rdrs(Disasm_result *result)
+static void  Rdrs(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
 }
 
-void  Rsrt(Disasm_result *result)
+static void  Rsrt(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 }
 
-void  Rtc0rd_iop(Disasm_result *result)
+static void  Rtc0rd_iop(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getc0rd_iop(result->data, &result->operands[1]);
 }
 
-void  Rtc0rd_ee(Disasm_result *result)
+static void  Rtc0rd_ee(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getc0rd_ee(result->data, &result->operands[1]);
 }
 
-void  Rtczrd(Disasm_result *result)
+static void  Rtczrd(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getczrd(result->data, &result->operands[1]);
 }
 
-void  Rdrsrt(Disasm_result *result)
+static void  Rdrsrt(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
 	getrt(result->data, &result->operands[2]);
 }
 
-void  Rdrtrs(Disasm_result *result)
+static void  Rdrtrs(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 	getrs(result->data, &result->operands[2]);
 }
 
-void  Rdrtshamt(Disasm_result *result)
+static void  Rdrtshamt(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 	getshamt(result->data, &result->operands[2]);
 }
 
-void  Rsseimm(Disasm_result *result)
+static void  Rsseimm(Disasm_result *result)
 {
 	unsigned int imm;
 
@@ -451,7 +493,7 @@ void  Rsseimm(Disasm_result *result)
 	result->operands[1].data = imm;
 }
 
-void  Rtrsseimm(Disasm_result *result)
+static void  Rtrsseimm(Disasm_result *result)
 {
 	unsigned int imm;
 
@@ -465,7 +507,7 @@ void  Rtrsseimm(Disasm_result *result)
 	result->operands[2].data = imm;
 }
 
-void  Rtrsimm(Disasm_result *result)
+static void  Rtrsimm(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
@@ -473,41 +515,43 @@ void  Rtrsimm(Disasm_result *result)
 	result->operands[2].data = (result->data & 0xFFFF);
 }
 
-void  Rdimm(Disasm_result *result)
+#if 0
+static void  Rdimm(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	result->operands[1].tag = OprTag_imm;
 	result->operands[1].data = (result->data & 0xFFFF);
 }
 
-void  Rsimm(Disasm_result *result)
+static void  Rsimm(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	result->operands[1].tag = OprTag_imm;
 	result->operands[1].data = (result->data & 0xFFFF);
 }
+#endif
 
-void  Rtimm(Disasm_result *result)
+static void  Rtimm(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	result->operands[1].tag = OprTag_imm;
 	result->operands[1].data = (result->data & 0xFFFF);
 }
 
-void  Rsrtbroff(Disasm_result *result)
+static void  Rsrtbroff(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 	getbroff(result->addr, result->data, &result->operands[2]);
 }
 
-void  Rsbroff(Disasm_result *result)
+static void  Rsbroff(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	getbroff(result->addr, result->data, &result->operands[1]);
 }
 
-void  Rtoffbase(Disasm_result *result)
+static void  Rtoffbase(Disasm_result *result)
 {
 	unsigned int off;
 
@@ -521,50 +565,50 @@ void  Rtoffbase(Disasm_result *result)
 	result->operands[1].reg = (result->data >> 21) & 0x1F;
 }
 
-void  Fdfs(Disasm_result *result)
+static void  Fdfs(Disasm_result *result)
 {
 	getfd(result->data, result->operands);
 	getfs(result->data, &result->operands[1]);
 }
 
-void  Fsft(Disasm_result *result)
+static void  Fsft(Disasm_result *result)
 {
 	getfs(result->data, result->operands);
 	getft(result->data, &result->operands[1]);
 }
 
-void  Fdfsft(Disasm_result *result)
+static void  Fdfsft(Disasm_result *result)
 {
 	getfd(result->data, result->operands);
 	getfs(result->data, &result->operands[1]);
 	getft(result->data, &result->operands[2]);
 }
 
-void  Rtczfs(Disasm_result *result)
+static void  Rtczfs(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getczfs(result->data, &result->operands[1]);
 }
 
-void  Code20(Disasm_result *result)
+static void  Code20(Disasm_result *result)
 {
 	result->operands[0].tag = OprTag_code20;
 	result->operands[0].data = (result->data >> 6) & 0xFFFFF;
 }
 
-void  Jtarget(Disasm_result *result)
+static void  Jtarget(Disasm_result *result)
 {
 	result->operands[0].tag = OprTag_jtarget;
 	result->operands[0].data = (4 * (result->data & 0x3FFFFFF)) | (result->addr & 0xF0000000);
 }
 
-void  Cofun(Disasm_result *result)
+static void  Cofun(Disasm_result *result)
 {
 	result->operands[0].tag = OprTag_code25;
 	result->operands[0].data = result->data & 0x1FFFFFF;
 }
 
-void  Bcft(Disasm_result *result)
+static void  Bcft(Disasm_result *result)
 {
 	result->mnemonic[0] = 98;
 	result->mnemonic[1] = 99;
@@ -581,7 +625,7 @@ void  Bcft(Disasm_result *result)
 	getbroff(result->addr, result->data, result->operands);
 }
 
-Opcode_table_entry iop_SPECIAL_entries[] =
+static const Opcode_table_entry iop_SPECIAL_entries[] =
 {
 	{ "sll", NULL, &Rdrtshamt },
 	{ NULL, NULL, NULL },
@@ -648,8 +692,8 @@ Opcode_table_entry iop_SPECIAL_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table iop_SPECIAL = { 0, 63, iop_SPECIAL_entries };
-Opcode_table_entry ee_SPECIAL_entries[] =
+static const Opcode_table iop_SPECIAL = { 0, 63, iop_SPECIAL_entries };
+static const Opcode_table_entry ee_SPECIAL_entries[] =
 {
 	{ "sll", NULL, &Rdrtshamt },
 	{ NULL, NULL, NULL },
@@ -716,8 +760,8 @@ Opcode_table_entry ee_SPECIAL_entries[] =
 	{ "dsrl32", NULL, &Rdrtshamt },
 	{ "dsra32", NULL, &Rdrtshamt }
 };
-Opcode_table ee_SPECIAL = { 0, 63, ee_SPECIAL_entries };
-Opcode_table_entry BCOND_entries[] =
+static const Opcode_table ee_SPECIAL = { 0, 63, ee_SPECIAL_entries };
+static const Opcode_table_entry BCOND_entries[] =
 {
 	{ "bltz", NULL, &Rsbroff },
 	{ "bgez", NULL, &Rsbroff },
@@ -752,8 +796,8 @@ Opcode_table_entry BCOND_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table BCOND = { 16, 31, BCOND_entries };
-Opcode_table_entry ee_REGIMM_entries[] =
+static const Opcode_table BCOND = { 16, 31, BCOND_entries };
+static const Opcode_table_entry ee_REGIMM_entries[] =
 {
 	{ "bltz", NULL, &Rsbroff },
 	{ "bgez", NULL, &Rsbroff },
@@ -788,8 +832,8 @@ Opcode_table_entry ee_REGIMM_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table ee_REGIMM = { 16, 31, ee_REGIMM_entries };
-Opcode_table_entry iop_COP0CO_entries[] =
+static const Opcode_table ee_REGIMM = { 16, 31, ee_REGIMM_entries };
+static const Opcode_table_entry iop_COP0CO_entries[] =
 {
 	{ NULL, NULL, NULL },
 	{ "tlbr", NULL, NULL },
@@ -856,8 +900,8 @@ Opcode_table_entry iop_COP0CO_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table iop_COP0CO = { 0, 63, iop_COP0CO_entries };
-Opcode_table_entry ee_COP0CO_entries[] =
+static const Opcode_table iop_COP0CO = { 0, 63, iop_COP0CO_entries };
+static const Opcode_table_entry ee_COP0CO_entries[] =
 {
 	{ NULL, NULL, NULL },
 	{ "tlbr", NULL, NULL },
@@ -924,8 +968,8 @@ Opcode_table_entry ee_COP0CO_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table ee_COP0CO = { 0, 63, ee_COP0CO_entries };
-Opcode_table_entry iop_COP0_entries[] =
+static const Opcode_table ee_COP0CO = { 0, 63, ee_COP0CO_entries };
+static const Opcode_table_entry iop_COP0_entries[] =
 {
 	{ "mfc0", NULL, &Rtc0rd_iop },
 	{ NULL, NULL, NULL },
@@ -960,8 +1004,8 @@ Opcode_table_entry iop_COP0_entries[] =
 	{ NULL, &iop_COP0CO, NULL },
 	{ NULL, &iop_COP0CO, NULL }
 };
-Opcode_table iop_COP0 = { 21, 31, iop_COP0_entries };
-Opcode_table_entry ee_COP0_entries[] =
+static const Opcode_table iop_COP0 = { 21, 31, iop_COP0_entries };
+static const Opcode_table_entry ee_COP0_entries[] =
 {
 	{ "mfc0", NULL, &Rtc0rd_ee },
 	{ NULL, NULL, NULL },
@@ -996,8 +1040,8 @@ Opcode_table_entry ee_COP0_entries[] =
 	{ NULL, &ee_COP0CO, NULL },
 	{ NULL, &ee_COP0CO, NULL }
 };
-Opcode_table ee_COP0 = { 21, 31, ee_COP0_entries };
-Opcode_table_entry ee_COP1CO_entries[] =
+static const Opcode_table ee_COP0 = { 21, 31, ee_COP0_entries };
+static const Opcode_table_entry ee_COP1CO_entries[] =
 {
 	{ "add.s", NULL, &Fdfsft },
 	{ "sub.s", NULL, &Fdfsft },
@@ -1064,8 +1108,8 @@ Opcode_table_entry ee_COP1CO_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table ee_COP1CO = { 0, 63, ee_COP1CO_entries };
-Opcode_table_entry iop_COP1_entries[] =
+static const Opcode_table ee_COP1CO = { 0, 63, ee_COP1CO_entries };
+static const Opcode_table_entry iop_COP1_entries[] =
 {
 	{ "mfc1", NULL, &Rtczrd },
 	{ NULL, NULL, NULL },
@@ -1100,8 +1144,8 @@ Opcode_table_entry iop_COP1_entries[] =
 	{ "cop1", NULL, &Cofun },
 	{ "cop1", NULL, &Cofun }
 };
-Opcode_table iop_COP1 = { 21, 31, iop_COP1_entries };
-Opcode_table_entry ee_COP1_entries[] =
+static const Opcode_table iop_COP1 = { 21, 31, iop_COP1_entries };
+static const Opcode_table_entry ee_COP1_entries[] =
 {
 	{ "mfc1", NULL, &Rtczfs },
 	{ NULL, NULL, NULL },
@@ -1136,8 +1180,8 @@ Opcode_table_entry ee_COP1_entries[] =
 	{ NULL, &ee_COP1CO, NULL },
 	{ NULL, &ee_COP1CO, NULL }
 };
-Opcode_table ee_COP1 = { 21, 31, ee_COP1_entries };
-Opcode_table_entry iop_COP2_entries[] =
+static const Opcode_table ee_COP1 = { 21, 31, ee_COP1_entries };
+static const Opcode_table_entry iop_COP2_entries[] =
 {
 	{ "mfc2", NULL, &Rtczrd },
 	{ NULL, NULL, NULL },
@@ -1172,8 +1216,8 @@ Opcode_table_entry iop_COP2_entries[] =
 	{ "cop2", NULL, &Cofun },
 	{ "cop2", NULL, &Cofun }
 };
-Opcode_table iop_COP2 = { 21, 31, iop_COP2_entries };
-Opcode_table_entry ee_COP2_entries[] =
+static const Opcode_table iop_COP2 = { 21, 31, iop_COP2_entries };
+static const Opcode_table_entry ee_COP2_entries[] =
 {
 	{ "mfc2", NULL, &Rtczrd },
 	{ "qmfc2", NULL, &Rtczrd },
@@ -1208,8 +1252,8 @@ Opcode_table_entry ee_COP2_entries[] =
 	{ "cop2", NULL, &Cofun },
 	{ "cop2", NULL, &Cofun }
 };
-Opcode_table ee_COP2 = { 21, 31, ee_COP2_entries };
-Opcode_table_entry COP3_entries[] =
+static const Opcode_table ee_COP2 = { 21, 31, ee_COP2_entries };
+static const Opcode_table_entry COP3_entries[] =
 {
 	{ "mfc3", NULL, &Rtczrd },
 	{ NULL, NULL, NULL },
@@ -1244,8 +1288,8 @@ Opcode_table_entry COP3_entries[] =
 	{ "cop3", NULL, &Cofun },
 	{ "cop3", NULL, &Cofun }
 };
-Opcode_table COP3 = { 21, 31, COP3_entries };
-Opcode_table_entry iop_opcode_root_table_entries[] =
+static const Opcode_table COP3 = { 21, 31, COP3_entries };
+static const Opcode_table_entry iop_opcode_root_table_entries[] =
 {
 	{ NULL, &iop_SPECIAL, NULL },
 	{ NULL, &BCOND, NULL },
@@ -1312,7 +1356,7 @@ Opcode_table_entry iop_opcode_root_table_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table_entry ee_opcode_root_table_entries[] =
+static const Opcode_table_entry ee_opcode_root_table_entries[] =
 {
 	{ NULL, &ee_SPECIAL, NULL },
 	{ NULL, &ee_REGIMM, NULL },
@@ -1379,9 +1423,9 @@ Opcode_table_entry ee_opcode_root_table_entries[] =
 	{ "sqc2", NULL, &Rtoffbase },
 	{ "sd", NULL, &Rtoffbase }
 };
-Opcode_table iop_opcode_root_table = { 26, 63, iop_opcode_root_table_entries };
-Opcode_table ee_opcode_root_table = { 26, 63, ee_opcode_root_table_entries };
-Opcode_table *opcode_root_table = &iop_opcode_root_table;
+static const Opcode_table iop_opcode_root_table = { 26, 63, iop_opcode_root_table_entries };
+static const Opcode_table ee_opcode_root_table = { 26, 63, ee_opcode_root_table_entries };
+static const Opcode_table * opcode_root_table = &iop_opcode_root_table;
 
 void  gen_asmmacro(Disasm_result *result)
 {
@@ -1450,8 +1494,8 @@ void  initdisasm(int arch, int regform0, int regform1, int regform2, int regform
 Disasm_result * disassemble(unsigned int addr, unsigned int data)
 {
 	Disasm_result *v3;
-	Opcode_table_entry *op;
-	Opcode_table *optable;
+	const Opcode_table_entry *op;
+	const Opcode_table *optable;
 
 	optable = opcode_root_table;
 	v3 = (Disasm_result *)calloc(1, sizeof(Disasm_result));

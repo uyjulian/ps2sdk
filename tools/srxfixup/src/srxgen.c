@@ -105,10 +105,7 @@ static int  setup_start_entry(elf_file *elf, const char * entrysym, elf_section 
 			fprintf(stderr, "Error: Cannot find entry symbol %s\n", entrysym);
 			return 1;
 		}
-		else
-		{
-			elf->ehp->e_entry = get_symbol_value(syp, elf);
-		}
+		elf->ehp->e_entry = get_symbol_value(syp, elf);
 	}
 	else
 	{
@@ -145,6 +142,8 @@ static int  setup_start_entry(elf_file *elf, const char * entrysym, elf_section 
 
 static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *elf, Elf_file_slot *order)
 {
+	elf_section **scp;
+
 	if ( !strcmp(ordstr, "@Section_header_table") )
 	{
 		while ( order->type != 100 )
@@ -155,7 +154,7 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 		}
 		return 0;
 	}
-	else if ( !strncmp(ordstr, "@Program_header_data ", 0x15) )
+	if ( !strncmp(ordstr, "@Program_header_data ", 0x15) )
 	{
 		int n;
 
@@ -168,32 +167,27 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 		}
 		return 0;
 	}
-	else
+	while ( order->type != 100 )
 	{
-		elf_section **scp;
-
-		while ( order->type != 100 )
+		switch ( order->type )
 		{
-			switch ( order->type )
-			{
-				case 3:
-					for ( scp = order->d.php->scp; *scp; ++scp )
-					{
-						if ( !sect_name_match(ordstr, (*scp)->name) )
-							return order;
-					}
-					break;
-				case 5:
-					if (!sect_name_match(ordstr, order->d.scp->name) )
+			case 3:
+				for ( scp = order->d.php->scp; *scp; ++scp )
+				{
+					if ( !sect_name_match(ordstr, (*scp)->name) )
 						return order;
-					break;
-				default:
-					break;
-			}
-			++order;
+				}
+				break;
+			case 5:
+				if (!sect_name_match(ordstr, order->d.scp->name) )
+					return order;
+				break;
+			default:
+				break;
 		}
-		return 0;
+		++order;
 	}
+	return 0;
 }
 
 int  layout_srx_file(elf_file *elf)
@@ -1239,7 +1233,14 @@ static int  check_undef_symboles(elf_file *elf)
 	return err;
 }
 
-static const char * SymbolType[] = { "STT_NOTYPE", "STT_OBJECT", "STT_FUNC", "STT_SECTION", "STT_FILE" };
+static const char * const SymbolType[] =
+{
+	"STT_NOTYPE",
+	"STT_OBJECT",
+	"STT_FUNC",
+	"STT_SECTION",
+	"STT_FILE"
+};
 static int  create_reserved_symbols(elf_file *elf)
 {
 	int csyms_;
@@ -1259,7 +1260,7 @@ static int  create_reserved_symbols(elf_file *elf)
 
 		sym = search_global_symbol(csyms->name, elf);
 		if ( !sym
-			&& (csyms->shindex > 65279
+			&& (csyms->shindex > 0xFEFF
 			 || (csyms->segment && csyms->segment->scp)
 			 || (!csyms->segment && csyms->sectname && search_section_by_name(elf, csyms->sectname))) )
 		{
@@ -1274,7 +1275,7 @@ static int  create_reserved_symbols(elf_file *elf)
 			{
 				sh_addr = csyms->segment->addr;
 				sh_size = csyms->segment->size;
-				if ( csyms->shindex <= 65279 )
+				if ( csyms->shindex <= 0xFEFF )
 					scp = *csyms->segment->scp;
 			}
 			else if ( csyms->sectname != NULL )
