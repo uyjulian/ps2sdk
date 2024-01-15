@@ -805,11 +805,14 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				result->file_layout_order = add_stringvector(result->file_layout_order, "@Section_header_table");
 				ttp = nttp;
 				break;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 			case TC_VECTOR:
 				ttp = ttp->value.subtree;
 			default:
 				fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
 				return 0;
+#pragma GCC diagnostic pop
 		}
 	}
 	switch ( result->target )

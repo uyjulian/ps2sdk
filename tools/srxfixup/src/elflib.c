@@ -123,6 +123,8 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 		{
 			switch ( elf->scp[i_3]->shr.sh_type )
 			{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 				case SHT_RELA:
 				case SHT_REL:
 					elf->scp[i_3]->info = elf->scp[elf->scp[i_3]->shr.sh_info];
@@ -132,6 +134,7 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 				case SHT_DYNSYM:
 					elf->scp[i_3]->link = elf->scp[elf->scp[i_3]->shr.sh_link];
 					break;
+#pragma GCC diagnostic pop
 				default:
 					break;
 			}
@@ -571,6 +574,8 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 		{
 			switch ( elf->scp[i_2]->shr.sh_type )
 			{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 				case SHT_RELA:
 				case SHT_REL:
 					elf->scp[i_2]->shr.sh_info = elf->scp[i_2]->info->number;
@@ -580,6 +585,7 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 				case SHT_DYNSYM:
 					elf->scp[i_2]->shr.sh_link = elf->scp[i_2]->link->number;
 					break;
+#pragma GCC diagnostic pop
 				default:
 					break;
 			}
