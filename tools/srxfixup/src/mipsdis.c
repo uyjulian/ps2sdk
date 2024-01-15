@@ -1423,10 +1423,17 @@ void  gen_asmmacro(Disasm_result *result)
 
 void  initdisasm(int arch, int regform0, int regform1, int regform2, int regform3)
 {
-	if ( arch == 1 )
-		opcode_root_table = &iop_opcode_root_table;
-	if ( arch == 2 )
-		opcode_root_table = &ee_opcode_root_table;
+	switch ( arch )
+	{
+		case 1:
+			opcode_root_table = &iop_opcode_root_table;
+			break;
+		case 2:
+			opcode_root_table = &ee_opcode_root_table;
+			break;
+		default:
+			break;
+	}
 	if ( regform0 != -1 )
 	{
 		if ( !regform0 || regform0 == 1 )
@@ -1476,10 +1483,6 @@ void  shex(char * buf, unsigned int data)
 
 void  format_operand(const Operand *opr, char *buf)
 {
-	size_t v2;
-	const char *v4;
-	enum OperandTag tag;
-
 	switch ( opr->tag )
 	{
 		case OprTag_reg:
@@ -1506,9 +1509,7 @@ void  format_operand(const Operand *opr, char *buf)
 			break;
 		case OprTag_regoffset:
 			shex(buf, opr->data);
-			v4 = REGNAME[regnmsw[0]][opr->reg];
-			v2 = strlen(buf);
-			sprintf(&buf[v2], "(%s)", v4);
+			sprintf(&buf[strlen(buf)], "(%s)", REGNAME[regnmsw[0]][opr->reg]);
 			break;
 		case OprTag_code20:
 		case OprTag_code25:
@@ -1516,8 +1517,7 @@ void  format_operand(const Operand *opr, char *buf)
 			break;
 		default:
 			sprintf(buf, "?type?(0x%x)", opr->tag);
-			tag = opr->tag;
-			fprintf(stderr, "Panic unknown oprand type 0x%x\n", tag);
+			fprintf(stderr, "Panic unknown oprand type 0x%x\n", opr->tag);
 			break;
 	}
 }

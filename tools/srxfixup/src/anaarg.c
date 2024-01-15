@@ -3,15 +3,6 @@
 
 int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 {
-	size_t v5;
-	SLink *v7;
-	unsigned int v8;
-	size_t v9;
-	unsigned int v10;
-	char v11;
-	SLink *v13;
-	char **v14;
-	int v15;
 	Opt_strings *optstr;
 	const char *opt;
 	Opttable *otp;
@@ -47,8 +38,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 			{
 				if ( opttable[i].vartype == 108 )
 				{
-					v13 = ring_to_liner(*(SLink **)opttable[i].var);
-					*(SLink **)opttable[i].var = v13;
+					*(SLink **)opttable[i].var = ring_to_liner(*(SLink **)opttable[i].var);
 				}
 			}
 			return nargc;
@@ -65,8 +55,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 				}
 				else
 				{
-					v5 = strlen(opttable[i].option);
-					if ( !strncmp(opttable[i].option, *argva, v5) )
+					if ( !strncmp(opttable[i].option, *argva, strlen(opttable[i].option)) )
 						break;
 				}
 			}
@@ -93,11 +82,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 					case 'f':
 						if ( (*argva)[strlen(opttable[i].option)] )
 						{
-							v15 = 16;
-							v14 = 0;
-							v9 = strlen(opttable[i].option);
-							v10 = strtoul(&(*argva)[v9], v14, v15);
-							*(uint32_t *)opttable[i].var = v10;
+							*(uint32_t *)opttable[i].var = strtoul(&(*argva)[strlen(opttable[i].option)], NULL, 16);
 						}
 						else
 						{
@@ -105,8 +90,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 						}
 						break;
 					case 'h':
-						v8 = strtoul(opt, 0, 16);
-						*(uint32_t *)opttable[i].var = v8;
+						*(uint32_t *)opttable[i].var = strtoul(opt, 0, 16);
 						break;
 					case 'i':
 						for ( otp = igadd; opttable < otp; --otp )
@@ -119,27 +103,26 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 						if ( cp )
 						{
 							*cp = 0;
-							v11 = cp[1];
-							if ( v11 == 110 )
+							switch ( cp[1] )
 							{
-								opttable->havearg = 2;
-							}
-							else if ( v11 > 110 )
-							{
-								if ( v11 == 111 )
+								case 'c':
+									opttable->havearg = 4;
+									break;
+								case 'n':
+									opttable->havearg = 2;
+									break;
+								case 'o':
 									opttable->havearg = 1;
-							}
-							else if ( v11 == 99 )
-							{
-								opttable->havearg = 4;
+									break;
+								default:
+									break;
 							}
 						}
 						break;
 					case 'l':
 						optstr = (Opt_strings *)calloc(1u, sizeof(Opt_strings));
 						optstr->string = opt;
-						v7 = add_ring_tail(*(SLink **)opttable[i].var, (SLink *)optstr);
-						*(SLink **)opttable[i].var = v7;
+						*(SLink **)opttable[i].var = add_ring_tail(*(SLink **)opttable[i].var, (SLink *)optstr);
 						break;
 					case 'n':
 						break;

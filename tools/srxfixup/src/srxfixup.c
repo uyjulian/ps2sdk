@@ -112,9 +112,7 @@ void stripusage(srxfixup_const_char_ptr_t myname)
 int main(int argc, char **argv)
 {
 	int v2;
-	size_t v3;
 	Srx_gen_table *srxgen_1;
-	int e_type;
 	const char *defaultconf;
 	elf_file *elf;
 	const char *myname_1;
@@ -138,7 +136,7 @@ int main(int argc, char **argv)
 		defaultconf = iop_defaultconf;
 	else
 		defaultconf = ee_defaultconf;
-	if ( strlen(*argv) > 5 && (v3 = strlen(*argv), !strcmp(&(*argv)[v3 - 5], "strip")) )
+	if ( strlen(*argv) > 5 && !strcmp(&(*argv)[strlen(*argv) - 5], "strip") )
 	{
 		int argca;
 
@@ -221,56 +219,65 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 	elf->optdata = (void *)srxgen_1;
-	if ( elf->ehp->e_type == ET_REL )
+	switch ( elf->ehp->e_type )
 	{
-		int v7;
-
-		v7 = 0;
-		if ( rfile || ofile || ffile )
-			v7 = 1;
-		if ( convert_rel2srx(elf, entrysym, v7, irx1_flag) )
+		case ET_REL:
+			if ( convert_rel2srx(elf, entrysym, (rfile || ofile || ffile) ? 1 : 0, irx1_flag) )
+				exit(1);
+			break;
+		case ET_SCE_IOPRELEXEC:
+		case ET_SCE_IOPRELEXEC2:
+		case ET_SCE_EERELEXEC2:
+		case ET_EXEC:
+			break;
+		default:
+			fprintf(stderr, "Error: '%s' is unsupport Type Elf file(type=%x)\n", source, elf->ehp->e_type);
 			exit(1);
-	}
-	else if ( elf->ehp->e_type != ET_SCE_IOPRELEXEC
-				 && elf->ehp->e_type != ET_SCE_IOPRELEXEC2
-				 && elf->ehp->e_type != ET_SCE_EERELEXEC2
-				 && elf->ehp->e_type != ET_EXEC )
-	{
-		e_type = elf->ehp->e_type;
-		fprintf(stderr, "Error: '%s' is unsupport Type Elf file(type=%x)\n", source, e_type);
-		exit(1);
+			break;
 	}
 	if ( dispmod_flag )
 		display_module_info(elf);
-	if ( elf->ehp->e_type == ET_SCE_IOPRELEXEC || elf->ehp->e_type == ET_SCE_IOPRELEXEC2 || elf->ehp->e_type == ET_SCE_EERELEXEC2 )
+	switch ( elf->ehp->e_type )
 	{
-		if ( br_conv )
-			convert_relative_branch(elf);
-		if ( rfile )
-		{
-			if ( layout_srx_file(elf) )
+		case ET_SCE_IOPRELEXEC:
+		case ET_SCE_IOPRELEXEC2:
+		case ET_SCE_EERELEXEC2:
+			if ( br_conv )
+				convert_relative_branch(elf);
+			if ( rfile )
+			{
+				if ( layout_srx_file(elf) )
+					exit(1);
+				write_elf(elf, rfile);
+			}
+			if ( ofile )
+			{
+				strip_elf(elf);
+				if ( layout_srx_file(elf) )
+					exit(1);
+				write_elf(elf, ofile);
+			}
+			break;
+		default:
+			if ( rfile || ofile )
+			{
+				fprintf(stderr, "Error: Cannot generate IRX/ERX file.  '%s' file type is ET_EXEC.\n", source);
 				exit(1);
-			write_elf(elf, rfile);
-		}
-		if ( ofile )
-		{
-			strip_elf(elf);
-			if ( layout_srx_file(elf) )
-				exit(1);
-			write_elf(elf, ofile);
-		}
-	}
-	else if ( rfile || ofile )
-	{
-		fprintf(stderr, "Error: Cannot generate IRX/ERX file.  '%s' file type is ET_EXEC.\n", source);
-		exit(1);
+			}
+			break;
 	}
 	if ( ffile || startaddr != -1 )
 	{
-		if ( elf->ehp->e_type == ET_SCE_IOPRELEXEC || elf->ehp->e_type == ET_SCE_IOPRELEXEC2 || elf->ehp->e_type == ET_SCE_EERELEXEC2 )
+		switch ( elf->ehp->e_type )
 		{
-			elf->ehp->e_type = 2;
-			fixlocation_elf(elf, startaddr);
+			case ET_SCE_IOPRELEXEC:
+			case ET_SCE_IOPRELEXEC2:
+			case ET_SCE_EERELEXEC2:
+				elf->ehp->e_type = ET_EXEC;
+				fixlocation_elf(elf, startaddr);
+				break;
+			default:
+				break;
 		}
 		if ( ffile )
 		{
@@ -340,20 +347,13 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		if ( relsect->info->shr.sh_addr > rp->rel.r_offset
 			|| rp->rel.r_offset >= relsect->info->shr.sh_size + relsect->info->shr.sh_addr )
 		{
-			uint32_t r_offset;
-			unsigned int sh_addr;
-			unsigned int s_;
-
-			s_ = relsect->info->shr.sh_size + relsect->info->shr.sh_addr;
-			sh_addr = relsect->info->shr.sh_addr;
-			r_offset = rp->rel.r_offset;
 			fprintf(
 				stderr,
 				"Panic !! relocation #%d offset=0x%x range out (section limit addr=0x%x-0x%x)\n",
 				i,
-				r_offset,
-				sh_addr,
-				s_);
+				rp->rel.r_offset,
+				relsect->info->shr.sh_addr,
+				relsect->info->shr.sh_size + relsect->info->shr.sh_addr);
 			exit(1);
 		}
 		daddr = &relsect->info->data[rp->rel.r_offset - relsect->info->shr.sh_addr];

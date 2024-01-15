@@ -267,11 +267,6 @@ struct _keyword_table
 
 static TokenTree * make_conf_vector(LowToken **lowtokens)
 {
-	TokenTree *conf_vector;
-	LowToken v6;
-	LowToken v7;
-	int kt_;
-	int sltp_;
 	struct _keyword_table *kt;
 	const LowToken *sltp;
 	LowToken *ltp;
@@ -298,13 +293,10 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 		{
 			sltp = ltp++;
 			v14[entries].tkcode = TC_VECTOR;
-			conf_vector = make_conf_vector(&ltp);
-			v14[entries].value.subtree = conf_vector;
+			v14[entries].value.subtree = make_conf_vector(&ltp);
 			if ( !ltp->str || strcmp(ltp->str, "}") != 0 )
 			{
-				sltp_ = sltp->col;
-				kt_ = sltp->line;
-				fprintf(stderr, "make_conf_vector(): missing '}' line:%d col=%d\n", kt_, sltp_);
+				fprintf(stderr, "make_conf_vector(): missing '}' line:%d col=%d\n", sltp->line, sltp->col);
 				exit(1);
 			}
 			++ltp;
@@ -317,8 +309,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 				&& *ltp->str != '*'
 				&& isalnum(*ltp->str) == 0 )
 			{
-				v7 = *ltp;
-				fprintf(stderr, "make_conf_vector(): unexcepted data '%s' line:%d col=%d\n", v7.str, v7.line, v7.col);
+				fprintf(stderr, "make_conf_vector(): unexcepted data '%s' line:%d col=%d\n", ltp->str, ltp->line, ltp->col);
 				exit(1);
 			}
 			if ( *ltp->str == '@' )
@@ -327,8 +318,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 					;
 				if ( kt->code < 0 )
 				{
-					v6 = *ltp;
-					fprintf(stderr, "make_conf_vector(): unknown keyword '%s' line:%d col=%d\n", v6.str, v6.line, v6.col);
+					fprintf(stderr, "make_conf_vector(): unknown keyword '%s' line:%d col=%d\n", ltp->str, ltp->line, ltp->col);
 					exit(1);
 				}
 				v14[entries].tkcode = kt->code;
@@ -347,7 +337,6 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 
 static TokenTree * make_conf_tree(LowToken *lowtokens)
 {
-	LowToken v3;
 	TokenTree *v4;
 
 	v4 = (TokenTree *)calloc(1u, sizeof(TokenTree));
@@ -355,8 +344,7 @@ static TokenTree * make_conf_tree(LowToken *lowtokens)
 	v4->value.subtree = make_conf_vector(&lowtokens);
 	if ( lowtokens->str )
 	{
-		v3 = *lowtokens;
-		fprintf(stderr, "make_conf_tree(): unexcepted data '%s' line:%d col=%d\n", v3.str, v3.line, v3.col);
+		fprintf(stderr, "make_conf_tree(): unexcepted data '%s' line:%d col=%d\n", lowtokens->str, lowtokens->line, lowtokens->col);
 		exit(1);
 	}
 	return v4;
@@ -412,14 +400,14 @@ static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp
 	{
 		result->bind = STB_LOCAL;
 	}
+	else if ( !strcmp("WEAK", ttp[1].value.lowtoken->str) )
+	{
+		result->bind = STB_WEAK;
+	}
 	else
 	{
-		if ( strcmp("WEAK", ttp[1].value.lowtoken->str) != 0 )
-		{
-			fprintf(stderr, "Unsupported bind '%s' for '%s'\n", ttp[1].value.lowtoken->str, ttp->value.lowtoken->str);
-			return 1;
-		}
-		result->bind = STB_WEAK;
+		fprintf(stderr, "Unsupported bind '%s' for '%s'\n", ttp[1].value.lowtoken->str, ttp->value.lowtoken->str);
+		return 1;
 	}
 	if ( strcmp("OBJECT", ttp[2].value.lowtoken->str) != 0 )
 	{
@@ -445,14 +433,14 @@ static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp
 	{
 		result->shindex = 65311;
 	}
+	else if ( !strcmp("0", ttp[4].value.lowtoken->str) )
+	{
+		result->shindex = 0;
+	}
 	else
 	{
-		if ( strcmp("0", ttp[4].value.lowtoken->str) != 0 )
-		{
-			fprintf(stderr, "Unknown shindex '%s' for '%s'\n", ttp[4].value.lowtoken->str, ttp->value.lowtoken->str);
-			return 1;
-		}
-		result->shindex = 0;
+		fprintf(stderr, "Unknown shindex '%s' for '%s'\n", ttp[4].value.lowtoken->str, ttp->value.lowtoken->str);
+		return 1;
 	}
 	if ( !strcmp("start", ttp[5].value.lowtoken->str) )
 	{
@@ -462,14 +450,14 @@ static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp
 	{
 		result->seflag = 1;
 	}
+	else if ( !strcmp("gpbase", ttp[5].value.lowtoken->str) )
+	{
+		result->seflag = 2;
+	}
 	else
 	{
-		if ( strcmp("gpbase", ttp[5].value.lowtoken->str) != 0 )
-		{
-			fprintf(stderr, "Unknown base '%s' for '%s'\n", ttp[5].value.lowtoken->str, ttp->value.lowtoken->str);
-			return 1;
-		}
-		result->seflag = 2;
+		fprintf(stderr, "Unknown base '%s' for '%s'\n", ttp[5].value.lowtoken->str, ttp->value.lowtoken->str);
+		return 1;
 	}
 	result->name = ttp->value.lowtoken->str;
 	return 0;
@@ -477,8 +465,6 @@ static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp
 
 static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 {
-	enum TokenCode v4;
-	enum TokenCode v5;
 	PheaderInfo *phrlist;
 	SegConf *segp;
 	SegConf *seglist;
@@ -503,58 +489,61 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 			return 1;
 		}
 		arg = ttp[1].value.subtree;
-		v4 = ttp->tkcode;
-		if ( ttp->tkcode == TC_Memory_segment )
+		switch ( ttp->tkcode )
 		{
-			entries_4 = get_vector_len(arg);
-			for ( i = 0; entries_4 > i; ++i )
-			{
-				segp = lookup_segment(result, arg[i].value.lowtoken->str, 1);
-				if ( !segp )
-					return 1;
-				segp->bitid = 1 << (segp - result->segment_list);
-			}
-		}
-		else if ( (unsigned int)v4 > TC_Memory_segment )
-		{
-			if ( v4 == TC_Program_header_order )
-			{
+			case TC_Segments_name:
+				entries_1 = get_vector_len(arg);
+				seglist = (SegConf *)calloc(entries_1 + 1, sizeof(SegConf));
+				result->segment_list = seglist;
+				for ( m = 0; entries_1 > m; ++m )
+				{
+					seglist[m].name = arg[m].value.lowtoken->str;
+					seglist[m].sect_name_patterns = (srxfixup_const_char_ptr_t *)calloc(1u, sizeof(srxfixup_const_char_ptr_t));
+				}
+				break;
+			case TC_Memory_segment:
+				entries_4 = get_vector_len(arg);
+				for ( i = 0; entries_4 > i; ++i )
+				{
+					segp = lookup_segment(result, arg[i].value.lowtoken->str, 1);
+					if ( !segp )
+						return 1;
+					segp->bitid = 1 << (segp - result->segment_list);
+				}
+				break;
+			case TC_Program_header_order:
 				entries_2 = get_vector_len(arg);
 				phrlist = (PheaderInfo *)calloc(entries_2 + 1, sizeof(PheaderInfo));
 				result->program_header_order = phrlist;
 				for ( j = 0; entries_2 > j; ++j )
 				{
-					v5 = arg[j].tkcode;
-					if ( v5 == TC_STRING )
+					switch ( arg[j].tkcode )
 					{
-						phrlist[j].sw = 1;
-						phrlist[j].d.section_name = arg[j].value.lowtoken->str;
-					}
-					else if ( v5 == TC_VECTOR )
-					{
-						subarg = arg[j].value.subtree;
-						nseg = get_vector_len(subarg);
-						phrlist[j].sw = 2;
-						phrlist[j].d.segment_list = (SegConf **)calloc(nseg + 1, sizeof(SegConf *));
-						for ( n = 0; nseg > n; ++n )
-						{
-							phrlist[j].d.segment_list[n] = lookup_segment(
-																		 result,
-																		 subarg[n].value.lowtoken->str,
-																		 1);
-							if ( !phrlist[j].d.segment_list[n] )
-								return 1;
-						}
+						case TC_STRING:
+							phrlist[j].sw = 1;
+							phrlist[j].d.section_name = arg[j].value.lowtoken->str;
+							break;
+						case TC_VECTOR:
+							subarg = arg[j].value.subtree;
+							nseg = get_vector_len(subarg);
+							phrlist[j].sw = 2;
+							phrlist[j].d.segment_list = (SegConf **)calloc(nseg + 1, sizeof(SegConf *));
+							for ( n = 0; nseg > n; ++n )
+							{
+								phrlist[j].d.segment_list[n] = lookup_segment(
+																			 result,
+																			 subarg[n].value.lowtoken->str,
+																			 1);
+								if ( !phrlist[j].d.segment_list[n] )
+									return 1;
+							}
+							break;
+						default:
+							break;
 					}
 				}
-			}
-			else
-			{
-				if ( v4 != TC_CreateSymbols )
-				{
-					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
-					return 1;
-				}
+				break;
+			case TC_CreateSymbols:
 				entries_3 = get_vector_len(arg);
 				result->create_symbols = (CreateSymbolConf *)calloc(entries_3 + 1, sizeof(CreateSymbolConf));
 				for ( k = 0; entries_3 > k; ++k )
@@ -567,23 +556,10 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 					if ( setup_reserved_symbol_table(&result->create_symbols[k], arg[k].value.subtree, result) )
 						return 1;
 				}
-			}
-		}
-		else
-		{
-			if ( v4 != TC_Segments_name )
-			{
+				break;
+			default:
 				fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
 				return 1;
-			}
-			entries_1 = get_vector_len(arg);
-			seglist = (SegConf *)calloc(entries_1 + 1, sizeof(SegConf));
-			result->segment_list = seglist;
-			for ( m = 0; entries_1 > m; ++m )
-			{
-				seglist[m].name = arg[m].value.lowtoken->str;
-				seglist[m].sect_name_patterns = (srxfixup_const_char_ptr_t *)calloc(1u, sizeof(srxfixup_const_char_ptr_t));
-			}
 		}
 		ttp += 2;
 	}
@@ -836,10 +812,15 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				return 0;
 		}
 	}
-	if ( result->target == 1 || result->target == 2 )
-		return result;
-	fprintf(stderr, "@IOP or @EE not found error !\n");
-	return 0;
+	switch ( result->target )
+	{
+		case 1:
+		case 2:
+			return result;
+		default:
+			fprintf(stderr, "@IOP or @EE not found error !\n");
+			return 0;
+	}
 }
 
 static void  check_change_bit(int oldbit, int newbit, int *up, int *down)
@@ -850,8 +831,6 @@ static void  check_change_bit(int oldbit, int newbit, int *up, int *down)
 
 static int  check_srx_gen_table(Srx_gen_table *tp)
 {
-	const char *name;
-	const char *sect_name_pattern;
 	SegConf *scnfp;
 	SectConf *sctp;
 	int nsegment;
@@ -883,9 +862,7 @@ static int  check_srx_gen_table(Srx_gen_table *tp)
 			{
 				if ( (sctp->flag & (1 << b)) != 0 )
 				{
-					sect_name_pattern = sctp->sect_name_pattern;
-					name = tp->segment_list[b].name;
-					fprintf(stderr, "Segment '%s' restart by section `%s`\n", name, sect_name_pattern);
+					fprintf(stderr, "Segment '%s' restart by section `%s`\n", tp->segment_list[b].name, sctp->sect_name_pattern);
 					break;
 				}
 			}

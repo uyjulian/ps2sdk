@@ -17,41 +17,6 @@ static int comp_Elf_file_slot(const void *a1, const void *a2);
 
 elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 {
-	elf_proghead *v8;
-	elf_section **v9;
-	unsigned int v10;
-	uint8_t *v11;
-	uint8_t *v12;
-	uint8_t *v13;
-	uint8_t *mips_symbolic;
-	uint8_t *v15;
-	char *v16;
-	unsigned int p_type;
-	elf_section *v18;
-	elf_section *v19;
-	elf_section *v20;
-	elf_section **v21;
-	unsigned int sh_type;
-	unsigned int p_filesz;
-	unsigned int p_offset;
-	int d;
-	int s;
-	signed int size;
-	signed int count_1;
-	signed int count_2;
-	unsigned int pos_1;
-	unsigned int pos_2;
-	signed int pos_3;
-	signed int pos_4;
-	signed int pos_5;
-	int i_1;
-	int i_2;
-	int i_3;
-	int i_4;
-	int i_5;
-	int i_6;
-	int i_7;
-	int i_8;
 	int ident;
 	elf_file *elf;
 	FILE *fp;
@@ -114,10 +79,13 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 	}
 	if ( elf->ehp->e_phnum && elf->ehp->e_phentsize )
 	{
+		signed int count_1;
+		unsigned int pos_1;
+		int i_1;
+
 		count_1 = elf->ehp->e_phnum;
 		pos_1 = elf->ehp->e_phoff;
-		v8 = (elf_proghead *)calloc(count_1, sizeof(elf_proghead));
-		elf->php = v8;
+		elf->php = (elf_proghead *)calloc(count_1, sizeof(elf_proghead));
 		fseek(fp, pos_1, 0);
 		for ( i_1 = 0; count_1 > i_1; ++i_1 )
 		{
@@ -131,10 +99,15 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 	}
 	if ( elf->ehp->e_shnum && elf->ehp->e_shentsize )
 	{
+		signed int count_2;
+		unsigned int pos_2;
+		int i_2;
+		int i_3;
+		int i_4;
+
 		pos_2 = elf->ehp->e_shoff;
 		count_2 = elf->ehp->e_shnum;
-		v9 = (elf_section **)calloc(count_2 + 1, sizeof(elf_section *));
-		elf->scp = v9;
+		elf->scp = (elf_section **)calloc(count_2 + 1, sizeof(elf_section *));
 		fseek(fp, pos_2, 0);
 		for ( i_2 = 0; count_2 > i_2; ++i_2 )
 		{
@@ -167,21 +140,40 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 		}
 		for ( i_4 = 0; ; ++i_4 )
 		{
+			signed int size;
+			signed int pos_3;
+
 			if ( count_2 <= i_4 )
 			{
+				int i_5;
+				int i_6;
+				int i_7;
+				int i_8;
+
 				for ( i_5 = 0; count_2 > i_5; ++i_5 )
 				{
+					signed int pos_4;
+
 					pos_4 = elf->scp[i_5]->shr.sh_offset;
-					if ( (elf->scp[i_5]->shr.sh_type == SHT_SYMTAB || elf->scp[i_5]->shr.sh_type == SHT_DYNSYM)
-						&& pos_4 > 0
-						&& elf->scp[i_5]->shr.sh_size )
+					switch ( elf->scp[i_5]->shr.sh_type )
 					{
-						fseek(fp, pos_4, 0);
-						read_symtab(elf, i_5, fp);
+						case SHT_SYMTAB:
+						case SHT_DYNSYM:
+							if ( pos_4 > 0
+								&& elf->scp[i_5]->shr.sh_size )
+							{
+								fseek(fp, pos_4, 0);
+								read_symtab(elf, i_5, fp);
+							}
+							break;
+						default:
+							break;
 					}
 				}
 				for ( i_6 = 0; count_2 > i_6; ++i_6 )
 				{
+					signed int pos_5;
+
 					pos_5 = elf->scp[i_6]->shr.sh_offset;
 					if ( elf->scp[i_6]->shr.sh_type == SHT_REL && pos_5 > 0 && elf->scp[i_6]->shr.sh_size )
 					{
@@ -191,55 +183,59 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 				}
 				for ( i_7 = 0; count_2 > i_7; ++i_7 )
 				{
-					v16 = strdup((char *)&elf->shstrptr->data[elf->scp[i_7]->shr.sh_name]);
-					elf->scp[i_7]->name = v16;
+					elf->scp[i_7]->name = strdup((char *)&elf->shstrptr->data[elf->scp[i_7]->shr.sh_name]);
 				}
 				for ( i_8 = 0; i_8 < elf->ehp->e_phnum; ++i_8 )
 				{
-					p_type = elf->php[i_8].phdr.p_type;
-					switch ( p_type )
+					int d;
+					int s;
+
+					switch ( elf->php[i_8].phdr.p_type )
 					{
 						case PT_LOAD:
-							v21 = (elf_section **)calloc(count_2, sizeof(elf_section *));
-							elf->php[i_8].scp = v21;
+							elf->php[i_8].scp = (elf_section **)calloc(count_2, sizeof(elf_section *));
 							s = 1;
 							d = 0;
 							while ( count_2 > s )
 							{
+								unsigned int p_filesz;
+								unsigned int p_offset;
+
 								p_offset = elf->php[i_8].phdr.p_offset;
 								p_filesz = elf->php[i_8].phdr.p_filesz;
-								sh_type = elf->scp[s]->shr.sh_type;
-								if ( sh_type == SHT_PROGBITS )
+								switch ( elf->scp[s]->shr.sh_type )
 								{
-									if ( is_in_range(p_offset, p_filesz, elf->scp[s]->shr.sh_offset)
-										|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
-									{
-										elf->php[i_8].scp[d++] = elf->scp[s];
-									}
-								}
-								else if ( sh_type == SHT_NOBITS
-											 && (is_in_range(elf->php[i_8].phdr.p_vaddr, elf->php[i_8].phdr.p_memsz, elf->scp[s]->shr.sh_addr)
-												|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset)) )
-								{
-									elf->php[i_8].scp[d++] = elf->scp[s];
+									case SHT_PROGBITS:
+										if ( is_in_range(p_offset, p_filesz, elf->scp[s]->shr.sh_offset)
+											|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
+										{
+											elf->php[i_8].scp[d++] = elf->scp[s];
+										}
+										break;
+									case SHT_NOBITS:
+										if ( is_in_range(elf->php[i_8].phdr.p_vaddr, elf->php[i_8].phdr.p_memsz, elf->scp[s]->shr.sh_addr)
+												|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
+										{
+											elf->php[i_8].scp[d++] = elf->scp[s];
+										}
+										break;
+									default:
+										break;
 								}
 								++s;
 							}
 							break;
 						case PT_MIPS_REGINFO:
 							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-							v18 = search_section(elf, SHT_MIPS_REGINFO);
-							*elf->php[i_8].scp = v18;
+							*elf->php[i_8].scp = search_section(elf, SHT_MIPS_REGINFO);
 							break;
 						case PT_SCE_IOPMOD:
 							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-							v19 = search_section(elf, SHT_SCE_IOPMOD);
-							*elf->php[i_8].scp = v19;
+							*elf->php[i_8].scp = search_section(elf, SHT_SCE_IOPMOD);
 							break;
 						case PT_SCE_EEMOD:
 							elf->php[i_8].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-							v20 = search_section(elf, SHT_SCE_EEMOD);
-							*elf->php[i_8].scp = v20;
+							*elf->php[i_8].scp = search_section(elf, SHT_SCE_EEMOD);
 							break;
 						default:
 							break;
@@ -252,16 +248,14 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 			if ( pos_3 > 0 && size > 0 )
 			{
 				fseek(fp, pos_3, 0);
-				v10 = elf->scp[i_4]->shr.sh_type;
-				switch ( v10 )
+				switch ( elf->scp[i_4]->shr.sh_type )
 				{
 					case SHT_PROGBITS:
 					case SHT_RELA:
 					case SHT_HASH:
 					case SHT_DYNAMIC:
 					case SHT_MIPS_REGINFO:
-						v11 = (uint8_t *)malloc(size);
-						elf->scp[i_4]->data = v11;
+						elf->scp[i_4]->data = (uint8_t *)malloc(size);
 						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
 						{
 							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
@@ -274,12 +268,10 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 					case SHT_DYNSYM:
 						break;
 					case SHT_MIPS_DEBUG:
-						mips_symbolic = (uint8_t *)read_mips_symbolic(fp);
-						elf->scp[i_4]->data = mips_symbolic;
+						elf->scp[i_4]->data = (uint8_t *)read_mips_symbolic(fp);
 						break;
 					case SHT_SCE_IOPMOD:
-						v12 = (uint8_t *)malloc(size);
-						elf->scp[i_4]->data = v12;
+						elf->scp[i_4]->data = (uint8_t *)malloc(size);
 						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
 						{
 							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
@@ -288,8 +280,7 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 						swapmemory(elf->scp[i_4]->data, "lllllls", 1);
 						break;
 					case SHT_SCE_EEMOD:
-						v13 = (uint8_t *)malloc(size);
-						elf->scp[i_4]->data = v13;
+						elf->scp[i_4]->data = (uint8_t *)malloc(size);
 						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
 						{
 							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
@@ -298,8 +289,7 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 						swapmemory(elf->scp[i_4]->data, "lllllllllls", 1);
 						break;
 					default:
-						v15 = (uint8_t *)malloc(size);
-						elf->scp[i_4]->data = v15;
+						elf->scp[i_4]->data = (uint8_t *)malloc(size);
 						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
 						{
 							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
@@ -561,16 +551,6 @@ int layout_elf_file(elf_file *elf)
 
 int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 {
-	unsigned int sh_type;
-	unsigned int size;
-	int count_1;
-	int count_2;
-	signed int pos;
-	int i_1;
-	int i_2;
-	int i_3;
-	int i_4;
-	int i_5;
 	FILE *fp;
 
 	fp = fopen(filename, "wb");
@@ -582,6 +562,9 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 	renumber_symtab(elf);
 	if ( elf->ehp->e_shnum && elf->ehp->e_shentsize )
 	{
+		int i_1;
+		int i_2;
+
 		for ( i_1 = 0; i_1 < elf->ehp->e_shnum; ++i_1 )
 			elf->scp[i_1]->number = i_1;
 		for ( i_2 = 0; i_2 < elf->ehp->e_shnum; ++i_2 )
@@ -609,6 +592,9 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 	swapmemory(elf->ehp, "ccccccccccccccccsslllllssssss", 1);
 	if ( elf->ehp->e_phnum && elf->ehp->e_phentsize )
 	{
+		int count_1;
+		int i_3;
+
 		count_1 = elf->ehp->e_phnum;
 		fseek(fp, elf->ehp->e_phoff, 0);
 		for ( i_3 = 0; count_1 > i_3; ++i_3 )
@@ -620,6 +606,10 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 	}
 	if ( elf->ehp->e_shnum && elf->ehp->e_shentsize )
 	{
+		int count_2;
+		int i_4;
+		int i_5;
+
 		count_2 = elf->ehp->e_shnum;
 		fseek(fp, elf->ehp->e_shoff, 0);
 		for ( i_4 = 0; count_2 > i_4; ++i_4 )
@@ -630,13 +620,15 @@ int write_elf(elf_file *elf, srxfixup_const_char_ptr_t filename)
 		}
 		for ( i_5 = 0; count_2 > i_5; ++i_5 )
 		{
+			unsigned int size;
+			signed int pos;
+
 			pos = elf->scp[i_5]->shr.sh_offset;
 			size = elf->scp[i_5]->shr.sh_size;
 			if ( pos > 0 && (int)size > 0 )
 			{
 				fseek(fp, pos, 0);
-				sh_type = elf->scp[i_5]->shr.sh_type;
-				switch ( sh_type )
+				switch ( elf->scp[i_5]->shr.sh_type )
 				{
 					case SHT_PROGBITS:
 					case SHT_RELA:
@@ -698,8 +690,15 @@ static void renumber_symtab(elf_file *elf)
 
 	for ( sc = 1; sc < elf->ehp->e_shnum; ++sc )
 	{
-		if ( elf->scp[sc]->shr.sh_type == SHT_SYMTAB || elf->scp[sc]->shr.sh_type == SHT_DYNSYM )
-			renumber_a_symtab(elf->scp[sc]);
+		switch ( elf->scp[sc]->shr.sh_type )
+		{
+			case SHT_SYMTAB:
+			case SHT_DYNSYM:
+				renumber_a_symtab(elf->scp[sc]);
+				break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -1125,8 +1124,15 @@ void reorder_symtab(elf_file *elf)
 
 	for ( s = 1; s < elf->ehp->e_shnum; ++s )
 	{
-		if ( elf->scp[s]->shr.sh_type == SHT_SYMTAB || elf->scp[s]->shr.sh_type == SHT_DYNSYM )
-			reorder_an_symtab(elf, elf->scp[s]);
+		switch ( elf->scp[s]->shr.sh_type )
+		{
+			case SHT_SYMTAB:
+			case SHT_DYNSYM:
+				reorder_an_symtab(elf, elf->scp[s]);
+				break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -1177,7 +1183,6 @@ static int search_string_table(srxfixup_const_char_ptr_t tbltop, int endindex, s
 
 static void rebuild_a_symbol_name_strings(elf_section *scp)
 {
-	size_t v1;
 	elf_section *strtab;
 	elf_syment **syp;
 	int offset;
@@ -1192,11 +1197,7 @@ static void rebuild_a_symbol_name_strings(elf_section *scp)
 	namesize = 1;
 	for ( i_1 = 1; entrise > i_1; ++i_1 )
 	{
-		if ( syp[i_1]->name )
-			v1 = strlen(syp[i_1]->name) + namesize + 1;
-		else
-			v1 = namesize;
-		namesize = v1;
+		namesize = (syp[i_1]->name != NULL) ? (strlen(syp[i_1]->name) + namesize + 1) : namesize;
 	}
 	if ( strtab->data )
 		free(strtab->data);
@@ -1230,8 +1231,15 @@ void rebuild_symbol_name_strings(elf_file *elf)
 	}
 	for ( sc = 1; sc < elf->ehp->e_shnum; ++sc )
 	{
-		if ( elf->scp[sc]->shr.sh_type == SHT_SYMTAB || elf->scp[sc]->shr.sh_type == SHT_DYNSYM )
-			rebuild_a_symbol_name_strings(elf->scp[sc]);
+		switch ( elf->scp[sc]->shr.sh_type )
+		{
+			case SHT_SYMTAB:
+			case SHT_DYNSYM:
+				rebuild_a_symbol_name_strings(elf->scp[sc]);
+				break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -1337,10 +1345,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 		}
 	}
 	resolt[d_1].type = 4;
-	if ( elf->ehp->e_shoff )
-		resolt[d_1].offset = elf->ehp->e_shoff;
-	else
-		resolt[d_1].offset = -256;
+	resolt[d_1].offset = elf->ehp->e_shoff ?: -256;
 	resolt[d_1].size = 40 * elf->ehp->e_shnum;
 	resolt[d_1].align = 4;
 	d_2 = d_1 + 1;
@@ -1422,7 +1427,6 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 {
 	int offset;
-	int sh_offset;
 	unsigned int size_tmp;
 	unsigned int offset_tmp;
 	char tmp[100];
@@ -1489,11 +1493,7 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 				else
 					oldend_2 = scp[i]->shr.sh_size;
 				startpos_2 = scp[i]->shr.sh_offset;
-				if ( oldend_2 <= 0 )
-					sh_offset = scp[i]->shr.sh_offset;
-				else
-					sh_offset = oldend_2 + startpos_2 - 1;
-				size_2 = sh_offset;
+				size_2 = (oldend_2 <= 0) ? (scp[i]->shr.sh_offset) : (oldend_2 + startpos_2 - 1);
 				sprintf(tmp, "(%s)", scp[i]->name);
 				name = tmp;
 				if ( startpos_2 > (int)(size_tmp + 1) )

@@ -131,7 +131,6 @@ struct name2num P_type_name[] =
 
 void print_elf_phdr(const elf_file *elf, int flag)
 {
-	int j;
 	int i;
 
 	if ( elf->php == NULL || (flag & 1) == 0 )
@@ -162,6 +161,8 @@ void print_elf_phdr(const elf_file *elf, int flag)
 		printf(")\n");
 		if ( elf->php[i].scp )
 		{
+			int j;
+
 			printf("     include sections = ");
 			for ( j = 0; elf->php[i].scp[j]; ++j )
 				printf("%s ", elf->php[i].scp[j]->name);
@@ -180,11 +181,6 @@ struct name2num S_type_name[] =
 
 void print_elf_sections(const elf_file *elf, int flag)
 {
-	unsigned int sh_type;
-	const char *v3;
-	const Elf32_RegInfo *v4;
-	const Elf32_IopMod *data;
-	const Elf32_EeMod *v6;
 	int i;
 
 	if ( elf->scp == NULL )
@@ -199,8 +195,7 @@ void print_elf_sections(const elf_file *elf, int flag)
 			return;
 		if ( (flag & 1) != 0 || ((flag & 2) != 0 && elf->scp[i]->shr.sh_type == SHT_REL) )
 		{
-			v3 = num2name(S_type_name, elf->scp[i]->shr.sh_type);
-			printf(" %2d: %-12s sh_name=0x%04x sh_type=%s\n", i, elf->scp[i]->name, elf->scp[i]->shr.sh_name, v3);
+			printf(" %2d: %-12s sh_name=0x%04x sh_type=%s\n", i, elf->scp[i]->name, elf->scp[i]->shr.sh_name, num2name(S_type_name, elf->scp[i]->shr.sh_type));
 			printf("        sh_flas=0x%08x ( ", elf->scp[i]->shr.sh_flags);
 			if ( (elf->scp[i]->shr.sh_flags & 1) != 0 )
 				printf("SHF_WRITE ");
@@ -224,8 +219,7 @@ void print_elf_sections(const elf_file *elf, int flag)
 				elf->scp[i]->shr.sh_entsize,
 				(int)(elf->scp[i]->shr.sh_entsize));
 		}
-		sh_type = elf->scp[i]->shr.sh_type;
-		switch ( sh_type )
+		switch ( elf->scp[i]->shr.sh_type )
 		{
 			case SHT_SYMTAB:
 			case SHT_DYNSYM:
@@ -240,6 +234,8 @@ void print_elf_sections(const elf_file *elf, int flag)
 			case SHT_SCE_IOPMOD:
 				if ( (flag & 1) != 0 )
 				{
+					const Elf32_IopMod *data;
+
 					data = (Elf32_IopMod *)elf->scp[i]->data;
 					printf(
 						"        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n",
@@ -256,28 +252,32 @@ void print_elf_sections(const elf_file *elf, int flag)
 			case SHT_SCE_EEMOD:
 				if ( (flag & 1) != 0 )
 				{
-					v6 = (Elf32_EeMod *)elf->scp[i]->data;
-					printf("        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n", v6->moduleinfo, v6->entry, v6->gp_value);
+					const Elf32_EeMod *data;
+
+					data = (Elf32_EeMod *)elf->scp[i]->data;
+					printf("        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n", data->moduleinfo, data->entry, data->gp_value);
 					printf(
 						"        text_size=0x%08x, data_size=0x%08x, bss_size=0x%08x\n",
-						v6->text_size,
-						v6->data_size,
-						v6->bss_size);
-					printf("        erx_lib_addr=0x%08x, erx_lib_size=0x%08x\n", v6->erx_lib_addr, v6->erx_lib_size);
-					printf("        erx_stub_addr=0x%08x, erx_stub_size=0x%08x\n", v6->erx_stub_addr, v6->erx_stub_size);
+						data->text_size,
+						data->data_size,
+						data->bss_size);
+					printf("        erx_lib_addr=0x%08x, erx_lib_size=0x%08x\n", data->erx_lib_addr, data->erx_lib_size);
+					printf("        erx_stub_addr=0x%08x, erx_stub_size=0x%08x\n", data->erx_stub_addr, data->erx_stub_size);
 				}
 				break;
 			case SHT_MIPS_REGINFO:
 				if ( (flag & 1) != 0 )
 				{
-					v4 = (Elf32_RegInfo *)elf->scp[i]->data;
+					const Elf32_RegInfo *data;
+
+					data = (Elf32_RegInfo *)elf->scp[i]->data;
 					printf(
 						"        gpmask=0x08x, cprmask=%08x,%08x,%08x,%08x\n",
-						v4->ri_gprmask,
-						v4->ri_cprmask[0],
-						v4->ri_cprmask[1],
-						v4->ri_cprmask[3]);
-					printf("        gp=0x%08x\n", v4->ri_gp_value);
+						data->ri_gprmask,
+						data->ri_cprmask[0],
+						data->ri_cprmask[1],
+						data->ri_cprmask[3]);
+					printf("        gp=0x%08x\n", data->ri_gp_value);
 				}
 				break;
 			default:
@@ -311,8 +311,7 @@ struct name2num R_MIPS_Type[] =
 
 void print_elf_reloc(const elf_section *scp, int flag)
 {
-	const char *name;
-	elf_rel *rp;
+	const elf_rel *rp;
 	signed int entrise;
 	signed int i;
 
@@ -329,20 +328,14 @@ void print_elf_reloc(const elf_section *scp, int flag)
 	rp = (elf_rel *)scp->data;
 	for ( i = 0; entrise > i; ++i )
 	{
-		const char *symshp;
-
-		symshp = num2name(R_MIPS_Type, rp[i].type);
-		printf("   %3d: 0x%06x  0x%02x %-16s ", i, rp[i].rel.r_offset, rp[i].type, symshp);
+		printf("   %3d: 0x%06x  0x%02x %-16s ", i, rp[i].rel.r_offset, rp[i].type, num2name(R_MIPS_Type, rp[i].type));
 		if ( rp[i].symptr->type == STT_SECTION )
 		{
 			printf("0x%03x[%s]\n", rp[i].rel.r_info >> 8, rp[i].symptr->shptr->name);
 		}
 		else
 		{
-			name = rp[i].symptr->name;
-			if ( !name )
-				name = "";
-			printf("0x%03x %s\n", rp[i].rel.r_info >> 8, name);
+			printf("0x%03x %s\n", rp[i].rel.r_info >> 8, rp[i].symptr->name ?: "");
 		}
 	}
 	printf("\n");
@@ -350,20 +343,7 @@ void print_elf_reloc(const elf_section *scp, int flag)
 
 void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 {
-	Disasm_result *v3;
-	size_t v4;
-	size_t v5;
-	const char *v6;
 	int v7;
-	size_t v8;
-	int v9;
-	const char *v10;
-	const char *v11;
-	uint32_t rp_;
-	uint32_t v13;
-	int rpbase_;
-	const char *name;
-	const char *v16;
 	const elf_rel *rp;
 	elf_rel *rpbase;
 	struct rellink *rel;
@@ -391,8 +371,7 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 	addr = 0;
 	while ( (int)steps > i )
 	{
-		v3 = disassemble(addr, codes[i]);
-		dis[i] = v3;
+		dis[i] = disassemble(addr, codes[i]);
 		gen_asmmacro(dis[i]);
 		search_rel_data(rpbase, relentries, baseoff + addr, &rel[i++]);
 		addr += 4;
@@ -418,9 +397,7 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 			for ( j = strlen(pb); j <= 47; ++j )
 				pb[j] = 32;
 			pb[48] = 0;
-			rpbase_ = rel[i].rid;
-			v4 = strlen(pb);
-			sprintf(&pb[v4], "%3d:", rpbase_);
+			sprintf(&pb[strlen(pb)], "%3d:", rel[i].rid);
 			if ( rel[i].rp )
 			{
 				rp = rel[i].rp;
@@ -433,42 +410,26 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 			}
 			if ( rp->symptr->type == STT_SECTION )
 			{
-				name = rp->symptr->shptr->name;
-				rp_ = rp->rel.r_info >> 8;
-				v10 = num2name(R_MIPS_Type, rp->type);
-				v5 = strlen(pb);
-				sprintf(&pb[v5], "  %s %d '%s'", v10, (int)rp_, name);
+				sprintf(&pb[strlen(pb)], "  %s %d '%s'", num2name(R_MIPS_Type, rp->type), (int)(rp->rel.r_info >> 8), rp->symptr->shptr->name);
 			}
 			else
 			{
-				v6 = rp->symptr->name;
-				if ( !v6 )
-					v6 = "";
-				v16 = v6;
-				v13 = rp->rel.r_info >> 8;
-				v11 = num2name(R_MIPS_Type, rp->type);
-				if ( rp->symptr->bind != STB_LOCAL )
+				switch ( rp->symptr->bind )
 				{
-					if ( rp->symptr->bind == STB_GLOBAL )
-					{
-						v7 = 69;
-					}
-					else if ( rp->symptr->bind == STB_WEAK )
-					{
-						v7 = 119;
-					}
-					else
-					{
-						v7 = 32;
-					}
+					case STB_GLOBAL:
+						v7 = 'E';
+						break;
+					case STB_LOCAL:
+						v7 = 'l';
+						break;
+					case STB_WEAK:
+						v7 = 'w';
+						break;
+					default:
+						v7 = ' ';
+						break;
 				}
-				else
-				{
-					v7 = 108;
-				}
-				v9 = v7;
-				v8 = strlen(pb);
-				sprintf(&pb[v8], "%c %s %d %s", v9, v11, (int)v13, v16);
+				sprintf(&pb[strlen(pb)], "%c %s %d %s", v7, num2name(R_MIPS_Type, rp->type), (int)(rp->rel.r_info >> 8), rp->symptr->name ?: "");
 			}
 		}
 		printf("    %s\n", pb);
@@ -496,12 +457,16 @@ static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_
 		*result = (elf_rel *)relscp->data;
 		*relentries = relscp->shr.sh_size / relscp->shr.sh_entsize;
 		*baseoff = 0;
-		if ( elf->ehp->e_type == ET_SCE_IOPRELEXEC
-			|| elf->ehp->e_type == ET_SCE_IOPRELEXEC2
-			|| elf->ehp->e_type == ET_SCE_EERELEXEC
-			|| elf->ehp->e_type == ET_SCE_EERELEXEC2 )
+		switch ( elf->ehp->e_type )
 		{
-			*baseoff = scp->shr.sh_addr;
+			case ET_SCE_IOPRELEXEC:
+			case ET_SCE_IOPRELEXEC2:
+			case ET_SCE_EERELEXEC:
+			case ET_SCE_EERELEXEC2:
+				*baseoff = scp->shr.sh_addr;
+				break;
+			default:
+				break;
 		}
 	}
 	else
@@ -663,33 +628,27 @@ static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 
 void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
 {
-	unsigned int sh_type;
-	unsigned int v4;
-	const char *v5;
-	srxfixup_const_char_ptr_t v6;
-	int v7;
-	const char *rpbase_;
-	uint32_t rel_;
-	uint32_t v10;
-	const char *name;
-	const char *v12;
 	elf_rel *rpbase;
 	struct rellink rel;
 	int relentries;
-	int i;
 	unsigned int baseoff;
-	unsigned int offset;
 	unsigned int *dumpbuf;
 
 	if ( (flag & 0xF0) == 0 )
 		return;
 	dumpbuf = (unsigned int *)calloc(1u, scp->shr.sh_size + 4);
 	memcpy(dumpbuf, scp->data, scp->shr.sh_size);
-	sh_type = scp->shr.sh_type;
-	if ( sh_type == SHT_PROGBITS || sh_type == SHT_HASH || sh_type == SHT_DYNAMIC || sh_type == SHT_MIPS_REGINFO )
-    {
-        swapmemory(dumpbuf, "l", (scp->shr.sh_size + 1) >> 2);
-    }
+	switch ( scp->shr.sh_type )
+	{
+		case SHT_PROGBITS:
+		case SHT_HASH:
+		case SHT_DYNAMIC:
+		case SHT_MIPS_REGINFO:
+			swapmemory(dumpbuf, "l", (scp->shr.sh_size + 1) >> 2);
+			break;
+		default:
+			break;
+	}
 	printf("\n");
 	if ( (flag & 0x10) != 0 )
 	{
@@ -703,16 +662,16 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
 	}
 	if ( (flag & 0xC0) != 0 )
 	{
+		unsigned int offset;
+
 		search_rel_section(elf, scp, &rpbase, &relentries, &baseoff);
 		for ( offset = 0; scp->shr.sh_size > offset; offset += 16 )
 		{
-			if ( scp->shr.sh_size > offset + 16 )
-				v4 = 16;
-			else
-				v4 = scp->shr.sh_size - offset;
-			dumpw("          ", offset, v4, &dumpbuf[offset / 4]);
+			dumpw("          ", offset, ( scp->shr.sh_size > offset + 16 ) ? 16 : (scp->shr.sh_size - offset), &dumpbuf[offset / 4]);
 			if ( (flag & 0x80u) != 0 )
 			{
+				int i;
+
 				for ( i = 0; i <= 15 && scp->shr.sh_size > offset + i; i += 4 )
 				{
 					search_rel_data(rpbase, relentries, baseoff + offset + i, &rel);
@@ -722,39 +681,28 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
 						printf(" [%3d]", rel.rid);
 						if ( rel.rp->symptr->type == STT_SECTION )
 						{
-							name = rel.rp->symptr->shptr->name;
-							rel_ = rel.rp->rel.r_info >> 8;
-							v5 = num2name(R_MIPS_Type, rel.rp->type);
-							printf("  %s %d '%s'", v5, (int)rel_, name);
+							printf("  %s %d '%s'", num2name(R_MIPS_Type, rel.rp->type), (int)(rel.rp->rel.r_info >> 8), rel.rp->symptr->shptr->name);
 						}
 						else
 						{
-							v6 = rel.rp->symptr->name;
-							if ( !v6 )
-								v6 = "";
-							v12 = v6;
-							v10 = rel.rp->rel.r_info >> 8;
-							rpbase_ = num2name(R_MIPS_Type, rel.rp->type);
-							if ( rel.rp->symptr->bind != STB_LOCAL )
+							int v7;
+
+							switch ( rel.rp->symptr->bind )
 							{
-								if ( rel.rp->symptr->bind == STB_GLOBAL )
-								{
-									v7 = 69;
-								}
-								else if ( rel.rp->symptr->bind == STB_WEAK )
-								{
-									v7 = 119;
-								}
-								else
-								{
-									v7 = 32;
-								}
+								case STB_GLOBAL:
+									v7 = 'E';
+									break;
+								case STB_LOCAL:
+									v7 = 'l';
+									break;
+								case STB_WEAK:
+									v7 = 'w';
+									break;
+								default:
+									v7 = ' ';
+									break;
 							}
-							else
-							{
-								v7 = 108;
-							}
-							printf("%c %s %d %s", v7, rpbase_, (int)v10, v12);
+							printf("%c %s %d %s", v7, num2name(R_MIPS_Type, rel.rp->type), (int)(rel.rp->rel.r_info >> 8), rel.rp->symptr->name ?: "");
 						}
 						printf("\n");
 					}
@@ -814,12 +762,7 @@ void print_elf_symtbl(const elf_section *scp, int flag)
 		}
 		else
 		{
-			const char *name;
-
-			name = syp[i]->name;
-			if ( !name )
-				name = "<no name>";
-			printf("%-11s ", name);
+			printf("%-11s ", syp[i]->name ?: "<no name>");
 		}
 		printf("%-10s %-11s 0x%08x 0x%04x ", num2name(SymbolBinding, syp[i]->bind), num2name(SymbolType, syp[i]->type), syp[i]->sym.st_value, syp[i]->sym.st_size);
 		if ( syp[i]->shptr )
@@ -872,13 +815,6 @@ struct name2num StorageClasse[] =
 
 void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 {
-	symr *syp_1;
-	pdr *pdrp_2;
-	const unsigned int *ip_1;
-	const unsigned int *ip_2;
-	const symr *syp_2;
-	extr *ep;
-	const char *issBase;
 	fdr *fdrp;
 	int ifd;
 
@@ -981,6 +917,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 	}
 	if ( symbol->head.iextMax > 0 )
 	{
+		extr *ep;
 		int i_3;
 
 		ep = (extr *)symbol->cbExt_Ptr;
@@ -1006,10 +943,13 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 	fdrp = (fdr *)symbol->cbFd_Ptr;
 	for ( ifd = 0; symbol->head.ifdMax > ifd; ++ifd )
 	{
+		const char *issBase;
+
 		issBase = &symbol->cbSs_Ptr[fdrp->issBase];
 		printf("  %3d: %-40s addr=0x%08x \n", ifd, &issBase[fdrp->rss], fdrp->adr);
 		if ( fdrp->csym > 0 )
 		{
+			symr *syp_1;
 			int i_4;
 
 			syp_1 = (symr *)&symbol->cbSym_Ptr[12 * fdrp->isymBase];
@@ -1041,6 +981,8 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 		}
 		if ( fdrp->cpd > 0 )
 		{
+			pdr *pdrp_2;
+			const symr *syp_2;
 			int i_5;
 
 			syp_2 = (symr *)&symbol->cbSym_Ptr[12 * fdrp->isymBase];
@@ -1069,6 +1011,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 		}
 		if ( fdrp->caux > 0 )
 		{
+			const unsigned int *ip_1;
 			int i_6;
 
 			printf("      Auxillary symbol entries\n");
@@ -1078,6 +1021,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 		}
 		if ( fdrp->crfd > 0 )
 		{
+			const unsigned int *ip_2;
 			int i_7;
 
 			printf("      File indirect entries\n");
