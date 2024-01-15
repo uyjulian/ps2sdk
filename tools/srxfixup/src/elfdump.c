@@ -516,7 +516,7 @@ static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 		else
 		{
 			printf("%02x ", data[off1]);
-			if ( data[off1] > 0x1Fu && data[off1] <= 0x7Eu )
+			if ( data[off1] > 0x1F && data[off1] <= 0x7E )
 			{
 				unsigned int v4;
 				char *v5;
@@ -636,7 +636,7 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
 
 	if ( (flag & 0xF0) == 0 )
 		return;
-	dumpbuf = (unsigned int *)calloc(1u, scp->shr.sh_size + 4);
+	dumpbuf = (unsigned int *)calloc(1, scp->shr.sh_size + 4);
 	memcpy(dumpbuf, scp->data, scp->shr.sh_size);
 	switch ( scp->shr.sh_type )
 	{
@@ -668,7 +668,7 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
 		for ( offset = 0; scp->shr.sh_size > offset; offset += 16 )
 		{
 			dumpw("          ", offset, ( scp->shr.sh_size > offset + 16 ) ? 16 : (scp->shr.sh_size - offset), &dumpbuf[offset / 4]);
-			if ( (flag & 0x80u) != 0 )
+			if ( (flag & 0x80) != 0 )
 			{
 				int i;
 

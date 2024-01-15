@@ -155,7 +155,7 @@ static Elf_file_slot * search_order_slots(srxfixup_const_char_ptr_t ordstr, cons
 		}
 		return 0;
 	}
-	else if ( !strncmp(ordstr, "@Program_header_data ", 0x15u) )
+	else if ( !strncmp(ordstr, "@Program_header_data ", 0x15) )
 	{
 		int n;
 
@@ -529,7 +529,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 	syp = (elf_syment **)scp->data;
 	for ( k = 1; entrise > k; ++k )
 	{
-		if ( syp[k]->sym.st_shndx == SHN_RADDR || (syp[k]->sym.st_shndx && syp[k]->sym.st_shndx <= 0xFEFFu) )
+		if ( syp[k]->sym.st_shndx == SHN_RADDR || (syp[k]->sym.st_shndx && syp[k]->sym.st_shndx <= 0xFEFF) )
 			syp[k]->sym.st_value += startaddr;
 		if ( syp[k]->sym.st_shndx == SHN_RADDR )
 			syp[k]->sym.st_shndx = -15;
@@ -553,7 +553,7 @@ static void  save_org_addrs(elf_file *elf)
 	{
 		Sect_org_data *org;
 
-		org = (Sect_org_data *)calloc(1u, sizeof(Sect_org_data));
+		org = (Sect_org_data *)calloc(1, sizeof(Sect_org_data));
 		org->org_addr = elf->scp[i]->shr.sh_addr;
 		if ( reginfop )
 			org->org_gp_value = reginfop->ri_gp_value;
@@ -743,7 +743,7 @@ static void  create_need_section(elf_file *elf)
 						{
 							elf_section *addscp_2;
 
-							addscp_2 = (elf_section *)calloc(1u, sizeof(elf_section));
+							addscp_2 = (elf_section *)calloc(1, sizeof(elf_section));
 							addscp_2->name = strdup(csym->sectname);
 							addscp_2->shr.sh_type = odr->secttype;
 							addscp_2->shr.sh_flags = odr->sectflag;
@@ -847,14 +847,14 @@ static void  create_phdr(elf_file *elf)
 					{
 						elf->php[j].phdr.p_type = PT_SCE_IOPMOD;
 						elf->php[j].phdr.p_filesz = 28;
-						elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
+						elf->php[j].scp = (elf_section **)calloc(2, sizeof(elf_section *));
 						*elf->php[j].scp = search_section(elf, SHT_SCE_IOPMOD);
 					}
 					else if ( !strcmp(".eemod", phip[j].d.section_name) )
 					{
 						elf->php[j].phdr.p_type = PT_SCE_EEMOD;
 						elf->php[j].phdr.p_filesz = 44;
-						elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
+						elf->php[j].scp = (elf_section **)calloc(2, sizeof(elf_section *));
 						*elf->php[j].scp = search_section(elf, SHT_SCE_EEMOD);
 					}
 					else
@@ -1196,7 +1196,7 @@ static int  check_undef_symboles_an_reloc(elf_section *relsect)
 		{
 			if ( rp->symptr->sym.st_shndx )
 			{
-				if ( rp->symptr->sym.st_shndx > 0xFEFFu
+				if ( rp->symptr->sym.st_shndx > 0xFEFF
 					&& rp->symptr->sym.st_shndx != SHN_ABS
 					&& rp->symptr->sym.st_shndx != SHN_RADDR )
 				{
@@ -1383,7 +1383,7 @@ static void  symbol_value_update(elf_file *elf)
 	{
 		if ( syp[i]->sym.st_shndx )
 		{
-			if ( syp[i]->sym.st_shndx <= 0xFEFFu )
+			if ( syp[i]->sym.st_shndx <= 0xFEFF )
 				syp[i]->sym.st_value += syp[i]->shptr->shr.sh_addr;
 		}
 	}
@@ -1547,7 +1547,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 		if ( rp->symptr->sym.st_shndx )
 			symvalue = rp->symptr->sym.st_value;
 		v4 = 0;
-		if ( (rp->symptr->sym.st_shndx && rp->symptr->sym.st_shndx <= 0xFEFFu) || rp->symptr->sym.st_shndx == SHN_RADDR )
+		if ( (rp->symptr->sym.st_shndx && rp->symptr->sym.st_shndx <= 0xFEFF) || rp->symptr->sym.st_shndx == SHN_RADDR )
 			v4 = 1;
 		switch ( rp->type )
 		{

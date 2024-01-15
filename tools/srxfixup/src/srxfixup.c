@@ -125,14 +125,14 @@ int main(int argc, char **argv)
 	if ( myname_1 )
 	{
 		myname_2 = myname_1 + 1;
-		v2 = strncmp(myname_2, "ee", 2u) != 0;
+		v2 = strncmp(myname_2, "ee", 2) != 0;
 	}
 	else
 	{
 		myname_2 = *argv;
-		v2 = strncmp(*argv, "ee", 2u) != 0;
+		v2 = strncmp(*argv, "ee", 2) != 0;
 	}
-	if ( v2 && strncmp(myname_2, "EE", 2u) != 0 )
+	if ( v2 && strncmp(myname_2, "EE", 2) != 0 )
 		defaultconf = iop_defaultconf;
 	else
 		defaultconf = ee_defaultconf;

@@ -100,7 +100,7 @@ Srx_gen_table * read_conf(srxfixup_const_char_ptr_t indata, srxfixup_const_char_
 	fbuf->col = 1;
 	if ( infile )
 	{
-		fbuf->ep = &fbuf->cp[fread(fbuf->buf, 1u, fsize, fp)];
+		fbuf->ep = &fbuf->cp[fread(fbuf->buf, 1, fsize, fp)];
 		fclose(fp);
 	}
 	else
@@ -283,7 +283,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 
 	entries = 0;
 	ltp = *lowtokens;
-	v14 = (TokenTree *)calloc(1u, sizeof(TokenTree));
+	v14 = (TokenTree *)calloc(1, sizeof(TokenTree));
 	v14->tkcode = TC_NULL;
 	while ( ltp->str && strcmp(ltp->str, "}") != 0 )
 	{
@@ -347,7 +347,7 @@ static TokenTree * make_conf_tree(LowToken *lowtokens)
 {
 	TokenTree *v4;
 
-	v4 = (TokenTree *)calloc(1u, sizeof(TokenTree));
+	v4 = (TokenTree *)calloc(1, sizeof(TokenTree));
 	v4->tkcode = TC_VECTOR;
 	v4->value.subtree = make_conf_vector(&lowtokens);
 	if ( lowtokens->str )
@@ -506,7 +506,7 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 				for ( m = 0; entries_1 > m; ++m )
 				{
 					seglist[m].name = arg[m].value.lowtoken->str;
-					seglist[m].sect_name_patterns = (srxfixup_const_char_ptr_t *)calloc(1u, sizeof(srxfixup_const_char_ptr_t));
+					seglist[m].sect_name_patterns = (srxfixup_const_char_ptr_t *)calloc(1, sizeof(srxfixup_const_char_ptr_t));
 				}
 				break;
 			case TC_Memory_segment:
@@ -616,7 +616,7 @@ static elf_section * make_empty_section(srxfixup_const_char_ptr_t name, int type
 {
 	elf_section *result;
 
-	result = (elf_section *)calloc(1u, sizeof(elf_section));
+	result = (elf_section *)calloc(1, sizeof(elf_section));
 	result->name = strdup(name);
 	result->shr.sh_type = type;
 	result->shr.sh_flags = flag;
@@ -645,7 +645,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 	const char *str;
 	char *str2;
 
-	result = (Srx_gen_table *)calloc(1u, sizeof(Srx_gen_table));
+	result = (Srx_gen_table *)calloc(1, sizeof(Srx_gen_table));
 	if ( tokentree->tkcode != TC_VECTOR )
 	{
 		fprintf(stderr, "Internal error:make_srx_gen_table();\n");
@@ -654,10 +654,10 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 	}
 	ttp = tokentree->value.subtree;
 	nsect = 0;
-	result->section_table_order = (srxfixup_const_char_ptr_t *)calloc(1u, sizeof(srxfixup_const_char_ptr_t));
-	result->file_layout_order = (srxfixup_const_char_ptr_t *)calloc(1u, sizeof(srxfixup_const_char_ptr_t));
-	result->removesection_list = (srxfixup_const_char_ptr_t *)calloc(1u, sizeof(srxfixup_const_char_ptr_t));
-	result->section_list = (SectConf *)calloc(1u, sizeof(SectConf));
+	result->section_table_order = (srxfixup_const_char_ptr_t *)calloc(1, sizeof(srxfixup_const_char_ptr_t));
+	result->file_layout_order = (srxfixup_const_char_ptr_t *)calloc(1, sizeof(srxfixup_const_char_ptr_t));
+	result->removesection_list = (srxfixup_const_char_ptr_t *)calloc(1, sizeof(srxfixup_const_char_ptr_t));
+	result->section_list = (SectConf *)calloc(1, sizeof(SectConf));
 	while ( ttp->tkcode )
 	{
 		if ( ttp[1].tkcode == TC_VECTOR )
@@ -791,7 +791,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					free(result);
 					return 0;
 				}
-				str2 = (char *)malloc(0x32u);
+				str2 = (char *)malloc(0x32);
 				sprintf(str2, "@Program_header_data %s", ttp1->value.lowtoken->str);
 				result->file_layout_order = add_stringvector(result->file_layout_order, str2);
 				ttp = nttp;

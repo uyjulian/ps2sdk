@@ -127,7 +127,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 						}
 						break;
 					case 'l':
-						optstr = (Opt_strings *)calloc(1u, sizeof(Opt_strings));
+						optstr = (Opt_strings *)calloc(1, sizeof(Opt_strings));
 						optstr->string = opt;
 						*(SLink **)opttable[i].var = add_ring_tail(*(SLink **)opttable[i].var, (SLink *)optstr);
 						break;

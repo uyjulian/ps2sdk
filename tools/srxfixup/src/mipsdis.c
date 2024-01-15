@@ -370,7 +370,7 @@ void  getczfs(unsigned int data, Operand *opr)
 void  getbroff(unsigned int addr, unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_jtarget;
-	if ( (data & 0x8000u) != 0 )
+	if ( (data & 0x8000) != 0 )
 		opr->data = 4 * (uint16_t)data - 0x40000;
 	else
 		opr->data = 4 * (uint16_t)data;
@@ -648,7 +648,7 @@ Opcode_table_entry iop_SPECIAL_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table iop_SPECIAL = { 0, 63u, iop_SPECIAL_entries };
+Opcode_table iop_SPECIAL = { 0, 63, iop_SPECIAL_entries };
 Opcode_table_entry ee_SPECIAL_entries[] =
 {
 	{ "sll", NULL, &Rdrtshamt },
@@ -716,7 +716,7 @@ Opcode_table_entry ee_SPECIAL_entries[] =
 	{ "dsrl32", NULL, &Rdrtshamt },
 	{ "dsra32", NULL, &Rdrtshamt }
 };
-Opcode_table ee_SPECIAL = { 0, 63u, ee_SPECIAL_entries };
+Opcode_table ee_SPECIAL = { 0, 63, ee_SPECIAL_entries };
 Opcode_table_entry BCOND_entries[] =
 {
 	{ "bltz", NULL, &Rsbroff },
@@ -752,7 +752,7 @@ Opcode_table_entry BCOND_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table BCOND = { 16, 31u, BCOND_entries };
+Opcode_table BCOND = { 16, 31, BCOND_entries };
 Opcode_table_entry ee_REGIMM_entries[] =
 {
 	{ "bltz", NULL, &Rsbroff },
@@ -788,7 +788,7 @@ Opcode_table_entry ee_REGIMM_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table ee_REGIMM = { 16, 31u, ee_REGIMM_entries };
+Opcode_table ee_REGIMM = { 16, 31, ee_REGIMM_entries };
 Opcode_table_entry iop_COP0CO_entries[] =
 {
 	{ NULL, NULL, NULL },
@@ -856,7 +856,7 @@ Opcode_table_entry iop_COP0CO_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table iop_COP0CO = { 0, 63u, iop_COP0CO_entries };
+Opcode_table iop_COP0CO = { 0, 63, iop_COP0CO_entries };
 Opcode_table_entry ee_COP0CO_entries[] =
 {
 	{ NULL, NULL, NULL },
@@ -924,7 +924,7 @@ Opcode_table_entry ee_COP0CO_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table ee_COP0CO = { 0, 63u, ee_COP0CO_entries };
+Opcode_table ee_COP0CO = { 0, 63, ee_COP0CO_entries };
 Opcode_table_entry iop_COP0_entries[] =
 {
 	{ "mfc0", NULL, &Rtc0rd_iop },
@@ -960,7 +960,7 @@ Opcode_table_entry iop_COP0_entries[] =
 	{ NULL, &iop_COP0CO, NULL },
 	{ NULL, &iop_COP0CO, NULL }
 };
-Opcode_table iop_COP0 = { 21, 31u, iop_COP0_entries };
+Opcode_table iop_COP0 = { 21, 31, iop_COP0_entries };
 Opcode_table_entry ee_COP0_entries[] =
 {
 	{ "mfc0", NULL, &Rtc0rd_ee },
@@ -996,7 +996,7 @@ Opcode_table_entry ee_COP0_entries[] =
 	{ NULL, &ee_COP0CO, NULL },
 	{ NULL, &ee_COP0CO, NULL }
 };
-Opcode_table ee_COP0 = { 21, 31u, ee_COP0_entries };
+Opcode_table ee_COP0 = { 21, 31, ee_COP0_entries };
 Opcode_table_entry ee_COP1CO_entries[] =
 {
 	{ "add.s", NULL, &Fdfsft },
@@ -1064,7 +1064,7 @@ Opcode_table_entry ee_COP1CO_entries[] =
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
-Opcode_table ee_COP1CO = { 0, 63u, ee_COP1CO_entries };
+Opcode_table ee_COP1CO = { 0, 63, ee_COP1CO_entries };
 Opcode_table_entry iop_COP1_entries[] =
 {
 	{ "mfc1", NULL, &Rtczrd },
@@ -1100,7 +1100,7 @@ Opcode_table_entry iop_COP1_entries[] =
 	{ "cop1", NULL, &Cofun },
 	{ "cop1", NULL, &Cofun }
 };
-Opcode_table iop_COP1 = { 21, 31u, iop_COP1_entries };
+Opcode_table iop_COP1 = { 21, 31, iop_COP1_entries };
 Opcode_table_entry ee_COP1_entries[] =
 {
 	{ "mfc1", NULL, &Rtczfs },
@@ -1136,7 +1136,7 @@ Opcode_table_entry ee_COP1_entries[] =
 	{ NULL, &ee_COP1CO, NULL },
 	{ NULL, &ee_COP1CO, NULL }
 };
-Opcode_table ee_COP1 = { 21, 31u, ee_COP1_entries };
+Opcode_table ee_COP1 = { 21, 31, ee_COP1_entries };
 Opcode_table_entry iop_COP2_entries[] =
 {
 	{ "mfc2", NULL, &Rtczrd },
@@ -1172,7 +1172,7 @@ Opcode_table_entry iop_COP2_entries[] =
 	{ "cop2", NULL, &Cofun },
 	{ "cop2", NULL, &Cofun }
 };
-Opcode_table iop_COP2 = { 21, 31u, iop_COP2_entries };
+Opcode_table iop_COP2 = { 21, 31, iop_COP2_entries };
 Opcode_table_entry ee_COP2_entries[] =
 {
 	{ "mfc2", NULL, &Rtczrd },
@@ -1208,7 +1208,7 @@ Opcode_table_entry ee_COP2_entries[] =
 	{ "cop2", NULL, &Cofun },
 	{ "cop2", NULL, &Cofun }
 };
-Opcode_table ee_COP2 = { 21, 31u, ee_COP2_entries };
+Opcode_table ee_COP2 = { 21, 31, ee_COP2_entries };
 Opcode_table_entry COP3_entries[] =
 {
 	{ "mfc3", NULL, &Rtczrd },
@@ -1244,7 +1244,7 @@ Opcode_table_entry COP3_entries[] =
 	{ "cop3", NULL, &Cofun },
 	{ "cop3", NULL, &Cofun }
 };
-Opcode_table COP3 = { 21, 31u, COP3_entries };
+Opcode_table COP3 = { 21, 31, COP3_entries };
 Opcode_table_entry iop_opcode_root_table_entries[] =
 {
 	{ NULL, &iop_SPECIAL, NULL },
@@ -1379,8 +1379,8 @@ Opcode_table_entry ee_opcode_root_table_entries[] =
 	{ "sqc2", NULL, &Rtoffbase },
 	{ "sd", NULL, &Rtoffbase }
 };
-Opcode_table iop_opcode_root_table = { 26, 63u, iop_opcode_root_table_entries };
-Opcode_table ee_opcode_root_table = { 26, 63u, ee_opcode_root_table_entries };
+Opcode_table iop_opcode_root_table = { 26, 63, iop_opcode_root_table_entries };
+Opcode_table ee_opcode_root_table = { 26, 63, ee_opcode_root_table_entries };
 Opcode_table *opcode_root_table = &iop_opcode_root_table;
 
 void  gen_asmmacro(Disasm_result *result)
@@ -1454,7 +1454,7 @@ Disasm_result * disassemble(unsigned int addr, unsigned int data)
 	Opcode_table *optable;
 
 	optable = opcode_root_table;
-	v3 = (Disasm_result *)calloc(1u, sizeof(Disasm_result));
+	v3 = (Disasm_result *)calloc(1, sizeof(Disasm_result));
 	while ( 1 )
 	{
 		op = &optable->entries[(data >> optable->bit_pos) & optable->bit_mask];
