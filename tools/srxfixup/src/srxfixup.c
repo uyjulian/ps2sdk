@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 			}
 			break;
 	}
-	if ( ffile || startaddr != -1 )
+	if ( ffile || startaddr != (unsigned int)(-1) )
 	{
 		switch ( elf->ehp->e_type )
 		{
@@ -300,7 +300,7 @@ static void display_module_info(elf_file *elf)
 		const Elf32_IopMod *iopmodinfo;
 
 		iopmodinfo = (Elf32_IopMod *)modsect_1->data;
-		if ( iopmodinfo->moduleinfo != -1 )
+		if ( iopmodinfo->moduleinfo != (Elf32_Word)(-1) )
 			printf(
 				"name:%s version:%d.%d\n",
 				iopmodinfo->modulename,
@@ -313,7 +313,7 @@ static void display_module_info(elf_file *elf)
 		const Elf32_EeMod *eemodinfo;
 
 		eemodinfo = (Elf32_EeMod *)modsect_2->data;
-		if ( eemodinfo->moduleinfo != -1 )
+		if ( eemodinfo->moduleinfo != (Elf32_Word)(-1) )
 			printf(
 				"name:%s version:%d.%d\n",
 				eemodinfo->modulename,

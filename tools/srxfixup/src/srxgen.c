@@ -483,7 +483,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 		Elf32_IopMod *iopmodinfo;
 
 		iopmodinfo = (Elf32_IopMod *)modsect_1->data;
-		if ( iopmodinfo->moduleinfo != -1 )
+		if ( iopmodinfo->moduleinfo != (Elf32_Word)(-1) )
 			iopmodinfo->moduleinfo += startaddr;
 		iopmodinfo->entry += startaddr;
 		iopmodinfo->gp_value += startaddr;
@@ -494,7 +494,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 		Elf32_EeMod *eemodinfo;
 
 		eemodinfo = (Elf32_EeMod *)modsect_2->data;
-		if ( eemodinfo->moduleinfo != -1 )
+		if ( eemodinfo->moduleinfo != (Elf32_Word)(-1) )
 			eemodinfo->moduleinfo += startaddr;
 		eemodinfo->entry += startaddr;
 		eemodinfo->gp_value += startaddr;
@@ -1600,7 +1600,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 						exit(1);
 					}
 					daddr_1 = (void *)&relsect->info->data[rp[next].rel.r_offset];
-					if ( datah != *(uint32_t *)daddr_1 << 16 )
+					if ( (uint32_t)datah != *(uint32_t *)daddr_1 << 16 )
 					{
 						fprintf(stderr, "R_MIPS_HI16s not same offsets\n");
 						exit(1);

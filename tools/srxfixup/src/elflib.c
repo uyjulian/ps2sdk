@@ -899,7 +899,7 @@ void add_section(elf_file *elf, elf_section *scp)
 	add_symbol(elf, 0, 0, 3, 0, scp, 0);
 }
 
-elf_section *remove_section(elf_file *elf, int shtype)
+elf_section *remove_section(elf_file *elf, Elf32_Word shtype)
 {
 	elf_section *rmsec;
 	int s;
@@ -945,7 +945,7 @@ elf_section *remove_section_by_name(elf_file *elf, srxfixup_const_char_ptr_t sec
 	return rmsec;
 }
 
-elf_section *search_section(elf_file *elf, int stype)
+elf_section *search_section(elf_file *elf, Elf32_Word stype)
 {
 	int i;
 
@@ -1345,7 +1345,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 		}
 	}
 	resolt[d_1].type = 4;
-	resolt[d_1].offset = elf->ehp->e_shoff ?: -256;
+	resolt[d_1].offset = elf->ehp->e_shoff ?: (Elf32_Off)(-256);
 	resolt[d_1].size = 40 * elf->ehp->e_shnum;
 	resolt[d_1].align = 4;
 	d_2 = d_1 + 1;
@@ -1493,7 +1493,7 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 				else
 					oldend_2 = scp[i]->shr.sh_size;
 				startpos_2 = scp[i]->shr.sh_offset;
-				size_2 = (oldend_2 <= 0) ? (scp[i]->shr.sh_offset) : (oldend_2 + startpos_2 - 1);
+				size_2 = (oldend_2 <= 0) ? (scp[i]->shr.sh_offset) : (Elf32_Off)(oldend_2 + startpos_2 - 1);
 				sprintf(tmp, "(%s)", scp[i]->name);
 				name = tmp;
 				if ( startpos_2 > (int)(size_tmp + 1) )
