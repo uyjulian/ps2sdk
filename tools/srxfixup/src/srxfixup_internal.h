@@ -214,7 +214,7 @@ typedef struct _rndxr
 	unsigned int rfd;
 	unsigned int index;
 } rndxr;
-typedef union __anon_struct_32
+typedef union _auxu
 {
 	tir ti;
 	rndxr rndx;
@@ -296,7 +296,7 @@ typedef struct _elf_file_slot
 	unsigned int size;
 	int align;
 	int type;
-	union __anon_struct_47
+	union _elf_file_slot_d
 	{
 		elf_proghead *php;
 		elf_section *scp;
@@ -319,7 +319,7 @@ typedef struct _segconf
 typedef struct _pheader_info
 {
 	int sw; 
-	union __anon_struct_42
+	union _pheader_info_d
 	{
 		const char * section_name;
 		SegConf **segment_list;

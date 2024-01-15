@@ -30,7 +30,7 @@ enum TokenCode
 typedef struct _TokenTree 
 {
 	enum TokenCode tkcode; 
-	union __anon_struct_57
+	union TokenTree_value
 	{
 		struct _TokenTree *subtree; 
 		LowToken *lowtoken;
