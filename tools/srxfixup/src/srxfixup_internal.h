@@ -3,12 +3,6 @@
 #define __SRXFIXUP_INTERNAL_H__
 
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
 
 // Type definitions
 

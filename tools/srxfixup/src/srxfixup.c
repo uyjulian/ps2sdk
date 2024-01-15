@@ -1,5 +1,9 @@
 
 #include "srxfixup_internal.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static const char * force_to_data_0 = NULL;
 static const char * ofile = NULL;
@@ -116,9 +120,9 @@ int main(int argc, char **argv)
 	const char *myname_2;
 	const char * source;
 
-	myname_1 = rindex(*argv, '/');
+	myname_1 = strrchr(*argv, '/');
 	if ( !myname_1 )
-		myname_1 = rindex(*argv, '\\');
+		myname_1 = strrchr(*argv, '\\');
 	if ( myname_1 )
 	{
 		myname_2 = myname_1 + 1;

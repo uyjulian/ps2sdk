@@ -1,5 +1,9 @@
 
 #include "srxfixup_internal.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 {
@@ -104,8 +108,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 							opttable->option = opt;
 							opttable->vartype = 110;
 							opttable->havearg = 3;
-							cp = NULL;
-							cp = index(opttable->option, ':');
+							cp = strchr(opttable->option, ':');
 							if ( cp )
 							{
 								*cp = 0;

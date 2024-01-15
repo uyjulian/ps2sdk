@@ -1,5 +1,9 @@
 
 #include "srxfixup_internal.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct _lowtoken 
 {

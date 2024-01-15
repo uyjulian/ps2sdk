@@ -1,5 +1,9 @@
 
 #include "srxfixup_internal.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static void  getrs(unsigned int data, Operand *opr);
 static void  getrt(unsigned int data, Operand *opr);
