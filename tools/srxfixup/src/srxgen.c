@@ -822,7 +822,6 @@ static void  create_phdr(elf_file *elf)
 {
 	const PheaderInfo *phip;
 	int i;
-	int j;
 
 	phip = ((Srx_gen_table *)(elf->optdata))->program_header_order;
 	for ( i = 0; phip[i].sw; ++i )
@@ -836,6 +835,8 @@ static void  create_phdr(elf_file *elf)
 	elf->ehp->e_phnum = i;
 	if ( elf->php != NULL )
 	{
+		int j;
+
 		for ( j = 0; phip[j].sw; ++j )
 		{
 			switch ( phip[j].sw )
