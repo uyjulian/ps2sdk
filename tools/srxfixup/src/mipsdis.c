@@ -1474,7 +1474,7 @@ void  shex(char * buf, unsigned int data)
 		sprintf(buf, "0x%x", data);
 }
 
-void  format_operand(Operand *opr, char *buf)
+void  format_operand(const Operand *opr, char *buf)
 {
 	size_t v2;
 	const char *v4;

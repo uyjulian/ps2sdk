@@ -1,7 +1,7 @@
 
 #include "all_include.h"
 
-int analize_arguments(Opttable *dopttable, int argc, char **argv)
+int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 {
 	size_t v5;
 	SLink *v7;

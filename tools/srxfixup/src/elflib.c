@@ -922,7 +922,7 @@ elf_syment *search_global_symbol(srxfixup_const_char_ptr_t name, elf_file *elf)
 	return 0;
 }
 
-int is_defined_symbol(elf_syment *sym)
+int is_defined_symbol(const elf_syment *sym)
 {
 	if ( !sym )
 		return 0;
@@ -963,7 +963,7 @@ elf_syment *add_symbol(elf_file *elf, srxfixup_const_char_ptr_t name, int bind, 
 	return sym;
 }
 
-unsigned int get_symbol_value(elf_syment *sym, elf_file *elf)
+unsigned int get_symbol_value(const elf_syment *sym, const elf_file *elf)
 {
 	if ( !is_defined_symbol(sym) )
 		return 0;
@@ -1194,7 +1194,7 @@ static int comp_Elf_file_slot(const void *a1, const void *a2)
 	return 1;
 }
 
-Elf_file_slot *build_file_order_list(elf_file *elf)
+Elf_file_slot *build_file_order_list(const elf_file *elf)
 {
 	int sections;
 	elf_section **scp;
@@ -1335,16 +1335,16 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 	}
 }
 
-void dump_file_order_list(elf_file *elf, Elf_file_slot *efs)
+void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 {
 	int offset;
 	int sh_offset;
 	unsigned int size_tmp;
 	unsigned int offset_tmp;
 	char tmp[100];
-	char *name;
+	const char *name;
 	elf_section **scp;
-	Elf_file_slot *slot;
+	const Elf_file_slot *slot;
 	int i;
 
 	offset_tmp = efs->offset;

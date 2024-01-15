@@ -4,8 +4,8 @@
 struct rellink 
 {
 	int rid; 
-	elf_rel *rp; 
-	elf_rel *mhrp;
+	const elf_rel *rp; 
+	const elf_rel *mhrp;
 };
 struct name2num 
 {
@@ -13,14 +13,14 @@ struct name2num
 	int num;
 };
 
-static void search_rel_section(elf_file *elf, elf_section *scp, elf_rel **result, int *relentries, unsigned int *baseoff);
-static void search_rel_data(elf_rel *rpbase, int relentries, unsigned int addr, struct rellink *result);
-static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, uint8_t *data);
-static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, uint16_t *data);
-static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, unsigned int *data);
+static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, int *relentries, unsigned int *baseoff);
+static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int addr, struct rellink *result);
+static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint8_t *data);
+static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint16_t *data);
+static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint32_t *data);
 static srxfixup_const_char_ptr_t num2name(struct name2num *table, int num);
 
-void print_elf(elf_file *elf, int flag)
+void print_elf(const elf_file *elf, int flag)
 {
 	if ( elf == NULL )
 	{
@@ -75,7 +75,7 @@ struct name2num E_machine_name[] =
 	{ NULL, 0 },
 };
 
-void print_elf_ehdr(elf_file *elf, int flag)
+void print_elf_ehdr(const elf_file *elf, int flag)
 {
 	if ( (flag & 1) == 0 )
 	{
@@ -129,7 +129,7 @@ struct name2num P_type_name[] =
 	{ NULL, 0 },
 };
 
-void print_elf_phdr(elf_file *elf, int flag)
+void print_elf_phdr(const elf_file *elf, int flag)
 {
 	int j;
 	int i;
@@ -178,13 +178,13 @@ struct name2num S_type_name[] =
 	{ NULL, 0 },
 };
 
-void print_elf_sections(elf_file *elf, int flag)
+void print_elf_sections(const elf_file *elf, int flag)
 {
 	unsigned int sh_type;
 	const char *v3;
-	Elf32_RegInfo *v4;
-	Elf32_IopMod *data;
-	Elf32_EeMod *v6;
+	const Elf32_RegInfo *v4;
+	const Elf32_IopMod *data;
+	const Elf32_EeMod *v6;
 	int i;
 
 	if ( elf->scp == NULL )
@@ -309,7 +309,7 @@ struct name2num R_MIPS_Type[] =
 	{ NULL, 0 },
 };
 
-void print_elf_reloc(elf_section *scp, int flag)
+void print_elf_reloc(const elf_section *scp, int flag)
 {
 	const char *name;
 	elf_rel *rp;
@@ -348,7 +348,7 @@ void print_elf_reloc(elf_section *scp, int flag)
 	printf("\n");
 }
 
-void print_elf_disasm(elf_file *elf, elf_section *scp, int flag)
+void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 {
 	Disasm_result *v3;
 	size_t v4;
@@ -364,14 +364,14 @@ void print_elf_disasm(elf_file *elf, elf_section *scp, int flag)
 	int rpbase_;
 	const char *name;
 	const char *v16;
-	elf_rel *rp;
+	const elf_rel *rp;
 	elf_rel *rpbase;
 	struct rellink *rel;
 	Disasm_result **dis;
 	char pb[200];
 	unsigned int baseoff;
 	unsigned int addr;
-	unsigned int *codes;
+	const unsigned int *codes;
 	int relentries;
 	size_t steps;
 	int d;
@@ -479,7 +479,7 @@ void print_elf_disasm(elf_file *elf, elf_section *scp, int flag)
 	free(rel);
 }
 
-static void search_rel_section(elf_file *elf, elf_section *scp, elf_rel **result, int *relentries, unsigned int *baseoff)
+static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, int *relentries, unsigned int *baseoff)
 {
 	elf_section *relscp;
 	int i;
@@ -512,7 +512,7 @@ static void search_rel_section(elf_file *elf, elf_section *scp, elf_rel **result
 	}
 }
 
-static void search_rel_data(elf_rel *rpbase, int relentries, unsigned int addr, struct rellink *result)
+static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int addr, struct rellink *result)
 {
 	int j;
 
@@ -529,7 +529,7 @@ static void search_rel_data(elf_rel *rpbase, int relentries, unsigned int addr, 
 	}
 }
 
-static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, uint8_t *data)
+static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint8_t *data)
 {
 	char cbuf[20];
 	unsigned int addr;
@@ -591,7 +591,7 @@ static void dumpb(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 	}
 }
 
-static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, uint16_t *data)
+static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint16_t *data)
 {
 	unsigned int addr;
 	unsigned int off2;
@@ -628,7 +628,7 @@ static void dumph(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 	}
 }
 
-static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, unsigned int *data)
+static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned int size, const uint32_t *data)
 {
 	unsigned int v4;
 	unsigned int off1;
@@ -661,7 +661,7 @@ static void dumpw(srxfixup_const_char_ptr_t head, unsigned int address, unsigned
 	}
 }
 
-void print_elf_datadump(elf_file *elf, elf_section *scp, int flag)
+void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
 {
 	unsigned int sh_type;
 	unsigned int v4;
@@ -788,7 +788,7 @@ struct name2num SymbolSpSection[] =
 	{ NULL, 0 },
 };
 
-void print_elf_symtbl(elf_section *scp, int flag)
+void print_elf_symtbl(const elf_section *scp, int flag)
 {
 	elf_syment **syp;
 	signed int entirse;
@@ -870,13 +870,13 @@ struct name2num StorageClasse[] =
 	{ NULL, 0 },
 };
 
-void print_elf_mips_symbols(elf_mips_symbolic_data *symbol, int flag)
+void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 {
 	symr *syp_1;
 	pdr *pdrp_2;
-	unsigned int *ip_1;
-	unsigned int *ip_2;
-	symr *syp_2;
+	const unsigned int *ip_1;
+	const unsigned int *ip_2;
+	const symr *syp_2;
 	extr *ep;
 	const char *issBase;
 	fdr *fdrp;

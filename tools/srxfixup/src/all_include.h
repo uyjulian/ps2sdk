@@ -412,18 +412,18 @@ typedef struct disasm_result
 // Function definitions
 
 // anaarg.c
-extern int analize_arguments(Opttable *dopttable, int argc, char **argv);
+extern int analize_arguments(const Opttable *dopttable, int argc, char **argv);
 
 // elfdump.c
-extern void print_elf(elf_file *elf, int flag);
-extern void print_elf_ehdr(elf_file *elf, int flag);
-extern void print_elf_phdr(elf_file *elf, int flag);
-extern void print_elf_sections(elf_file *elf, int flag);
-extern void print_elf_reloc(elf_section *scp, int flag);
-extern void print_elf_disasm(elf_file *elf, elf_section *scp, int flag);
-extern void print_elf_datadump(elf_file *elf, elf_section *scp, int flag);
-extern void print_elf_symtbl(elf_section *scp, int flag);
-extern void print_elf_mips_symbols(elf_mips_symbolic_data *symbol, int flag);
+extern void print_elf(const elf_file *elf, int flag);
+extern void print_elf_ehdr(const elf_file *elf, int flag);
+extern void print_elf_phdr(const elf_file *elf, int flag);
+extern void print_elf_sections(const elf_file *elf, int flag);
+extern void print_elf_reloc(const elf_section *scp, int flag);
+extern void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag);
+extern void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag);
+extern void print_elf_symtbl(const elf_section *scp, int flag);
+extern void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag);
 
 // elflib.c
 extern elf_file *read_elf(srxfixup_const_char_ptr_t filename);
@@ -436,17 +436,17 @@ extern elf_section *search_section(elf_file *elf, int stype);
 extern elf_section *search_section_by_name(elf_file *elf, srxfixup_const_char_ptr_t secname);
 extern unsigned int *get_section_data(elf_file *elf, unsigned int addr);
 extern elf_syment *search_global_symbol(srxfixup_const_char_ptr_t name, elf_file *elf);
-extern int is_defined_symbol(elf_syment *sym);
+extern int is_defined_symbol(const elf_syment *sym);
 extern elf_syment *add_symbol(elf_file *elf, srxfixup_const_char_ptr_t name, int bind, int type, int value, elf_section *scp, int st_shndx);
-extern unsigned int get_symbol_value(elf_syment *sym, elf_file *elf);
+extern unsigned int get_symbol_value(const elf_syment *sym, const elf_file *elf);
 extern void reorder_symtab(elf_file *elf);
 extern int adjust_align(int value, int align);
 extern void rebuild_section_name_strings(elf_file *elf);
 extern void rebuild_symbol_name_strings(elf_file *elf);
-extern Elf_file_slot *build_file_order_list(elf_file *elf);
+extern Elf_file_slot *build_file_order_list(const elf_file *elf);
 extern void  shrink_file_order_list(Elf_file_slot *efs);
 extern void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs);
-extern void dump_file_order_list(elf_file *elf, Elf_file_slot *efs);
+extern void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs);
 
 // mipsdis.c
 extern void  getrs(unsigned int data, Operand *opr);
@@ -492,7 +492,7 @@ extern void  gen_asmmacro(Disasm_result *result);
 extern void  initdisasm(int arch, int regform0, int regform1, int regform2, int regform3);
 extern Disasm_result * disassemble(unsigned int addr, unsigned int data);
 extern void  shex(char *buf, unsigned int data);
-extern void  format_operand(Operand *opr, char *buf);
+extern void  format_operand(const Operand *opr, char *buf);
 extern void  format_disasm(Disasm_result *dis, char *buf);
 
 // readconf.c

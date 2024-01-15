@@ -8,7 +8,7 @@ typedef struct _sect_org_data
 } Sect_org_data;
 
 static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym, elf_section *modinfo, int needoutput);
-static Elf_file_slot * search_order_slots(srxfixup_const_char_ptr_t ordstr, elf_file *elf, Elf_file_slot *order);
+static Elf_file_slot * search_order_slots(srxfixup_const_char_ptr_t ordstr, const elf_file *elf, Elf_file_slot *order);
 static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr);
 static void  save_org_addrs(elf_file *elf);
 static elf_section * add_iopmod(elf_file *elf);
@@ -38,8 +38,8 @@ static void  rebuild_relocation(elf_file *elf, unsigned int gpvalue);
 static int  check_irx12(elf_file *elf, int cause_irx1);
 static void  setup_module_info(elf_file *elf, elf_section *modsect, srxfixup_const_char_ptr_t modulesymbol);
 static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, int target);
-static int  iopmod_size(Elf32_IopMod *modinfo);
-static int  eemod_size(Elf32_EeMod *modinfo);
+static int  iopmod_size(const Elf32_IopMod *modinfo);
+static int  eemod_size(const Elf32_EeMod *modinfo);
 
 int  convert_rel2srx(elf_file *elf, srxfixup_const_char_ptr_t entrysym, int needoutput, int cause_irx1)
 {
@@ -83,7 +83,7 @@ int  convert_rel2srx(elf_file *elf, srxfixup_const_char_ptr_t entrysym, int need
 		return 1;
 	{
 		const char *module_info_symbol;
-		elf_syment *syp;
+		const elf_syment *syp;
 
 		module_info_symbol = "Module";
 		syp = search_global_symbol("_irx_id", elf);
@@ -99,7 +99,7 @@ int  convert_rel2srx(elf_file *elf, srxfixup_const_char_ptr_t entrysym, int need
 static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym, elf_section *modinfo, int needoutput)
 {
 	unsigned int sh_type;
-	elf_syment *syp;
+	const elf_syment *syp;
 
 	if ( entrysym )
 	{
@@ -143,7 +143,7 @@ static int  setup_start_entry(elf_file *elf, srxfixup_const_char_ptr_t entrysym,
 	return 0;
 }
 
-static Elf_file_slot * search_order_slots(srxfixup_const_char_ptr_t ordstr, elf_file *elf, Elf_file_slot *order)
+static Elf_file_slot * search_order_slots(srxfixup_const_char_ptr_t ordstr, const elf_file *elf, Elf_file_slot *order)
 {
 	elf_section **scp;
 	int n;
@@ -195,7 +195,7 @@ int  layout_srx_file(elf_file *elf)
 	int align;
 	unsigned int sh_addralign;
 	elf_section **scp;
-	Srx_gen_table *tp;
+	const Srx_gen_table *tp;
 	Elf_file_slot *slotp_1;
 	Elf_file_slot *slotp_2;
 	Elf_file_slot *nslotp;
@@ -546,7 +546,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 static void  save_org_addrs(elf_file *elf)
 {
 	Elf32_RegInfo *data;
-	Elf32_RegInfo *reginfop;
+	const Elf32_RegInfo *reginfop;
 	elf_section *reginfosec;
 	int i;
 
@@ -731,7 +731,7 @@ static void  create_need_section(elf_file *elf)
 	}
 	for ( i = 1; i < (signed int)(scp->shr.sh_size / scp->shr.sh_entsize); ++i )
 	{
-		elf_syment *syment;
+		const elf_syment *syment;
 
 		syment = *(elf_syment **)&scp->data[i * sizeof(void *)];
 		if ( !syment->sym.st_shndx )
@@ -949,10 +949,10 @@ static void  segment_end_setup(SegConf *seglist, int bitid, int *moffset, int ee
 static void  update_modinfo(elf_file *elf)
 {
 	Srx_gen_table *tp;
-	SegConf *seginfo;
-	SegConf *seginfo_4;
-	SegConf *seginfo_8;
-	SegConf *seginfo_12;
+	const SegConf *seginfo;
+	const SegConf *seginfo_4;
+	const SegConf *seginfo_8;
+	const SegConf *seginfo_12;
 	elf_section *scp_1;
 	elf_section *scp_2;
 
@@ -1457,13 +1457,13 @@ static void  setup_module_info(elf_file *elf, elf_section *modsect, srxfixup_con
 	unsigned int *section_data;
 	int i;
 	char *buf;
-	char *name;
+	const char *name;
 	int woff;
 	size_t buflen;
-	unsigned int *modnamep;
+	const unsigned int *modnamep;
 	unsigned int *modidatap;
 	unsigned int modiaddr;
-	elf_syment *syp;
+	const elf_syment *syp;
 
 	syp = search_global_symbol(modulesymbol, elf);
 	if ( is_defined_symbol(syp) == 0 )
@@ -1827,12 +1827,12 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 	}
 }
 
-static int  iopmod_size(Elf32_IopMod *modinfo)
+static int  iopmod_size(const Elf32_IopMod *modinfo)
 {
 	return strlen(modinfo->modulename) + 27;
 }
 
-static int  eemod_size(Elf32_EeMod *modinfo)
+static int  eemod_size(const Elf32_EeMod *modinfo)
 {
 	return strlen(modinfo->modulename) + 43;
 }

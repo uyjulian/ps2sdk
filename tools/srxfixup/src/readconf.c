@@ -273,7 +273,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 	int kt_;
 	int sltp_;
 	struct _keyword_table *kt;
-	LowToken *sltp;
+	const LowToken *sltp;
 	LowToken *ltp;
 	int entries;
 	TokenTree *v14;
@@ -646,7 +646,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 {
 	SegConf *seg_1;
 	SegConf *seg_2;
-	SegConf *seg_3;
+	const SegConf *seg_3;
 	TokenTree *nttp;
 	TokenTree *ttp2_1;
 	TokenTree *ttp2_2;

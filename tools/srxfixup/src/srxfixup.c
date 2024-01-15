@@ -117,8 +117,8 @@ int main(int argc, char **argv)
 	int e_type;
 	const char *defaultconf;
 	elf_file *elf;
-	char *myname_1;
-	char *myname_2;
+	const char *myname_1;
+	const char *myname_2;
 	srxfixup_const_char_ptr_t source;
 
 	myname_1 = rindex(*argv, '/');
@@ -290,7 +290,7 @@ static void display_module_info(elf_file *elf)
 	modsect_1 = search_section(elf, SHT_SCE_IOPMOD);
 	if ( modsect_1 )
 	{
-		Elf32_IopMod *iopmodinfo;
+		const Elf32_IopMod *iopmodinfo;
 
 		iopmodinfo = (Elf32_IopMod *)modsect_1->data;
 		if ( iopmodinfo->moduleinfo != -1 )
@@ -303,7 +303,7 @@ static void display_module_info(elf_file *elf)
 	modsect_2 = search_section(elf, SHT_SCE_EEMOD);
 	if ( modsect_2 )
 	{
-		Elf32_EeMod *eemodinfo;
+		const Elf32_EeMod *eemodinfo;
 
 		eemodinfo = (Elf32_EeMod *)modsect_2->data;
 		if ( eemodinfo->moduleinfo != -1 )
