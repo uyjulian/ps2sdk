@@ -90,32 +90,39 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 						}
 						break;
 					case 'h':
-						*(uint32_t *)opttable[i].var = strtoul(opt, 0, 16);
+						if ( opt != NULL )
+						{
+							*(uint32_t *)opttable[i].var = strtoul(opt, 0, 16);
+						}
 						break;
 					case 'i':
-						for ( otp = igadd; opttable < otp; --otp )
-							*otp = otp[-1];
-						++igadd;
-						opttable->option = opt;
-						opttable->vartype = 110;
-						opttable->havearg = 3;
-						cp = index(opttable->option, ':');
-						if ( cp )
+						if ( opt != NULL )
 						{
-							*cp = 0;
-							switch ( cp[1] )
+							for ( otp = igadd; opttable < otp; --otp )
+								*otp = otp[-1];
+							++igadd;
+							opttable->option = opt;
+							opttable->vartype = 110;
+							opttable->havearg = 3;
+							cp = NULL;
+							cp = index(opttable->option, ':');
+							if ( cp )
 							{
-								case 'c':
-									opttable->havearg = 4;
-									break;
-								case 'n':
-									opttable->havearg = 2;
-									break;
-								case 'o':
-									opttable->havearg = 1;
-									break;
-								default:
-									break;
+								*cp = 0;
+								switch ( cp[1] )
+								{
+									case 'c':
+										opttable->havearg = 4;
+										break;
+									case 'n':
+										opttable->havearg = 2;
+										break;
+									case 'o':
+										opttable->havearg = 1;
+										break;
+									default:
+										break;
+								}
 							}
 						}
 						break;

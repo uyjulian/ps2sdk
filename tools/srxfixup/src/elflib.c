@@ -186,7 +186,7 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 				}
 				for ( i_7 = 0; count_2 > i_7; ++i_7 )
 				{
-					elf->scp[i_7]->name = strdup((char *)&elf->shstrptr->data[elf->scp[i_7]->shr.sh_name]);
+					elf->scp[i_7]->name = strdup((elf->shstrptr != NULL) ? ((char *)&elf->shstrptr->data[elf->scp[i_7]->shr.sh_name]) : "");
 				}
 				for ( i_8 = 0; i_8 < elf->ehp->e_phnum; ++i_8 )
 				{
@@ -1203,7 +1203,7 @@ static void rebuild_a_symbol_name_strings(elf_section *scp)
 	namesize = 1;
 	for ( i_1 = 1; entrise > i_1; ++i_1 )
 	{
-		namesize = (syp[i_1]->name != NULL) ? (strlen(syp[i_1]->name) + namesize + 1) : namesize;
+		namesize = (syp[i_1] != NULL && syp[i_1]->name != NULL) ? (strlen(syp[i_1]->name) + namesize + 1) : namesize;
 	}
 	if ( strtab->data )
 		free(strtab->data);
@@ -1212,7 +1212,7 @@ static void rebuild_a_symbol_name_strings(elf_section *scp)
 	offset = 1;
 	while ( entrise > i_2 )
 	{
-		if ( syp[i_2]->name )
+		if ( syp[i_2] != NULL && syp[i_2]->name != NULL )
 		{
 			syp[i_2]->sym.st_name = search_string_table((char *)strtab->data, offset, syp[i_2]->name);
 			if ( !syp[i_2]->sym.st_name )

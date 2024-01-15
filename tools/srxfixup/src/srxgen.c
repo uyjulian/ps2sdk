@@ -827,43 +827,49 @@ static void  create_phdr(elf_file *elf)
 	phip = ((Srx_gen_table *)(elf->optdata))->program_header_order;
 	for ( i = 0; phip[i].sw; ++i )
 		;
-	elf->php = (elf_proghead *)malloc(i * sizeof(elf_proghead));
-	memset(elf->php, 0, i * sizeof(elf_proghead));
+	elf->php = (i != 0) ? (elf_proghead *)malloc(i * sizeof(elf_proghead)) : NULL;
+	if ( elf->php != NULL )
+	{
+		memset(elf->php, 0, i * sizeof(elf_proghead));
+	}
 	elf->ehp->e_phentsize = 32;
 	elf->ehp->e_phnum = i;
-	for ( j = 0; phip[j].sw; ++j )
+	if ( elf->php != NULL )
 	{
-		switch ( phip[j].sw )
+		for ( j = 0; phip[j].sw; ++j )
 		{
-			case 1:
-				elf->php[j].phdr.p_flags = 4;
-				elf->php[j].phdr.p_align = 4;
-				if ( !strcmp(".iopmod", phip[j].d.section_name) )
-				{
-					elf->php[j].phdr.p_type = PT_SCE_IOPMOD;
-					elf->php[j].phdr.p_filesz = 28;
-					elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-					*elf->php[j].scp = search_section(elf, SHT_SCE_IOPMOD);
-				}
-				else if ( !strcmp(".eemod", phip[j].d.section_name) )
-				{
-					elf->php[j].phdr.p_type = PT_SCE_EEMOD;
-					elf->php[j].phdr.p_filesz = 44;
-					elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
-					*elf->php[j].scp = search_section(elf, SHT_SCE_EEMOD);
-				}
-				else
-				{
-					fprintf(stderr, "Unsuport section '%s' for program header\n", phip[j].d.section_name);
-				}
-				break;
-			case 2:
-				elf->php[j].phdr.p_type = PT_LOAD;
-				elf->php[j].phdr.p_flags = 7;
-				elf->php[j].phdr.p_align = 16;
-				break;
-			default:
-				break;
+			switch ( phip[j].sw )
+			{
+				case 1:
+					elf->php[j].phdr.p_flags = 4;
+					elf->php[j].phdr.p_align = 4;
+					if ( !strcmp(".iopmod", phip[j].d.section_name) )
+					{
+						elf->php[j].phdr.p_type = PT_SCE_IOPMOD;
+						elf->php[j].phdr.p_filesz = 28;
+						elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
+						*elf->php[j].scp = search_section(elf, SHT_SCE_IOPMOD);
+					}
+					else if ( !strcmp(".eemod", phip[j].d.section_name) )
+					{
+						elf->php[j].phdr.p_type = PT_SCE_EEMOD;
+						elf->php[j].phdr.p_filesz = 44;
+						elf->php[j].scp = (elf_section **)calloc(2u, sizeof(elf_section *));
+						*elf->php[j].scp = search_section(elf, SHT_SCE_EEMOD);
+					}
+					else
+					{
+						fprintf(stderr, "Unsuport section '%s' for program header\n", phip[j].d.section_name);
+					}
+					break;
+				case 2:
+					elf->php[j].phdr.p_type = PT_LOAD;
+					elf->php[j].phdr.p_flags = 7;
+					elf->php[j].phdr.p_align = 16;
+					break;
+				default:
+					break;
+			}
 		}
 	}
 }

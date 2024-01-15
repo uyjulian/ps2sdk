@@ -119,17 +119,25 @@ Srx_gen_table * read_conf(srxfixup_const_char_ptr_t indata, srxfixup_const_char_
 				break;
 			fputc(ch_, stdout);
 		}
+		free(lowtokens);
+		free(fbuf);
 		return 0;
 	}
 	else
 	{
+		TokenTree *tokentree;
 		Srx_gen_table *srx_gen_table;
 
 		split_conf(lowtokens, (char *)&lowtokens[fsize + 1], fbuf);
 		free(fbuf);
-		srx_gen_table = make_srx_gen_table(make_conf_tree(lowtokens));
+		tokentree = make_conf_tree(lowtokens);
+		srx_gen_table = make_srx_gen_table(tokentree);
+		free(tokentree);
 		if ( check_srx_gen_table(srx_gen_table) )
+		{
+			free(srx_gen_table);
 			return 0;
+		}
 		else
 			return srx_gen_table;
 	}
@@ -729,18 +737,21 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 						}
 						if ( !seg_2 )
 						{
+							free(result);
 							return 0;
 						}
 					}
 					else
 					{
 						fprintf(stderr, "Illegal @createinfo line:%d col=%d\n", ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
+						free(result);
 						return 0;
 					}
 				}
 				else
 				{
 					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp1->value.lowtoken->str, ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
+					free(result);
 					return 0;
 				}
 				break;
@@ -756,6 +767,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				if ( !ttp1 )
 				{
 					fprintf(stderr, "argument not found for '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+					free(result);
 					return 0;
 				}
 				if ( !gen_define(ttp1, result) )
@@ -763,6 +775,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					ttp = nttp;
 					break;
 				}
+				free(result);
 				return 0;
 			case TC_Program_header_data:
 				if ( !ttp1 || ttp1->tkcode != TC_STRING )
@@ -775,6 +788,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					{
 						fprintf(stderr, "%s missing '{ <n> }' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
 					}
+					free(result);
 					return 0;
 				}
 				str2 = (char *)malloc(0x32u);
@@ -785,19 +799,23 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 			case TC_Segment_data:
 				while ( 2 )
 				{
-					if ( ttp1->tkcode == TC_NULL )
+					if ( ttp1 != NULL && ttp1->tkcode == TC_NULL )
 					{
 						ttp = nttp;
 						break;
 					}
-					seg_3 = lookup_segment(result, ttp1->value.lowtoken->str, 1);
-					if ( seg_3 )
+					if ( ttp1 != NULL )
 					{
-						for ( strp = seg_3->sect_name_patterns; *strp; ++strp )
-							result->file_layout_order = add_stringvector(result->file_layout_order, *strp);
-						++ttp1;
-						continue;
+						seg_3 = lookup_segment(result, ttp1->value.lowtoken->str, 1);
+						if ( seg_3 )
+						{
+							for ( strp = seg_3->sect_name_patterns; *strp; ++strp )
+								result->file_layout_order = add_stringvector(result->file_layout_order, *strp);
+							++ttp1;
+							continue;
+						}
 					}
+					free(result);
 					return 0;
 				}
 				break;
@@ -811,6 +829,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				ttp = ttp->value.subtree;
 			default:
 				fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+				free(result);
 				return 0;
 #pragma GCC diagnostic pop
 		}
@@ -822,6 +841,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 			return result;
 		default:
 			fprintf(stderr, "@IOP or @EE not found error !\n");
+			free(result);
 			return 0;
 	}
 }

@@ -399,7 +399,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		}
 		++rp;
 	}
-	if ( rmcount > 0 )
+	if ( rmcount > 0 && (entrise - rmcount) > 0 )
 	{
 		elf_rel *s;
 		elf_rel *d;
