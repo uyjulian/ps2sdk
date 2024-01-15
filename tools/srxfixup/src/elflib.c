@@ -339,7 +339,7 @@ static void read_symtab(elf_file *elf, int sctindex, FILE *fp)
 		result[i]->name = 0;
 		if ( result[i]->sym.st_name )
 			result[i]->name = strdup((char *)&sp_x->link->data[result[i]->sym.st_name]);
-		if ( result[i]->sym.st_shndx && result[i]->sym.st_shndx <= 0xFEFFu )
+		if ( result[i]->sym.st_shndx && result[i]->sym.st_shndx <= 0xFEFF )
 			result[i]->shptr = elf->scp[result[i]->sym.st_shndx];
 		else
 			result[i]->shptr = 0;
@@ -1017,7 +1017,7 @@ int is_defined_symbol(const elf_syment *sym)
 		return 0;
 	if ( !sym->sym.st_shndx )
 		return 0;
-	if ( sym->sym.st_shndx <= 0xFEFFu )
+	if ( sym->sym.st_shndx <= 0xFEFF )
 		return 1;
 	return sym->sym.st_shndx == SHN_ABS;
 }
