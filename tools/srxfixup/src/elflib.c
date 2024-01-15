@@ -64,7 +64,11 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 	}
 	elf = (elf_file *)calloc(1u, sizeof(elf_file));
 	elf->ehp = (Elf32_Ehdr *)malloc(sizeof(Elf32_Ehdr));
-	fread(elf->ehp, sizeof(Elf32_Ehdr), 1u, fp);
+	if ( fread(elf->ehp, sizeof(Elf32_Ehdr), 1u, fp) != 1 )
+	{
+		fprintf(stderr, "%s: Could not read ELF header\n", filename);
+		exit(1);
+	}
 	swapmemory(elf->ehp, "ccccccccccccccccsslllllssssss", 1);
 	ident = *(uint32_t *)elf->ehp->e_ident;
 	swapmemory(&ident, "l", 1);
@@ -117,7 +121,11 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 		fseek(fp, pos_1, 0);
 		for ( i_1 = 0; count_1 > i_1; ++i_1 )
 		{
-			fread(&elf->php[i_1], sizeof(Elf32_Phdr), 1u, fp);
+			if ( fread(&elf->php[i_1], sizeof(Elf32_Phdr), 1u, fp) != 1 )
+			{
+				fprintf(stderr, "%s: Could not read ELF program header\n", filename);
+				exit(1);
+			}
 			swapmemory(&elf->php[i_1], "llllllll", 1);
 		}
 	}
@@ -131,7 +139,11 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 		for ( i_2 = 0; count_2 > i_2; ++i_2 )
 		{
 			elf->scp[i_2] = (elf_section *)calloc(1u, sizeof(elf_section));
-			fread(elf->scp[i_2], sizeof(Elf32_Shdr), 1u, fp);
+			if ( fread(elf->scp[i_2], sizeof(Elf32_Shdr), 1u, fp) != 1 )
+			{
+				fprintf(stderr, "%s: Could not read ELF section header\n", filename);
+				exit(1);
+			}
 			swapmemory(elf->scp[i_2], "llllllllll", 1);
 		}
 		for ( i_3 = 0; count_2 > i_3; ++i_3 )
@@ -250,7 +262,11 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 					case SHT_MIPS_REGINFO:
 						v11 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v11;
-						fread(elf->scp[i_4]->data, size, 1u, fp);
+						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
+						{
+							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
+							exit(1);
+						}
 						swapmemory(elf->scp[i_4]->data, "l", (unsigned int)size >> 2);
 						break;
 					case SHT_SYMTAB:
@@ -264,19 +280,31 @@ elf_file *read_elf(srxfixup_const_char_ptr_t filename)
 					case SHT_SCE_IOPMOD:
 						v12 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v12;
-						fread(elf->scp[i_4]->data, size, 1u, fp);
+						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
+						{
+							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
+							exit(1);
+						}
 						swapmemory(elf->scp[i_4]->data, "lllllls", 1);
 						break;
 					case SHT_SCE_EEMOD:
 						v13 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v13;
-						fread(elf->scp[i_4]->data, size, 1u, fp);
+						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
+						{
+							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
+							exit(1);
+						}
 						swapmemory(elf->scp[i_4]->data, "lllllllllls", 1);
 						break;
 					default:
 						v15 = (uint8_t *)malloc(size);
 						elf->scp[i_4]->data = v15;
-						fread(elf->scp[i_4]->data, size, 1u, fp);
+						if ( fread(elf->scp[i_4]->data, size, 1u, fp) != 1 )
+						{
+							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
+							exit(1);
+						}
 						break;
 				}
 			}
@@ -307,7 +335,11 @@ static void read_symtab(elf_file *elf, int sctindex, FILE *fp)
 	for ( i = 0; entrise > i; ++i )
 	{
 		result[i] = (elf_syment *)calloc(1u, sizeof(elf_syment));
-		fread(result[i], sp_x->shr.sh_entsize, 1u, fp);
+		if ( fread(result[i], sp_x->shr.sh_entsize, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF symbol table\n");
+			exit(1);
+		}
 		swapmemory(result[i], "lllccs", 1);
 		result[i]->bind = result[i]->sym.st_info >> 4;
 		result[i]->type = result[i]->sym.st_info & 0xF;
@@ -336,7 +368,11 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 	symp = (elf_syment **)sp_x->link->data;
 	for ( i = 0; entrise > i; ++i )
 	{
-		fread(&result[i], sp_x->shr.sh_entsize, 1u, fp);
+		if ( fread(&result[i], sp_x->shr.sh_entsize, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF relocations\n");
+			exit(1);
+		}
 		swapmemory(&result[i], "ll", 1);
 		result[i].type = result[i].rel.r_info & 0xFF;
 		result[i].symptr = symp[result[i].rel.r_info >> 8];
@@ -349,7 +385,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	elf_mips_symbolic_data *sycb;
 
 	sycb = (elf_mips_symbolic_data *)malloc(sizeof(elf_mips_symbolic_data));
-	fread(sycb, sizeof(hdrr), 1u, fp);
+	if ( fread(sycb, sizeof(hdrr), 1u, fp) != 1 )
+	{
+		fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+		exit(1);
+	}
 	swapmemory(sycb, "sslllllllllllllllllllllll", 1);
 	if ( sycb->head.cbLineOffset > 0 )
 	{
@@ -358,7 +398,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_1 = sycb->head.cbLine;
 		sycb->cbLine_Ptr = (char *)malloc(size_1);
 		fseek(fp, sycb->head.cbLineOffset, 0);
-		fread(sycb->cbLine_Ptr, size_1, 1u, fp);
+		if ( fread(sycb->cbLine_Ptr, size_1, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 	}
 	if ( sycb->head.cbDnOffset > 0 )
 	{
@@ -367,7 +411,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_2 = 8 * sycb->head.idnMax;
 		sycb->cbDn_Ptr = (char *)malloc(size_2);
 		fseek(fp, sycb->head.cbDnOffset, 0);
-		fread(sycb->cbDn_Ptr, size_2, 1u, fp);
+		if ( fread(sycb->cbDn_Ptr, size_2, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbDn_Ptr, "ll", sycb->head.idnMax);
 	}
 	if ( sycb->head.cbPdOffset > 0 )
@@ -377,7 +425,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_3 = 52 * sycb->head.ipdMax;
 		sycb->cbPd_Ptr = (char *)malloc(size_3);
 		fseek(fp, sycb->head.cbPdOffset, 0);
-		fread(sycb->cbPd_Ptr, size_3, 1u, fp);
+		if ( fread(sycb->cbPd_Ptr, size_3, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbPd_Ptr, "lllllllllsslll", sycb->head.ipdMax);
 	}
 	if ( sycb->head.cbSymOffset > 0 )
@@ -387,7 +439,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_4 = 12 * sycb->head.isymMax;
 		sycb->cbSym_Ptr = (char *)malloc(size_4);
 		fseek(fp, sycb->head.cbSymOffset, 0);
-		fread(sycb->cbSym_Ptr, size_4, 1u, fp);
+		if ( fread(sycb->cbSym_Ptr, size_4, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbSym_Ptr, "lll", sycb->head.isymMax);
 	}
 	if ( sycb->head.cbOptOffset > 0 )
@@ -397,7 +453,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_5 = 12 * sycb->head.ioptMax;
 		sycb->cbOpt_Ptr = (char *)malloc(size_5);
 		fseek(fp, sycb->head.cbOptOffset, 0);
-		fread(sycb->cbOpt_Ptr, size_5, 1u, fp);
+		if ( fread(sycb->cbOpt_Ptr, size_5, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbOpt_Ptr, "lll", sycb->head.ioptMax);
 	}
 	if ( sycb->head.cbAuxOffset > 0 )
@@ -407,7 +467,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_6 = 4 * sycb->head.iauxMax;
 		sycb->cbAux_Ptr = (char *)malloc(size_6);
 		fseek(fp, sycb->head.cbAuxOffset, 0);
-		fread(sycb->cbAux_Ptr, size_6, 1u, fp);
+		if ( fread(sycb->cbAux_Ptr, size_6, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbAux_Ptr, "l", sycb->head.iauxMax);
 	}
 	if ( sycb->head.cbSsOffset > 0 )
@@ -417,7 +481,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_7 = sycb->head.issMax;
 		sycb->cbSs_Ptr = (char *)malloc(size_7);
 		fseek(fp, sycb->head.cbSsOffset, 0);
-		fread(sycb->cbSs_Ptr, size_7, 1u, fp);
+		if ( fread(sycb->cbSs_Ptr, size_7, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 	}
 	if ( sycb->head.cbSsExtOffset > 0 )
 	{
@@ -426,7 +494,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_8 = sycb->head.issExtMax;
 		sycb->cbSsExt_Ptr = (char *)malloc(size_8);
 		fseek(fp, sycb->head.cbSsExtOffset, 0);
-		fread(sycb->cbSsExt_Ptr, size_8, 1u, fp);
+		if ( fread(sycb->cbSsExt_Ptr, size_8, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 	}
 	if ( sycb->head.cbFdOffset > 0 )
 	{
@@ -435,7 +507,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_9 = 72 * sycb->head.ifdMax;
 		sycb->cbFd_Ptr = (char *)malloc(size_9);
 		fseek(fp, sycb->head.cbFdOffset, 0);
-		fread(sycb->cbFd_Ptr, size_9, 1u, fp);
+		if ( fread(sycb->cbFd_Ptr, size_9, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbFd_Ptr, "llllllllllsslllllll", sycb->head.ifdMax);
 	}
 	if ( sycb->head.cbRfdOffset > 0 )
@@ -445,7 +521,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_A = 4 * sycb->head.crfd;
 		sycb->cbRfd_Ptr = (char *)malloc(size_A);
 		fseek(fp, sycb->head.cbRfdOffset, 0);
-		fread(sycb->cbRfd_Ptr, size_A, 1u, fp);
+		if ( fread(sycb->cbRfd_Ptr, size_A, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbRfd_Ptr, "l", sycb->head.crfd);
 	}
 	if ( sycb->head.cbExtOffset > 0 )
@@ -455,7 +535,11 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 		size_B = 16 * sycb->head.iextMax;
 		sycb->cbExt_Ptr = (char *)malloc(size_B);
 		fseek(fp, sycb->head.cbExtOffset, 0);
-		fread(sycb->cbExt_Ptr, size_B, 1u, fp);
+		if ( fread(sycb->cbExt_Ptr, size_B, 1u, fp) != 1 )
+		{
+			fprintf(stderr, "elflib: Could not read ELF debug info contents\n");
+			exit(1);
+		}
 		swapmemory(sycb->cbExt_Ptr, "sslll", sycb->head.iextMax);
 	}
 	return sycb;
