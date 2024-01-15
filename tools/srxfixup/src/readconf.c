@@ -767,6 +767,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp1->value.lowtoken->str, ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
 					return 0;
 				}
+				break;
 			case TC_IOP:
 				result->target = 1;
 				ttp = nttp;
