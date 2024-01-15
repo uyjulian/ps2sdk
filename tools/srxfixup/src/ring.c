@@ -1,5 +1,5 @@
 
-#include "all_include.h"
+#include "srxfixup_internal.h"
 
 SLink * add_ring_top(SLink *tailp, SLink *elementp)
 {

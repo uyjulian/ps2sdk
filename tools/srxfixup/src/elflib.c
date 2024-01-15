@@ -1,5 +1,5 @@
 
-#include "all_include.h"
+#include "srxfixup_internal.h"
 
 static int is_in_range(unsigned int top, unsigned int size, unsigned int pos);
 static void read_symtab(elf_file *elf, int sctindex, FILE *fp);

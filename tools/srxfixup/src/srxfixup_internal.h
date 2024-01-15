@@ -1,6 +1,6 @@
 
-#ifndef __ALL_INCLUDE_H__
-#define __ALL_INCLUDE_H__
+#ifndef __SRXFIXUP_INTERNAL_H__
+#define __SRXFIXUP_INTERNAL_H__
 
 #include <stdint.h>
 #include <string.h>

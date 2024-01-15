@@ -1,5 +1,5 @@
 
-#include "all_include.h"
+#include "srxfixup_internal.h"
 
 static const char * force_to_data_0 = NULL;
 static const char * ofile = NULL;

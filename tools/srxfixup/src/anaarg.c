@@ -1,5 +1,5 @@
 
-#include "all_include.h"
+#include "srxfixup_internal.h"
 
 int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 {

@@ -1,5 +1,5 @@
 
-#include "all_include.h"
+#include "srxfixup_internal.h"
 
 void  swapmemory(void *aaddr, const char * format, int times)
 {

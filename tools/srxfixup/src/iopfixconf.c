@@ -1,5 +1,5 @@
 
-#include "all_include.h"
+#include "srxfixup_internal.h"
 
 const char *iop_defaultconf = 
 	"  @IOP\n"

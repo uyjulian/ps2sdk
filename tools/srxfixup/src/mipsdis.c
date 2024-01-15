@@ -1,5 +1,5 @@
 
-#include "all_include.h"
+#include "srxfixup_internal.h"
 
 static void  getrs(unsigned int data, Operand *opr);
 static void  getrt(unsigned int data, Operand *opr);
