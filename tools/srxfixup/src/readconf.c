@@ -588,11 +588,11 @@ static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag)
 		info = ttp->value.lowtoken->str;
 		if ( !strcmp(info, "PROGBITS") )
 		{
-			type = 1;
+			type = SHT_PROGBITS;
 		}
 		else if ( !strcmp(info, "NOBITS") )
 		{
-			type = 8;
+			type = SHT_NOBITS;
 		}
 		else if ( !strcmp(info, "WRITE") )
 		{

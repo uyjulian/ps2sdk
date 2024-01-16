@@ -1240,11 +1240,9 @@ static int  check_undef_symboles(elf_file *elf)
 // clang-format off
 static const char * const SymbolType[] =
 {
-	"STT_NOTYPE",
-	"STT_OBJECT",
-	"STT_FUNC",
-	"STT_SECTION",
-	"STT_FILE"
+#define X(d) #d,
+	XEACH_SymbolType_enum()
+#undef X
 };
 // clang-format on
 static int  create_reserved_symbols(elf_file *elf)
