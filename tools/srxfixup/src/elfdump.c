@@ -106,11 +106,11 @@ void print_elf_ehdr(const elf_file *elf, unsigned int flag)
 		elf->ehp->e_phoff,
 		elf->ehp->e_shoff);
 	printf("   e_flags = 0x%08x ", elf->ehp->e_flags);
-	if ( (elf->ehp->e_flags & 1) != 0 )
+	if ( (elf->ehp->e_flags & EF_MIPS_NOREORDER) != 0 )
 		printf("EF_MIPS_NOREORDER ");
-	if ( (elf->ehp->e_flags & 2) != 0 )
+	if ( (elf->ehp->e_flags & EF_MIPS_PIC) != 0 )
 		printf("EF_MIPS_PIC");
-	if ( (elf->ehp->e_flags & 4) != 0 )
+	if ( (elf->ehp->e_flags & EF_MIPS_CPIC) != 0 )
 		printf("EF_MIPS_CPIC");
 	printf("\n");
 	printf(
@@ -156,11 +156,11 @@ void print_elf_phdr(const elf_file *elf, unsigned int flag)
 			elf->php[i].phdr.p_memsz,
 			(int)(elf->php[i].phdr.p_align));
 		printf("     p_flags=0x%08x ( ", elf->php[i].phdr.p_flags);
-		if ( (elf->php[i].phdr.p_flags & 1) != 0 )
+		if ( (elf->php[i].phdr.p_flags & PF_X) != 0 )
 			printf("PF_X ");
-		if ( (elf->php[i].phdr.p_flags & 2) != 0 )
+		if ( (elf->php[i].phdr.p_flags & PF_W) != 0 )
 			printf("PF_W ");
-		if ( (elf->php[i].phdr.p_flags & 4) != 0 )
+		if ( (elf->php[i].phdr.p_flags & PF_R) != 0 )
 			printf("PF_R ");
 		printf(")\n");
 		if ( elf->php[i].scp )
@@ -201,13 +201,13 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 		{
 			printf(" %2d: %-12s sh_name=0x%04x sh_type=%s\n", i, elf->scp[i]->name, elf->scp[i]->shr.sh_name, num2name(S_type_name, elf->scp[i]->shr.sh_type));
 			printf("        sh_flas=0x%08x ( ", elf->scp[i]->shr.sh_flags);
-			if ( (elf->scp[i]->shr.sh_flags & 1) != 0 )
+			if ( (elf->scp[i]->shr.sh_flags & SHF_WRITE) != 0 )
 				printf("SHF_WRITE ");
-			if ( (elf->scp[i]->shr.sh_flags & 2) != 0 )
+			if ( (elf->scp[i]->shr.sh_flags & SHF_ALLOC) != 0 )
 				printf("SHF_ALLOC ");
-			if ( (elf->scp[i]->shr.sh_flags & 4) != 0 )
+			if ( (elf->scp[i]->shr.sh_flags & SHF_EXECINSTR) != 0 )
 				printf("SHF_EXECINSTR ");
-			if ( (elf->scp[i]->shr.sh_flags & 0x10000000) != 0 )
+			if ( (elf->scp[i]->shr.sh_flags & SHF_MIPS_GPREL) != 0 )
 				printf("SHF_MIPS_GPREL ");
 			printf(")\n");
 			printf(
@@ -289,9 +289,9 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 		}
 		if ( elf->scp[i]->data )
 		{
-			if ( (elf->scp[i]->shr.sh_flags & 4) != 0 && elf->ehp->e_machine == EM_MIPS )
+			if ( (elf->scp[i]->shr.sh_flags & SHF_EXECINSTR) != 0 && elf->ehp->e_machine == EM_MIPS )
 			{
-				if ( (elf->ehp->e_flags & 0xF0FF0000) == 0x20920000 )
+				if ( ((elf->ehp->e_flags & EF_MIPS_MACH) == EF_MIPS_MACH_5900) && ((elf->ehp->e_flags & EF_MIPS_ARCH) == EF_MIPS_ARCH_3) )
 					initdisasm(2, -1, 0, 0, 0);
 				else
 					initdisasm(1, -1, 0, 0, 0);

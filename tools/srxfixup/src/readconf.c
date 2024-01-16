@@ -528,13 +528,13 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 					switch ( arg[j].tkcode )
 					{
 						case TC_STRING:
-							phrlist[j].sw = 1;
+							phrlist[j].sw = SRX_PH_TYPE_MOD;
 							phrlist[j].d.section_name = arg[j].value.lowtoken->str;
 							break;
 						case TC_VECTOR:
 							subarg = arg[j].value.subtree;
 							nseg = get_vector_len(subarg);
-							phrlist[j].sw = 2;
+							phrlist[j].sw = SRX_PH_TYPE_TEXT;
 							phrlist[j].d.segment_list = (SegConf **)calloc(nseg + 1, sizeof(SegConf *));
 							for ( n = 0; nseg > n; ++n )
 							{
@@ -594,17 +594,17 @@ static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag)
 		{
 			type = 8;
 		}
+		else if ( !strcmp(info, "WRITE") )
+		{
+			flag |= SHF_WRITE;
+		}
 		else if ( !strcmp(info, "ALLOC") )
 		{
-			flag |= 2;
+			flag |= SHF_ALLOC;
 		}
 		else if ( !strcmp(info, "EXECINSTR") )
 		{
-			flag |= 4;
-		}
-		else if ( !strcmp(info, "WRITE") )
-		{
-			flag |= 1;
+			flag |= SHF_EXECINSTR;
 		}
 		++ttp;
 	}
@@ -756,11 +756,11 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				}
 				break;
 			case TC_IOP:
-				result->target = 1;
+				result->target = SRX_TARGET_IOP;
 				ttp = nttp;
 				break;
 			case TC_EE:
-				result->target = 2;
+				result->target = SRX_TARGET_EE;
 				ttp = nttp;
 				break;
 			case TC_Define:

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char * force_to_data_0 = NULL;
+static const char * conffile = NULL;
 static const char * ofile = NULL;
 static const char * rfile = NULL;
 static const char * ffile = NULL;
@@ -19,33 +19,33 @@ static int br_conv = 0;
 static int print_config = 0;
 static const Opttable opttable[] =
 {
-	{ "-v", 0, 'f', &verbose },
-	{ "-d", 0, 'f', &dumpflag },
-	{ "-r", 2, 's', &rfile },
-	{ "-o", 2, 's', &ofile },
-	{ "-c", 2, 's', &force_to_data_0 },
-	{ "-f", 2, 's', &ffile },
-	{ "-t", 2, 'h', &startaddr },
-	{ "-e", 2, 's', &entrysym },
-	{ "-m", 0, 'f', &dispmod_flag },
-	{ "--irx1", 0, 'f', &irx1_flag },
-	{ "--rb", 0, 'f', &br_conv },
-	{ "--relative-branch", 0, 'f', &br_conv },
-	{ "--print-internal-config", 0, 'f', &print_config },
+	{ "-v", ARG_HAVEARG_NONE, 'f', &verbose },
+	{ "-d", ARG_HAVEARG_NONE, 'f', &dumpflag },
+	{ "-r", ARG_HAVEARG_REQUIRED, 's', &rfile },
+	{ "-o", ARG_HAVEARG_REQUIRED, 's', &ofile },
+	{ "-c", ARG_HAVEARG_REQUIRED, 's', &conffile },
+	{ "-f", ARG_HAVEARG_REQUIRED, 's', &ffile },
+	{ "-t", ARG_HAVEARG_REQUIRED, 'h', &startaddr },
+	{ "-e", ARG_HAVEARG_REQUIRED, 's', &entrysym },
+	{ "-m", ARG_HAVEARG_NONE, 'f', &dispmod_flag },
+	{ "--irx1", ARG_HAVEARG_NONE, 'f', &irx1_flag },
+	{ "--rb", ARG_HAVEARG_NONE, 'f', &br_conv },
+	{ "--relative-branch", ARG_HAVEARG_NONE, 'f', &br_conv },
+	{ "--print-internal-config", ARG_HAVEARG_NONE, 'f', &print_config },
 	{ NULL, 0, '\0', NULL },
 };
 static const Opttable stripopttable[] =
 {
-	{ "-v", 0, 'f', &verbose },
-	{ "-d", 0, 'f', &dumpflag },
-	{ "-o", 2, 's', &ofile },
-	{ "-c", 2, 's', &force_to_data_0 },
-	{ "-e", 2, 's', &entrysym },
-	{ "-m", 0, 'f', &dispmod_flag },
-	{ "--irx1", 0, 'f', &irx1_flag },
-	{ "--rb", 0, 'f', &br_conv },
-	{ "--relative-branch", 0, 'f', &br_conv },
-	{ "--print-internal-config", 0, 'f', &print_config },
+	{ "-v", ARG_HAVEARG_NONE, 'f', &verbose },
+	{ "-d", ARG_HAVEARG_NONE, 'f', &dumpflag },
+	{ "-o", ARG_HAVEARG_REQUIRED, 's', &ofile },
+	{ "-c", ARG_HAVEARG_REQUIRED, 's', &conffile },
+	{ "-e", ARG_HAVEARG_REQUIRED, 's', &entrysym },
+	{ "-m", ARG_HAVEARG_NONE, 'f', &dispmod_flag },
+	{ "--irx1", ARG_HAVEARG_NONE, 'f', &irx1_flag },
+	{ "--rb", ARG_HAVEARG_NONE, 'f', &br_conv },
+	{ "--relative-branch", ARG_HAVEARG_NONE, 'f', &br_conv },
+	{ "--print-internal-config", ARG_HAVEARG_NONE, 'f', &print_config },
 	{ NULL, 0, '\0', NULL },
 };
 
@@ -112,7 +112,6 @@ void stripusage(const char * myname)
 
 int main(int argc, char **argv)
 {
-	int v2;
 	Srx_gen_table *srxgen_1;
 	const char *defaultconf;
 	elf_file *elf;
@@ -126,14 +125,12 @@ int main(int argc, char **argv)
 	if ( myname_1 )
 	{
 		myname_2 = myname_1 + 1;
-		v2 = strncmp(myname_2, "ee", 2) != 0;
 	}
 	else
 	{
 		myname_2 = *argv;
-		v2 = strncmp(*argv, "ee", 2) != 0;
 	}
-	if ( v2 && strncmp(myname_2, "EE", 2) != 0 )
+	if ( (strncmp(myname_2, "ee", 2) != 0) && (strncmp(myname_2, "EE", 2) != 0) )
 		defaultconf = iop_defaultconf;
 	else
 		defaultconf = ee_defaultconf;
@@ -146,7 +143,7 @@ int main(int argc, char **argv)
 		{
 			Srx_gen_table *srxgen_2;
 
-			srxgen_2 = read_conf(defaultconf, force_to_data_0, print_config);
+			srxgen_2 = read_conf(defaultconf, conffile, print_config);
 			if ( !srxgen_2 )
 				exit(1);
 			if ( (dumpflag & 0x1000) != 0 )
@@ -178,7 +175,7 @@ int main(int argc, char **argv)
 		{
 			Srx_gen_table *srxgen_3;
 
-			srxgen_3 = read_conf(defaultconf, force_to_data_0, print_config);
+			srxgen_3 = read_conf(defaultconf, conffile, print_config);
 			if ( !srxgen_3 )
 				exit(1);
 			if ( (dumpflag & 0x1000) != 0 )
@@ -203,10 +200,10 @@ int main(int argc, char **argv)
 	elf = read_elf(source);
 	if ( !elf )
 		exit(1);
-	if ( (elf->ehp->e_flags & 0xF0FF0000) == 0x20920000 )
-		srxgen_1 = read_conf(ee_defaultconf, force_to_data_0, print_config);
+	if ( ((elf->ehp->e_flags & EF_MIPS_MACH) == EF_MIPS_MACH_5900) && ((elf->ehp->e_flags & EF_MIPS_ARCH) == EF_MIPS_ARCH_3) )
+		srxgen_1 = read_conf(ee_defaultconf, conffile, print_config);
 	else
-		srxgen_1 = read_conf(iop_defaultconf, force_to_data_0, print_config);
+		srxgen_1 = read_conf(iop_defaultconf, conffile, print_config);
 	if ( !srxgen_1 )
 		exit(1);
 	if ( (dumpflag & 0x1000) != 0 )

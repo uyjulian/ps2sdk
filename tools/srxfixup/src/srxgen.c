@@ -54,10 +54,10 @@ int  convert_rel2srx(elf_file *elf, const char * entrysym, int needoutput, int c
 	save_org_addrs(elf);
 	switch ( tp->target )
 	{
-		case 1:
+		case SRX_TARGET_IOP:
 			modinfo = add_iopmod(elf);
 			break;
-		case 2:
+		case SRX_TARGET_EE:
 			modinfo = add_eemod(elf);
 			break;
 		default:
@@ -150,9 +150,9 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 
 	if ( !strcmp(ordstr, "@Section_header_table") )
 	{
-		while ( order->type != 100 )
+		while ( order->type != EFS_TYPE_END )
 		{
-			if ( order->type == 4 )
+			if ( order->type == EFS_TYPE_SECTION_HEADER_TABLE )
 				return order;
 			++order;
 		}
@@ -163,26 +163,26 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 		long n;
 
 		n = strtol(ordstr + 21, NULL, 10);
-		while ( order->type != 100 )
+		while ( order->type != EFS_TYPE_END )
 		{
-			if ( order->type == 3 && order->d.php == &elf->php[n] )
+			if ( order->type == EFS_TYPE_PROGRAM_HEADER_ENTRY && order->d.php == &elf->php[n] )
 				return order;
 			++order;
 		}
 		return 0;
 	}
-	while ( order->type != 100 )
+	while ( order->type != EFS_TYPE_END )
 	{
 		switch ( order->type )
 		{
-			case 3:
+			case EFS_TYPE_PROGRAM_HEADER_ENTRY:
 				for ( scp = order->d.php->scp; *scp; ++scp )
 				{
 					if ( !sect_name_match(ordstr, (*scp)->name) )
 						return order;
 				}
 				break;
-			case 5:
+			case EFS_TYPE_SECTION_DATA:
 				if (!sect_name_match(ordstr, order->d.scp->name) )
 					return order;
 				break;
@@ -212,10 +212,10 @@ int  layout_srx_file(elf_file *elf)
 	error = 0;
 	switch ( tp->target )
 	{
-		case 1:
+		case SRX_TARGET_IOP:
 			max_seg_align = 16;
 			break;
-		case 2:
+		case SRX_TARGET_EE:
 			max_seg_align = 0x10000;
 			break;
 		default:
@@ -226,17 +226,17 @@ int  layout_srx_file(elf_file *elf)
 	rebuild_section_name_strings(elf);
 	rebuild_symbol_name_strings(elf);
 	order = build_file_order_list(elf);
-	for ( maxslot = 0; order[maxslot].type != 100; ++maxslot )
+	for ( maxslot = 0; order[maxslot].type != EFS_TYPE_END; ++maxslot )
 		;
 	neworder = (Elf_file_slot *)calloc(maxslot + 1, sizeof(Elf_file_slot));
 	memcpy(neworder, order, sizeof(Elf_file_slot));
 	nslotp = neworder + 1;
-	order->type = 0;
+	order->type = EFS_TYPE_NONE;
 	if ( elf->ehp->e_phnum )
 	{
 		memcpy(nslotp, &order[1], sizeof(Elf_file_slot));
 		nslotp = neworder + 2;
-		order[1].type = 0;
+		order[1].type = EFS_TYPE_NONE;
 	}
 	for ( ordstr = tp->file_layout_order; *ordstr; ++ordstr )
 	{
@@ -246,15 +246,15 @@ int  layout_srx_file(elf_file *elf)
 			if ( !slotp_1 )
 				break;
 			memcpy(nslotp++, slotp_1, sizeof(Elf_file_slot));
-			slotp_1->type = 0;
+			slotp_1->type = EFS_TYPE_NONE;
 		}
 	}
-	nslotp->type = 100;
+	nslotp->type = EFS_TYPE_END;
 	shrink_file_order_list(neworder);
 	writeback_file_order_list(elf, neworder);
-	for ( slotp_2 = neworder; slotp_2->type != 100; ++slotp_2 )
+	for ( slotp_2 = neworder; slotp_2->type != EFS_TYPE_END; ++slotp_2 )
 	{
-		if ( slotp_2->type == 3 && slotp_2->d.php->phdr.p_type == PT_LOAD && max_seg_align < slotp_2->align )
+		if ( slotp_2->type == EFS_TYPE_PROGRAM_HEADER_ENTRY && slotp_2->d.php->phdr.p_type == PT_LOAD && max_seg_align < slotp_2->align )
 		{
 			fprintf(stderr, "Program Header Entry: unsupported align %u\n", slotp_2->align);
 			++error;
@@ -829,7 +829,7 @@ static void  create_phdr(elf_file *elf)
 	{
 		memset(elf->php, 0, i * sizeof(elf_proghead));
 	}
-	elf->ehp->e_phentsize = 32;
+	elf->ehp->e_phentsize = sizeof(Elf32_Phdr);
 	elf->ehp->e_phnum = i;
 	if ( elf->php != NULL )
 	{
@@ -839,20 +839,20 @@ static void  create_phdr(elf_file *elf)
 		{
 			switch ( phip[j].sw )
 			{
-				case 1:
-					elf->php[j].phdr.p_flags = 4;
+				case SRX_PH_TYPE_MOD:
+					elf->php[j].phdr.p_flags = PF_R;
 					elf->php[j].phdr.p_align = 4;
 					if ( !strcmp(".iopmod", phip[j].d.section_name) )
 					{
 						elf->php[j].phdr.p_type = PT_SCE_IOPMOD;
-						elf->php[j].phdr.p_filesz = 28;
+						elf->php[j].phdr.p_filesz = sizeof(Elf32_IopMod);
 						elf->php[j].scp = (elf_section **)calloc(2, sizeof(elf_section *));
 						*elf->php[j].scp = search_section(elf, SHT_SCE_IOPMOD);
 					}
 					else if ( !strcmp(".eemod", phip[j].d.section_name) )
 					{
 						elf->php[j].phdr.p_type = PT_SCE_EEMOD;
-						elf->php[j].phdr.p_filesz = 44;
+						elf->php[j].phdr.p_filesz = sizeof(Elf32_EeMod);
 						elf->php[j].scp = (elf_section **)calloc(2, sizeof(elf_section *));
 						*elf->php[j].scp = search_section(elf, SHT_SCE_EEMOD);
 					}
@@ -861,9 +861,9 @@ static void  create_phdr(elf_file *elf)
 						fprintf(stderr, "Unsuport section '%s' for program header\n", phip[j].d.section_name);
 					}
 					break;
-				case 2:
+				case SRX_PH_TYPE_TEXT:
 					elf->php[j].phdr.p_type = PT_LOAD;
-					elf->php[j].phdr.p_flags = 7;
+					elf->php[j].phdr.p_flags = PF_X | PF_W | PF_R;
 					elf->php[j].phdr.p_align = 16;
 					break;
 				default:
@@ -999,10 +999,10 @@ static void  update_programheader(elf_file *elf)
 	phip = tp->program_header_order;
 	switch ( tp->target )
 	{
-		case 1:
+		case SRX_TARGET_IOP:
 			minsegalign = 16;
 			break;
-		case 2:
+		case SRX_TARGET_EE:
 			minsegalign = 128;
 			break;
 		default:
@@ -1012,7 +1012,7 @@ static void  update_programheader(elf_file *elf)
 	}
 	for ( n = 0; phip[n].sw; ++n )
 	{
-		if ( phip[n].sw == 2 )
+		if ( phip[n].sw == SRX_PH_TYPE_TEXT )
 		{
 			segp = phip[n].d.segment_list;
 			if ( segp )
@@ -1105,7 +1105,7 @@ static int  layout_srx_memory(elf_file *elf)
 	moffset = 0;
 	oldbitid = 0;
 	error = 0;
-	is_ee = tp->target == 2;
+	is_ee = tp->target == SRX_TARGET_EE;
 	if ( !elf->scp )
 		return 1;
 	sections = elf->ehp->e_shnum;
@@ -1118,7 +1118,7 @@ static int  layout_srx_memory(elf_file *elf)
 			segment_start_setup(tp->segment_list, updelta, &moffset);
 		for ( s_1 = 1; sections > s_1; ++s_1 )
 		{
-			if ( scp[s_1] && !sect_name_match(odr->sect_name_pattern, scp[s_1]->name) && (scp[s_1]->shr.sh_flags & 2) != 0 )
+			if ( scp[s_1] && !sect_name_match(odr->sect_name_pattern, scp[s_1]->name) && (scp[s_1]->shr.sh_flags & SHF_ALLOC) != 0 )
 			{
 				moffset = adjust_align(moffset, scp[s_1]->shr.sh_addralign);
 				scp[s_1]->shr.sh_addr = moffset;
@@ -1134,7 +1134,7 @@ static int  layout_srx_memory(elf_file *elf)
 	}
 	for ( s_2 = 1; sections > s_2; ++s_2 )
 	{
-		if ( scp[s_2] && (scp[s_2]->shr.sh_flags & 2) != 0 )
+		if ( scp[s_2] && (scp[s_2]->shr.sh_flags & SHF_ALLOC) != 0 )
 		{
 			for ( s_3 = 1;
 						sections > s_3
@@ -1369,10 +1369,10 @@ static void  symbol_value_update(elf_file *elf)
 	}
 	switch ( target )
 	{
-		case 1:
+		case SRX_TARGET_IOP:
 			elf->ehp->e_type = ET_SCE_IOPRELEXEC;
 			break;
-		case 2:
+		case SRX_TARGET_EE:
 			elf->ehp->e_type = ET_SCE_EERELEXEC2;
 			break;
 		default:
@@ -1734,7 +1734,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				rmflag = 1;
 				break;
 			case R_MIPS_DVP_27_S4:
-				if ( target != 2 )
+				if ( target != SRX_TARGET_EE )
 				{
 					fprintf(stderr, "R_MIPS_DVP_27_S4 can use only for EE.\n");
 					exit(1);
@@ -1805,12 +1805,12 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 
 static size_t  iopmod_size(const Elf32_IopMod *modinfo)
 {
-	return strlen(modinfo->modulename) + 27;
+	return strlen(modinfo->modulename) + (sizeof(Elf32_IopMod) - 1);
 }
 
 static size_t  eemod_size(const Elf32_EeMod *modinfo)
 {
-	return strlen(modinfo->modulename) + 43;
+	return strlen(modinfo->modulename) + (sizeof(Elf32_EeMod) - 1);
 }
 
 int  relocation_is_version2(elf_section *relsect)
@@ -1868,10 +1868,10 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 	}
 	switch ( tp->target )
 	{
-		case 1:
+		case SRX_TARGET_IOP:
 			v1 = "IOP";
 			break;
-		case 2:
+		case SRX_TARGET_EE:
 			v1 = "EE";
 			break;
 		default:
@@ -1911,10 +1911,10 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 	{
 		switch ( phip->sw )
 		{
-			case 1:
+			case SRX_PH_TYPE_MOD:
 				printf("  %2d: section %s\n", scp_, phip->d.section_name);
 				break;
-			case 2:
+			case SRX_PH_TYPE_TEXT:
 				printf("  %2d: Segments ", scp_);
 				for ( scnfpp = (const char ***)phip->d.section_name; *scnfpp; ++scnfpp )
 					printf("%s ", **scnfpp);

@@ -68,7 +68,7 @@ typedef struct _Elf_Note
 	Elf32_Word namesz;
 	Elf32_Word descsz;
 	Elf32_Word type;
-	char name[1];
+	char name[];
 } Elf_Note;
 typedef struct _Elf32_Rel
 {
@@ -90,7 +90,7 @@ typedef struct _Elf32_IopMod
 	Elf32_Word data_size;
 	Elf32_Word bss_size;
 	Elf32_Half moduleversion;
-	char modulename[1];
+	char modulename[];
 } Elf32_IopMod;
 typedef struct _Elf32_EeMod
 {
@@ -105,7 +105,7 @@ typedef struct _Elf32_EeMod
 	Elf32_Addr erx_stub_addr;
 	Elf32_Word erx_stub_size;
 	Elf32_Half moduleversion;
-	char modulename[1];
+	char modulename[];
 } Elf32_EeMod;
 typedef struct _hdrr
 {
@@ -874,5 +874,63 @@ enum StorageClasse_enum
 	X(scFini) \
 	X(scRConst) \
 	X(scMax)
+
+enum elf_header_flags
+{
+	EF_MIPS_NOREORDER = 1,
+	EF_MIPS_PIC = 2,
+	EF_MIPS_CPIC = 4,
+	EF_MIPS_MACH = 0x00FF0000,
+	EF_MIPS_MACH_5900 = 0x00920000,
+	EF_MIPS_ARCH_3 = 0x20000000,
+	EF_MIPS_ARCH = 0xF0000000,
+};
+
+enum elf_program_header_flags
+{
+	PF_X = 1,
+	PF_W = 2,
+	PF_R = 4,
+};
+
+enum elf_section_header_flags
+{
+	SHF_WRITE = 1,
+	SHF_ALLOC = 2,
+	SHF_EXECINSTR = 4,
+	SHF_MIPS_GPREL = 0x10000000,
+};
+
+enum anaarg_havearg_param
+{
+	ARG_HAVEARG_NONE = 0,
+	ARG_HAVEARG_UNK1 = 1,
+	ARG_HAVEARG_REQUIRED = 2,
+	ARG_HAVEARG_UNK3 = 3,
+	ARG_HAVEARG_UNK4 = 4,
+};
+
+enum elf_file_slot_type
+{
+	EFS_TYPE_NONE = 0,
+	EFS_TYPE_ELF_HEADER = 1,
+	EFS_TYPE_PROGRAM_HEADER_TABLE = 2,
+	EFS_TYPE_PROGRAM_HEADER_ENTRY = 3,
+	EFS_TYPE_SECTION_HEADER_TABLE = 4,
+	EFS_TYPE_SECTION_DATA = 5,
+	EFS_TYPE_END = 100,
+};
+
+enum srx_target_enum
+{
+	SRX_TARGET_IOP = 1,
+	SRX_TARGET_EE = 2,
+};
+
+enum srx_program_header_type
+{
+	SRX_PH_TYPE_MOD = 1,
+	SRX_PH_TYPE_TEXT = 2,
+};
 
 #endif

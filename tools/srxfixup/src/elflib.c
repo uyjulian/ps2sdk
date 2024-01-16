@@ -1091,7 +1091,7 @@ static void reorder_an_symtab(elf_file *elf, elf_section *scp)
 		for ( i = 1; entrise > i; ++i )
 		{
 			if ( oldtab[i]
-				&& oldtab[i]->type == 3
+				&& oldtab[i]->type == STT_SECTION
 				&& !oldtab[i]->name
 				&& oldtab[i]->shptr
 				&& !strcmp(oldtab[i]->shptr->name, elf->scp[sc]->name) )
@@ -1104,7 +1104,7 @@ static void reorder_an_symtab(elf_file *elf, elf_section *scp)
 	}
 	for ( j = 1; entrise > j; ++j )
 	{
-		if ( oldtab[j] && oldtab[j]->type == 3 && !oldtab[j]->name )
+		if ( oldtab[j] && oldtab[j]->type == STT_SECTION && !oldtab[j]->name )
 			oldtab[j] = 0;
 	}
 	for ( k = 1; entrise > k; ++k )
@@ -1261,17 +1261,17 @@ static int comp_Elf_file_slot(const void *a1, const void *a2)
 	p1 = a1;
 	p2 = a2;
 
-	if ( p1->type == 1 && p2->type == 1 )
+	if ( p1->type == EFS_TYPE_ELF_HEADER && p2->type == EFS_TYPE_ELF_HEADER )
 		return 0;
-	if ( p1->type == 1 )
+	if ( p1->type == EFS_TYPE_ELF_HEADER )
 		return -1;
-	if ( p2->type == 1 )
+	if ( p2->type == EFS_TYPE_ELF_HEADER )
 		return 1;
-	if ( p1->type == 2 && p2->type == 2 )
+	if ( p1->type == EFS_TYPE_PROGRAM_HEADER_TABLE && p2->type == EFS_TYPE_PROGRAM_HEADER_TABLE )
 		return 0;
-	if ( p1->type == 2 )
+	if ( p1->type == EFS_TYPE_PROGRAM_HEADER_TABLE )
 		return -1;
-	if ( p2->type == 2 )
+	if ( p2->type == EFS_TYPE_PROGRAM_HEADER_TABLE )
 		return 1;
 	if ( !p1->type && !p2->type )
 		return 0;
@@ -1279,15 +1279,15 @@ static int comp_Elf_file_slot(const void *a1, const void *a2)
 		return 1;
 	if ( !p2->type )
 		return -1;
-	if ( p1->type == 100 && p2->type == 100 )
+	if ( p1->type == EFS_TYPE_END && p2->type == EFS_TYPE_END )
 		return 0;
-	if ( p1->type == 100 )
+	if ( p1->type == EFS_TYPE_END )
 		return 1;
-	if ( p2->type == 100 )
+	if ( p2->type == EFS_TYPE_END )
 		return -1;
-	if ( p1->type == 3 && p2->type == 4 )
+	if ( p1->type == EFS_TYPE_PROGRAM_HEADER_ENTRY && p2->type == EFS_TYPE_SECTION_HEADER_TABLE )
 		return -1;
-	if ( p1->type == 4 && p2->type == 3 )
+	if ( p1->type == EFS_TYPE_SECTION_HEADER_TABLE && p2->type == EFS_TYPE_PROGRAM_HEADER_ENTRY )
 		return 1;
 	if ( p2->offset == p1->offset )
 		return 0;
@@ -1313,18 +1313,18 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 	if ( elf->ehp->e_phnum )
 		maxent = elf->ehp->e_phnum + elf->ehp->e_shnum + 3;
 	resolt = (Elf_file_slot *)calloc(maxent, sizeof(Elf_file_slot));
-	resolt->type = 1;
+	resolt->type = EFS_TYPE_ELF_HEADER;
 	resolt->offset = 0;
-	resolt->size = 52;
+	resolt->size = sizeof(Elf32_Ehdr);
 	resolt->align = 4;
 	d_1 = 1;
 	if ( elf->ehp->e_phnum )
 	{
 		int seg;
 
-		resolt[1].type = 2;
+		resolt[1].type = EFS_TYPE_PROGRAM_HEADER_TABLE;
 		resolt[1].offset = resolt->size;
-		resolt[1].size = 32 * elf->ehp->e_phnum;
+		resolt[1].size = sizeof(Elf32_Phdr) * elf->ehp->e_phnum;
 		resolt[1].align = 4;
 		seg = 0;
 		d_1 = 2;
@@ -1332,7 +1332,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 		{
 			elf_section **phdscp;
 
-			resolt[d_1].type = 3;
+			resolt[d_1].type = EFS_TYPE_PROGRAM_HEADER_ENTRY;
 			resolt[d_1].d.php = &elf->php[seg];
 			resolt[d_1].offset = elf->php[seg].phdr.p_offset;
 			resolt[d_1].size = elf->php[seg].phdr.p_filesz;
@@ -1354,16 +1354,16 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 			++d_1;
 		}
 	}
-	resolt[d_1].type = 4;
+	resolt[d_1].type = EFS_TYPE_SECTION_HEADER_TABLE;
 	resolt[d_1].offset = elf->ehp->e_shoff ?: (Elf32_Off)(-256);
-	resolt[d_1].size = 40 * elf->ehp->e_shnum;
+	resolt[d_1].size = sizeof(Elf32_Shdr) * elf->ehp->e_shnum;
 	resolt[d_1].align = 4;
 	d_2 = d_1 + 1;
 	for ( s_2 = 1; sections > s_2; ++s_2 )
 	{
 		if ( scp[s_2] )
 		{
-			resolt[d_2].type = 5;
+			resolt[d_2].type = EFS_TYPE_SECTION_DATA;
 			resolt[d_2].d.scp = scp[s_2];
 			resolt[d_2].offset = scp[s_2]->shr.sh_offset;
 			resolt[d_2].size = scp[s_2]->shr.sh_size;
@@ -1372,7 +1372,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 			++d_2;
 		}
 	}
-	resolt[d_2].type = 100;
+	resolt[d_2].type = EFS_TYPE_END;
 	free(scp);
 	qsort(resolt, d_2, sizeof(Elf_file_slot), comp_Elf_file_slot);
 	return resolt;
@@ -1383,7 +1383,7 @@ void  shrink_file_order_list(Elf_file_slot *efs)
 	unsigned int slot;
 
 	slot = 0;
-	while ( efs->type != 100 )
+	while ( efs->type != EFS_TYPE_END )
 	{
 		unsigned int foffset;
 
@@ -1400,14 +1400,14 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 	unsigned int segoffset;
 	int i;
 
-	while ( efs->type != 100 )
+	while ( efs->type != EFS_TYPE_END )
 	{
 		switch ( efs->type )
 		{
-			case 2:
+			case EFS_TYPE_PROGRAM_HEADER_TABLE:
 				elf->ehp->e_phoff = efs->offset;
 				break;
-			case 3:
+			case EFS_TYPE_PROGRAM_HEADER_ENTRY:
 				efs->d.php->phdr.p_offset = efs->offset;
 				scp = efs->d.php->scp;
 				segoffset = efs->offset;
@@ -1421,10 +1421,10 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 						segoffset += scp[i]->shr.sh_size;
 				}
 				break;
-			case 4:
+			case EFS_TYPE_SECTION_HEADER_TABLE:
 				elf->ehp->e_shoff = efs->offset;
 				break;
-			case 5:
+			case EFS_TYPE_SECTION_DATA:
 				efs->d.php->phdr.p_filesz = efs->offset;
 				break;
 			default:
@@ -1447,7 +1447,7 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 
 	offset_tmp = efs->offset;
 	printf("\n");
-	for ( slot = efs; slot->type != 100; ++slot )
+	for ( slot = efs; slot->type != EFS_TYPE_END; ++slot )
 	{
 		unsigned int oldend_1;
 		unsigned int size_1;
@@ -1462,20 +1462,20 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 		size_1 = offset;
 		switch ( slot->type )
 		{
-			case 1:
+			case EFS_TYPE_ELF_HEADER:
 				name = "[Elf header]";
 				break;
-			case 2:
+			case EFS_TYPE_PROGRAM_HEADER_TABLE:
 				name = "[Proram Header Table]";
 				break;
-			case 3:
+			case EFS_TYPE_PROGRAM_HEADER_ENTRY:
 				sprintf(tmp, "[Proram Header entry %d]", (int)(0xCCCCCCCD * ((char *)slot->d.php - (char *)elf->php)) >> 3);
 				name = tmp;
 				break;
-			case 4:
+			case EFS_TYPE_SECTION_HEADER_TABLE:
 				name = "[Section Header Table]";
 				break;
-			case 5:
+			case EFS_TYPE_SECTION_DATA:
 				sprintf(tmp, "%s data", slot->d.scp->name);
 				name = tmp;
 				break;
@@ -1487,7 +1487,7 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 			printf("%36s = %08x-%08x (%06x)\n", "**Blank**", offset_tmp + 1, startpos_1 - 1, startpos_1 - offset_tmp - 1);
 		offset_tmp = size_1;
 		printf("%36s = %08x-%08x (%06x)\n", name, startpos_1, size_1, oldend_1);
-		if ( slot->type == 3 )
+		if ( slot->type == EFS_TYPE_PROGRAM_HEADER_ENTRY )
 		{
 			scp = slot->d.php->scp;
 			(*scp)->shr.sh_offset = slot->offset;

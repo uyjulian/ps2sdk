@@ -40,7 +40,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 				argvp[i] = nargv[i];
 			for ( i = 0; opttable[i].option; ++i )
 			{
-				if ( opttable[i].vartype == 108 )
+				if ( opttable[i].vartype == 'l' )
 				{
 					*(SLink **)opttable[i].var = ring_to_liner(*(SLink **)opttable[i].var);
 				}
@@ -52,7 +52,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 			opt = 0;
 			for ( i = 0; opttable[i].option; ++i )
 			{
-				if ( opttable[i].havearg == 3 )
+				if ( opttable[i].havearg == ARG_HAVEARG_UNK3 )
 				{
 					if ( !strcmp(opttable[i].option, *argva) )
 						break;
@@ -65,9 +65,9 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 			}
 			if ( !opttable[i].option )
 				return -1;
-			if ( opttable[i].havearg && opttable[i].havearg != 3 )
+			if ( opttable[i].havearg != ARG_HAVEARG_NONE && opttable[i].havearg != ARG_HAVEARG_UNK3 )
 			{
-				if ( opttable[i].havearg == 4 || (*argva)[strlen(opttable[i].option)] )
+				if ( opttable[i].havearg == ARG_HAVEARG_UNK4 || (*argva)[strlen(opttable[i].option)] )
 				{
 					opt = &(*argva)[strlen(opttable[i].option)];
 				}
@@ -78,7 +78,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 					--argca;
 				}
 			}
-			if ( opttable[i].havearg != 2 || opt )
+			if ( opttable[i].havearg != ARG_HAVEARG_REQUIRED || opt )
 			{
 				switch ( opttable[i].vartype )
 				{
@@ -106,8 +106,8 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 								*otp = otp[-1];
 							++igadd;
 							opttable->option = opt;
-							opttable->vartype = 110;
-							opttable->havearg = 3;
+							opttable->vartype = 'n';
+							opttable->havearg = ARG_HAVEARG_UNK3;
 							cp = strchr(opttable->option, ':');
 							if ( cp )
 							{
@@ -115,13 +115,13 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 								switch ( cp[1] )
 								{
 									case 'c':
-										opttable->havearg = 4;
+										opttable->havearg = ARG_HAVEARG_UNK4;
 										break;
 									case 'n':
-										opttable->havearg = 2;
+										opttable->havearg = ARG_HAVEARG_REQUIRED;
 										break;
 									case 'o':
-										opttable->havearg = 1;
+										opttable->havearg = ARG_HAVEARG_UNK1;
 										break;
 									default:
 										break;
