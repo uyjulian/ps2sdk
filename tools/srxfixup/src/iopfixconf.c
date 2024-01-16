@@ -1,6 +1,7 @@
 
 #include "srxfixup_internal.h"
 
+// clang-format off
 const char *iop_defaultconf = 
 	"  @IOP\n"
 	"  .reginfo { @remove }\n"
@@ -69,3 +70,4 @@ const char *iop_defaultconf =
 	"  *    ##### other sections\n"
 	"\n"
 ;
+// clang-format on

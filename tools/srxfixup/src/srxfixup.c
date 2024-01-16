@@ -17,6 +17,7 @@ static unsigned int dispmod_flag = 0;
 static int irx1_flag = 0;
 static int br_conv = 0;
 static int print_config = 0;
+// clang-format off
 static const Opttable opttable[] =
 {
 	{ "-v", ARG_HAVEARG_NONE, 'f', &verbose },
@@ -48,6 +49,7 @@ static const Opttable stripopttable[] =
 	{ "--print-internal-config", ARG_HAVEARG_NONE, 'f', &print_config },
 	{ NULL, 0, '\0', NULL },
 };
+// clang-format on
 
 static void display_module_info(elf_file *elf);
 static void convert_relative_branch_an_section(elf_section *relsect);

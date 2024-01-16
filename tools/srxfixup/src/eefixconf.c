@@ -1,6 +1,7 @@
 
 #include "srxfixup_internal.h"
 
+// clang-format off
 const char *ee_defaultconf = 
 	"  @EE\n"
 	"  .reginfo { @remove }\n"
@@ -88,3 +89,4 @@ const char *ee_defaultconf =
 	"\n"
 	""
 ;
+// clang-format on

@@ -47,6 +47,7 @@ static void  Jtarget(Disasm_result *result);
 static void  Cofun(Disasm_result *result);
 static void  Bcft(Disasm_result *result);
 
+// clang-format off
 static int regnmsw[5] = { 1, 1, 0, 1, 0 };
 static const char * const REGNAME[2][32] =
 {
@@ -332,6 +333,7 @@ static const char * const REGC1[2][32] =
 		"$fs11"
 	}
 };
+// clang-format on
 
 typedef void (*Operand_func)(Disasm_result *result);
 typedef struct opcode_table_entry_
@@ -629,6 +631,7 @@ static void  Bcft(Disasm_result *result)
 	getbroff(result->addr, result->data, result->operands);
 }
 
+// clang-format off
 static const Opcode_table_entry iop_SPECIAL_entries[] =
 {
 	{ "sll", NULL, &Rdrtshamt },
@@ -1430,6 +1433,7 @@ static const Opcode_table_entry ee_opcode_root_table_entries[] =
 static const Opcode_table iop_opcode_root_table = { 26, 63, iop_opcode_root_table_entries };
 static const Opcode_table ee_opcode_root_table = { 26, 63, ee_opcode_root_table_entries };
 static const Opcode_table * opcode_root_table = &iop_opcode_root_table;
+// clang-format on
 
 void  gen_asmmacro(Disasm_result *result)
 {

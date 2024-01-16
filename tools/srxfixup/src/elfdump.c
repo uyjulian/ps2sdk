@@ -43,6 +43,7 @@ void print_elf(const elf_file *elf, unsigned int flag)
 	}
 }
 
+// clang-format off
 static const struct name2num Ei_class_name[] =
 {
 #define X(d) { #d, d },
@@ -78,6 +79,7 @@ static const struct name2num E_machine_name[] =
 #undef X
 	{ NULL, 0 },
 };
+// clang-format on
 
 void print_elf_ehdr(const elf_file *elf, unsigned int flag)
 {
@@ -125,6 +127,7 @@ void print_elf_ehdr(const elf_file *elf, unsigned int flag)
 		elf->ehp->e_shstrndx);
 }
 
+// clang-format off
 static const struct name2num P_type_name[] =
 {
 #define X(d) { #d, d },
@@ -132,6 +135,7 @@ static const struct name2num P_type_name[] =
 #undef X
 	{ NULL, 0 },
 };
+// clang-format on
 
 void print_elf_phdr(const elf_file *elf, unsigned int flag)
 {
@@ -175,6 +179,7 @@ void print_elf_phdr(const elf_file *elf, unsigned int flag)
 	}
 }
 
+// clang-format off
 static const struct name2num S_type_name[] =
 {
 #define X(d) { #d, d },
@@ -182,6 +187,7 @@ static const struct name2num S_type_name[] =
 #undef X
 	{ NULL, 0 },
 };
+// clang-format on
 
 void print_elf_sections(const elf_file *elf, unsigned int flag)
 {
@@ -305,6 +311,7 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 	}
 }
 
+// clang-format off
 static const struct name2num R_MIPS_Type[] =
 {
 #define X(d) { #d, d },
@@ -312,6 +319,7 @@ static const struct name2num R_MIPS_Type[] =
 #undef X
 	{ NULL, 0 },
 };
+// clang-format on
 
 void print_elf_reloc(const elf_section *scp, unsigned int flag)
 {
@@ -721,6 +729,7 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 	free(dumpbuf);
 }
 
+// clang-format off
 static const struct name2num SymbolBinding[] =
 {
 #define X(d) { #d, d },
@@ -742,6 +751,7 @@ static const struct name2num SymbolSpSection[] =
 #undef X
 	{ NULL, 0 },
 };
+// clang-format on
 
 void print_elf_symtbl(const elf_section *scp, unsigned int flag)
 {
@@ -804,6 +814,7 @@ static const char * num2name(const struct name2num *table, unsigned int num)
 	return buf_28;
 }
 
+// clang-format off
 static const struct name2num SymbolTypes[] =
 {
 #define X(d) { #d, d },
@@ -818,6 +829,7 @@ static const struct name2num StorageClasse[] =
 #undef X
 	{ NULL, 0 },
 };
+// clang-format on
 
 void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int flag)
 {

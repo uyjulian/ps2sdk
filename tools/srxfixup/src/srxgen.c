@@ -1237,6 +1237,7 @@ static int  check_undef_symboles(elf_file *elf)
 	return err;
 }
 
+// clang-format off
 static const char * const SymbolType[] =
 {
 	"STT_NOTYPE",
@@ -1245,6 +1246,7 @@ static const char * const SymbolType[] =
 	"STT_SECTION",
 	"STT_FILE"
 };
+// clang-format on
 static int  create_reserved_symbols(elf_file *elf)
 {
 	int csyms_;
