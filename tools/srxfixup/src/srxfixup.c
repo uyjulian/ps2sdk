@@ -334,7 +334,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 	rp = (elf_rel *)relsect->data;
 	symp = (elf_syment **)relsect->link->data;
 	rmcount = 0;
-	for ( i = 0; entrise > i; ++i )
+	for ( i = 0; entrise > i; i += 1 )
 	{
 		unsigned int type;
 		uint8_t *daddr;
@@ -382,22 +382,22 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 					{
 						*(uint32_t *)daddr = jaddr | 0x10000000;
 						rp->type = R_MIPS_NONE;
-						++rmcount;
+						rmcount += 1;
 					}
 					else if ( data >> 26 == 3 )
 					{
 						*(uint32_t *)daddr = jaddr | 0x4110000;
 						rp->type = R_MIPS_NONE;
-						++rmcount;
+						rmcount += 1;
 					}
 				}
 			}
 		}
 		else
 		{
-			++rmcount;
+			rmcount += 1;
 		}
-		++rp;
+		rp += 1;
 	}
 	if ( rmcount > 0 && (entrise - rmcount) > 0 )
 	{
@@ -409,11 +409,14 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		newtab = (elf_rel *)calloc(entrise - rmcount, sizeof(elf_rel));
 		d = newtab;
 		s = (elf_rel *)relsect->data;
-		for ( j = 0; entrise > j; ++j )
+		for ( j = 0; entrise > j; j += 1 )
 		{
 			if ( s->type )
-				memcpy(d++, s, sizeof(elf_rel));
-			++s;
+			{
+				memcpy(d, s, sizeof(elf_rel));
+				d += 1;
+			}
+			s += 1;
 		}
 		free(relsect->data);
 		relsect->data = (uint8_t *)newtab;
@@ -429,7 +432,7 @@ static void convert_relative_branch(elf_file *elf)
 	{
 		return;
 	}
-	for ( i = 1; i < elf->ehp->e_shnum; ++i )
+	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
 		if ( elf->scp[i]->shr.sh_type == SHT_REL )
 			convert_relative_branch_an_section(elf->scp[i]);

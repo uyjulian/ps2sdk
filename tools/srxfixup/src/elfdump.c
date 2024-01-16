@@ -146,7 +146,7 @@ void print_elf_phdr(const elf_file *elf, unsigned int flag)
 		return;
 	}
 	printf(" Program header\n");
-	for ( i = 0; i < elf->ehp->e_phnum; ++i )
+	for ( i = 0; i < elf->ehp->e_phnum; i += 1 )
 	{
 		printf(" %2d: p_type=%s, ", i, num2name(P_type_name, elf->php[i].phdr.p_type));
 		printf(
@@ -172,7 +172,7 @@ void print_elf_phdr(const elf_file *elf, unsigned int flag)
 			int j;
 
 			printf("     include sections = ");
-			for ( j = 0; elf->php[i].scp[j]; ++j )
+			for ( j = 0; elf->php[i].scp[j]; j += 1 )
 				printf("%s ", elf->php[i].scp[j]->name);
 			printf("\n");
 		}
@@ -199,7 +199,7 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 	}
 	if ( (flag & 1) != 0 )
 		printf(" Section header\n");
-	for ( i = 1; ; ++i )
+	for ( i = 1; ; i += 1 )
 	{
 		if ( i >= elf->ehp->e_shnum )
 			return;
@@ -338,7 +338,7 @@ void print_elf_reloc(const elf_section *scp, unsigned int flag)
 		printf("   ---  --------  --------------------  -----------------------------------\n");
 	}
 	rp = (elf_rel *)scp->data;
-	for ( i = 0; i < entrise; ++i )
+	for ( i = 0; i < entrise; i += 1 )
 	{
 		printf("   %3u: 0x%06x  0x%02x %-16s ", i, rp[i].rel.r_offset, rp[i].type, num2name(R_MIPS_Type, rp[i].type));
 		if ( rp[i].symptr->type == STT_SECTION )
@@ -384,10 +384,11 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 	{
 		dis[i] = disassemble(addr, codes[i]);
 		gen_asmmacro(dis[i]);
-		search_rel_data(rpbase, relentries, baseoff + addr, &rel[i++]);
+		search_rel_data(rpbase, relentries, baseoff + addr, &rel[i]);
+		i += 1;
 		addr += 4;
 	}
-	for ( i = 0; (int)steps > i; ++i )
+	for ( i = 0; (int)steps > i; i += 1 )
 	{
 		if ( rel[i].rp && rel[i].rp->type == R_MIPSSCE_MHI16 )
 		{
@@ -402,14 +403,14 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 			}
 		}
 	}
-	for ( i = 0; (int)steps > i; ++i )
+	for ( i = 0; (int)steps > i; i += 1 )
 	{
 		format_disasm(dis[i], pb);
 		if ( rel[i].rp || rel[i].mhrp )
 		{
 			size_t k;
 
-			for ( k = strlen(pb); k <= 47; ++k )
+			for ( k = strlen(pb); k <= 47; k += 1 )
 				pb[k] = 32;
 			pb[48] = 0;
 			sprintf(&pb[strlen(pb)], "%3d:", rel[i].rid);
@@ -461,7 +462,7 @@ static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_
 	int i;
 
 	relscp = 0;
-	for ( i = 1; i < elf->ehp->e_shnum; ++i )
+	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
 		relscp = elf->scp[i];
 		if ( relscp->shr.sh_type == SHT_REL && scp == relscp->info )
@@ -498,7 +499,7 @@ static void search_rel_data(const elf_rel *rpbase, unsigned int relentries, unsi
 
 	result->rid = -1;
 	result->rp = 0;
-	for ( j = 0; j < (int)relentries; ++j )
+	for ( j = 0; j < (int)relentries; j += 1 )
 	{
 		if ( rpbase[j].type != R_MIPSSCE_ADDEND && addr == rpbase[j].rel.r_offset )
 		{
@@ -553,8 +554,8 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 			strcpy((char *)cbuf, "........ ........");
 		}
 		if ( address <= addr )
-			++off1;
-		++addr;
+			off1 += 1;
+		addr += 1;
 	}
 	while ( (addr & 0xF) != 0 )
 	{
@@ -567,7 +568,7 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 			printf("\n");
 			strcpy((char *)cbuf, "........ ........");
 		}
-		++addr;
+		addr += 1;
 	}
 }
 
@@ -770,7 +771,7 @@ void print_elf_symtbl(const elf_section *scp, unsigned int flag)
 		printf("   ###: name        bind       type        st_value  st_size st_shndx\n");
 		printf("   ---  ----------- ---------- ----------- ---------- ------ ------------------\n");
 	}
-	for ( i = 1; i < entirse; ++i )
+	for ( i = 1; i < entirse; i += 1 )
 	{
 		printf("   %3u: ", i);
 		if ( syp[i]->name && strlen(syp[i]->name) > 0xB )
@@ -808,7 +809,7 @@ static const char * num2name(const struct name2num *table, unsigned int num)
 	{
 		if ( num == table->num )
 			return table->name;
-		++table;
+		table += 1;
 	}
 	sprintf(buf_28, "? 0x%x", num);
 	return buf_28;
@@ -911,7 +912,8 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 		i_1 = 0;
 		while ( cpend_1 > cp_1 )
 		{
-			printf("   %3d(%5d): %s\n", i_1++, (int)(cp_1 - symbol->cbSs_Ptr), cp_1);
+			printf("   %3d(%5d): %s\n", i_1, (int)(cp_1 - symbol->cbSs_Ptr), cp_1);
+			i_1 += 1;
 			cp_1 += strlen(cp_1) + 1;
 		}
 		printf("\n");
@@ -928,7 +930,8 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 		i_2 = 0;
 		while ( cpend_2 > cp_2 )
 		{
-			printf("   %3d(%5d): %s\n", i_2++, (int)(cp_2 - symbol->cbSsExt_Ptr), cp_2);
+			printf("   %3d(%5d): %s\n", i_2, (int)(cp_2 - symbol->cbSsExt_Ptr), cp_2);
+			i_2 += 1;
 			cp_2 += strlen(cp_2) + 1;
 		}
 		printf("\n");
@@ -940,7 +943,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 		ep = (extr *)symbol->cbExt_Ptr;
 		printf("  External symbols\n");
-		for ( i_3 = 0; symbol->head.iextMax > i_3; ++i_3 )
+		for ( i_3 = 0; symbol->head.iextMax > i_3; i_3 += 1 )
 		{
 			unsigned int idx_1;
 			unsigned int class_1;
@@ -953,13 +956,13 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 			printf(", 0x%08x", ep->asym.value);
 			printf(", %8s:%-7s 0x%05x ", num2name(SymbolTypes, type_1), num2name(StorageClasse, class_1), idx_1);
 			printf("%s\n", &symbol->cbSsExt_Ptr[ep->asym.iss]);
-			++ep;
+			ep += 1;
 		}
 		printf("\n");
 	}
 	printf("  Local informations\n");
 	fdrp = (fdr *)symbol->cbFd_Ptr;
-	for ( ifd = 0; symbol->head.ifdMax > ifd; ++ifd )
+	for ( ifd = 0; symbol->head.ifdMax > ifd; ifd += 1 )
 	{
 		const char *issBase;
 
@@ -972,7 +975,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 			syp_1 = (symr *)&symbol->cbSym_Ptr[sizeof(symr) * fdrp->isymBase];
 			printf("      Local symbols\n");
-			for ( i_4 = 0; fdrp->csym > i_4; ++i_4 )
+			for ( i_4 = 0; fdrp->csym > i_4; i_4 += 1 )
 			{
 				unsigned int idx_2;
 				unsigned int class_2;
@@ -984,7 +987,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 				printf("      %3d: 0x%08x", i_4, syp_1->value);
 				printf(", %10s:%-10s 0x%05x ", num2name(SymbolTypes, type_2), num2name(StorageClasse, class_2), idx_2);
 				printf("%s\n", &issBase[syp_1->iss]);
-				++syp_1;
+				syp_1 += 1;
 			}
 		}
 		if ( fdrp->cline > 0 )
@@ -1006,7 +1009,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 			syp_2 = (symr *)&symbol->cbSym_Ptr[sizeof(symr) * fdrp->isymBase];
 			pdrp_2 = (pdr *)&symbol->cbPd_Ptr[sizeof(pdr) * fdrp->ipdFirst];
 			printf("      Procedures\n");
-			for ( i_5 = 0; i_5 < fdrp->cpd; ++i_5 )
+			for ( i_5 = 0; i_5 < fdrp->cpd; i_5 += 1 )
 			{
 				printf("      %3d: 0x%08x  %s\n", i_5, pdrp_2->adr, &issBase[syp_2[pdrp_2->isym].iss]);
 				printf(
@@ -1024,7 +1027,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 					pdrp_2->lnLow,
 					pdrp_2->lnHigh);
 				printf("           iline=%d, cbLineOffset=%d\n", pdrp_2->iline, (int)(pdrp_2->cbLineOffset));
-				++pdrp_2;
+				pdrp_2 += 1;
 			}
 		}
 		if ( fdrp->caux > 0 )
@@ -1034,8 +1037,11 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 			printf("      Auxillary symbol entries\n");
 			ip_1 = (unsigned int *)&symbol->cbAux_Ptr[sizeof(unsigned int) * fdrp->iauxBase];
-			for ( i_6 = 0; fdrp->caux > i_6; ++i_6 )
-				printf("      %3d: 0x%08lx \n", i_6, (unsigned long)(*ip_1++));
+			for ( i_6 = 0; fdrp->caux > i_6; i_6 += 1 )
+			{
+				printf("      %3d: 0x%08lx \n", i_6, (unsigned long)(*ip_1));
+				ip_1 += 1;
+			}
 		}
 		if ( fdrp->crfd > 0 )
 		{
@@ -1044,11 +1050,14 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 			printf("      File indirect entries\n");
 			ip_2 = (unsigned int *)&symbol->cbRfd_Ptr[sizeof(unsigned int) * fdrp->rfdBase];
-			for ( i_7 = 0; fdrp->crfd > i_7; ++i_7 )
-				printf("      %3d: 0x%08lx \n", i_7, (unsigned long)(*ip_2++));
+			for ( i_7 = 0; fdrp->crfd > i_7; i_7 += 1 )
+			{
+				printf("      %3d: 0x%08lx \n", i_7, (unsigned long)(*ip_2));
+				ip_2 += 1;
+			}
 		}
 		printf("\n");
-		++fdrp;
+		fdrp += 1;
 	}
 	printf("\n");
 }

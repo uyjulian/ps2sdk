@@ -145,28 +145,32 @@ Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 
 static int  bgetc(struct fstrbuf *fb)
 {
+	int ret;
+
 	if ( fb->ep <= fb->cp )
 		return -1;
 	if ( *fb->cp == '\n' )
 	{
-		++fb->line;
+		fb->line += 1;
 		fb->col = 0;
 	}
 	else
 	{
-		++fb->col;
+		fb->col += 1;
 	}
-	return *fb->cp++;
+	ret = (unsigned char)(*fb->cp);
+	fb->cp += 1;
+	return ret;
 }
 
 static void  bungetc(struct fstrbuf *fb)
 {
 	if ( fb->cp > fb->buf )
 	{
-		--fb->cp;
-		--fb->col;
+		fb->cp -= 1;
+		fb->col -= 1;
 		if ( *fb->cp == '\n' )
-			--fb->line;
+			fb->line -= 1;
 	}
 }
 
@@ -202,7 +206,8 @@ static int  gettoken(char **strbuf, struct fstrbuf *fb)
 		ch_ = bgetc(fb);
 		if ( ch_ == -1 || (ch_ != '.' && ch_ != '_' && ch_ != '*' && isalnum(ch_) == 0) )
 			break;
-		*cp++ = (char)(ch_ & 0xFF);
+		*cp = (char)(ch_ & 0xFF);
+		cp += 1;
 	}
 	if ( ch_ != -1 )
 		bungetc(fb);
@@ -229,9 +234,10 @@ static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 			result->str = cp;
 			result->line = fb->line;
 			result->col = fb->col;
-			++result;
+			result += 1;
 			result->str = 0;
-			*cp++ = (char)(cuchar & 0xFF);
+			*cp = (char)(cuchar & 0xFF);
+			cp += 1;
 			gettoken(&cp, fb);
 		}
 		else if ( cuchar == '#' )
@@ -243,10 +249,12 @@ static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 			result->str = cp;
 			result->line = fb->line;
 			result->col = fb->col;
-			++result;
+			result += 1;
 			result->str = 0;
-			*cp++ = (char)(cuchar & 0xFF);
-			*cp++ = 0;
+			*cp = (char)(cuchar & 0xFF);
+			cp += 1;
+			*cp = 0;
+			cp += 1;
 		}
 	}
 }
@@ -301,7 +309,8 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 		
 		if ( !strcmp(ltp->str, "{") )
 		{
-			sltp = ltp++;
+			sltp = ltp;
+			ltp += 1;
 			v14[entries].tkcode = TC_VECTOR;
 			v14[entries].value.subtree = make_conf_vector(&ltp);
 			if ( !ltp->str || strcmp(ltp->str, "}") != 0 )
@@ -309,7 +318,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 				fprintf(stderr, "make_conf_vector(): missing '}' line:%d col=%d\n", sltp->line, sltp->col);
 				exit(1);
 			}
-			++ltp;
+			ltp += 1;
 		}
 		else
 		{
@@ -324,7 +333,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 			}
 			if ( *ltp->str == '@' )
 			{
-				for ( kt = keyword_table; kt->code >= 0 && strcmp(kt->name, ltp->str + 1) != 0; ++kt )
+				for ( kt = keyword_table; kt->code >= 0 && strcmp(kt->name, ltp->str + 1) != 0; kt += 1 )
 					;
 				if ( kt->code < 0 )
 				{
@@ -337,9 +346,11 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 			{
 				v14[entries].tkcode = TC_STRING;
 			}
-			v14[entries].value.subtree = (TokenTree *)ltp++;
+			v14[entries].value.subtree = (TokenTree *)ltp;
+			ltp += 1;
 		}
-		v14[++entries].tkcode = TC_NULL;
+		entries += 1;
+		v14[entries].tkcode = TC_NULL;
 	}
 	*lowtokens = ltp;
 	return v14;
@@ -367,8 +378,8 @@ static int  get_vector_len(TokenTree *ttp)
 	v2 = 0;
 	while ( ttp->tkcode )
 	{
-		++v2;
-		++ttp;
+		v2 += 1;
+		ttp += 1;
 	}
 	return v2;
 }
@@ -380,8 +391,8 @@ static int  get_stringvector_len(const char * *str)
 	v2 = 0;
 	while ( *str )
 	{
-		++v2;
-		++str;
+		v2 += 1;
+		str += 1;
 	}
 	return v2;
 }
@@ -505,7 +516,7 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 				entries_1 = get_vector_len(arg);
 				seglist = (SegConf *)calloc(entries_1 + 1, sizeof(SegConf));
 				result->segment_list = seglist;
-				for ( m = 0; entries_1 > m; ++m )
+				for ( m = 0; entries_1 > m; m += 1 )
 				{
 					seglist[m].name = arg[m].value.lowtoken->str;
 					seglist[m].sect_name_patterns = (const char * *)calloc(1, sizeof(const char *));
@@ -513,7 +524,7 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 				break;
 			case TC_Memory_segment:
 				entries_4 = get_vector_len(arg);
-				for ( i = 0; entries_4 > i; ++i )
+				for ( i = 0; entries_4 > i; i += 1 )
 				{
 					segp = lookup_segment(result, arg[i].value.lowtoken->str, 1);
 					if ( !segp )
@@ -525,7 +536,7 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 				entries_2 = get_vector_len(arg);
 				phrlist = (PheaderInfo *)calloc(entries_2 + 1, sizeof(PheaderInfo));
 				result->program_header_order = phrlist;
-				for ( j = 0; entries_2 > j; ++j )
+				for ( j = 0; entries_2 > j; j += 1 )
 				{
 					switch ( arg[j].tkcode )
 					{
@@ -538,7 +549,7 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 							nseg = get_vector_len(subarg);
 							phrlist[j].sw = SRX_PH_TYPE_TEXT;
 							phrlist[j].d.segment_list = (SegConf **)calloc(nseg + 1, sizeof(SegConf *));
-							for ( n = 0; nseg > n; ++n )
+							for ( n = 0; nseg > n; n += 1 )
 							{
 								phrlist[j].d.segment_list[n] = lookup_segment(
 																			 result,
@@ -556,7 +567,7 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 			case TC_CreateSymbols:
 				entries_3 = get_vector_len(arg);
 				result->create_symbols = (CreateSymbolConf *)calloc(entries_3 + 1, sizeof(CreateSymbolConf));
-				for ( k = 0; entries_3 > k; ++k )
+				for ( k = 0; entries_3 > k; k += 1 )
 				{
 					if ( arg[k].tkcode != TC_VECTOR || get_vector_len(arg[k].value.subtree) != 6 )
 					{
@@ -608,7 +619,7 @@ static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag)
 		{
 			flag |= SHF_EXECINSTR;
 		}
-		++ttp;
+		ttp += 1;
 	}
 	*rtype = type;
 	*rflag = flag;
@@ -692,7 +703,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				if ( ttp1->tkcode == TC_segment && ttp1[1].tkcode == TC_VECTOR )
 				{
 					bitid = 0;
-					for ( ttp2_1 = ttp1[1].value.subtree; ttp2_1->tkcode; ++ttp2_1 )
+					for ( ttp2_1 = ttp1[1].value.subtree; ttp2_1->tkcode; ttp2_1 += 1 )
 					{
 						seg_1 = lookup_segment(result, ttp2_1->value.lowtoken->str, 1);
 						if ( !seg_1 )
@@ -703,7 +714,8 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					if ( bitid )
 					{
 						result->section_list[nsect].sect_name_pattern = str;
-						result->section_list[nsect++].flag = bitid;
+						result->section_list[nsect].flag = bitid;
+						nsect += 1;
 						result->section_list = (SectConf *)realloc(result->section_list, (nsect + 1) * sizeof(SectConf));
 						result->section_list[nsect].sect_name_pattern = 0;
 						result->section_list[nsect].flag = 0;
@@ -724,7 +736,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 							result->section_list[nsect - 1].sectflag = sectflag;
 						}
 						seg_2 = NULL;
-						for ( ttp2_2 = ttp1[1].value.subtree; ; ++ttp2_2 )
+						for ( ttp2_2 = ttp1[1].value.subtree; ; ttp2_2 += 1 )
 						{
 							if ( ttp2_2->tkcode == TC_NULL )
 							{
@@ -811,9 +823,9 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 						seg_3 = lookup_segment(result, ttp1->value.lowtoken->str, 1);
 						if ( seg_3 )
 						{
-							for ( strp = seg_3->sect_name_patterns; *strp; ++strp )
+							for ( strp = seg_3->sect_name_patterns; *strp; strp += 1 )
 								result->file_layout_order = add_stringvector(result->file_layout_order, *strp);
-							++ttp1;
+							ttp1 += 1;
 							continue;
 						}
 					}
@@ -863,7 +875,6 @@ static int  check_srx_gen_table(Srx_gen_table *tp)
 	SectConf *sctp;
 	int nsegment;
 	int b;
-	int i;
 	int error;
 	unsigned int defbitid;
 	unsigned int downdelta;
@@ -874,19 +885,18 @@ static int  check_srx_gen_table(Srx_gen_table *tp)
 	for ( 
 		scnfp = tp->segment_list;
 		scnfp && scnfp->name;
-		++scnfp )
-		++nsegment;
+		scnfp += 1 )
+		nsegment += 1;
 	defbitid = 0;
 	oldbitid = 0;
 	error = 0;
-	i = 0;
-	for ( sctp = tp->section_list; sctp->sect_name_pattern; ++sctp )
+	for ( sctp = tp->section_list; sctp->sect_name_pattern; sctp += 1 )
 	{
 		check_change_bit(oldbitid, sctp->flag, &updelta, &downdelta);
 		if ( (defbitid & updelta) != 0 )
 		{
-			++error;
-			for ( b = 0; nsegment > b; ++b )
+			error += 1;
+			for ( b = 0; nsegment > b; b += 1 )
 			{
 				if ( (sctp->flag & (1 << b)) != 0 )
 				{
@@ -898,7 +908,6 @@ static int  check_srx_gen_table(Srx_gen_table *tp)
 		oldbitid = sctp->flag;
 		check_change_bit(oldbitid, sctp[1].flag, &updelta, &downdelta);
 		defbitid |= downdelta;
-		++i;
 	}
 	return error;
 }

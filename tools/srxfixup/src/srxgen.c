@@ -154,7 +154,7 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 		{
 			if ( order->type == EFS_TYPE_SECTION_HEADER_TABLE )
 				return order;
-			++order;
+			order += 1;
 		}
 		return 0;
 	}
@@ -167,7 +167,7 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 		{
 			if ( order->type == EFS_TYPE_PROGRAM_HEADER_ENTRY && order->d.php == &elf->php[n] )
 				return order;
-			++order;
+			order += 1;
 		}
 		return 0;
 	}
@@ -176,7 +176,7 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 		switch ( order->type )
 		{
 			case EFS_TYPE_PROGRAM_HEADER_ENTRY:
-				for ( scp = order->d.php->scp; *scp; ++scp )
+				for ( scp = order->d.php->scp; *scp; scp += 1 )
 				{
 					if ( !sect_name_match(ordstr, (*scp)->name) )
 						return order;
@@ -189,7 +189,7 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 			default:
 				break;
 		}
-		++order;
+		order += 1;
 	}
 	return 0;
 }
@@ -226,7 +226,7 @@ int  layout_srx_file(elf_file *elf)
 	rebuild_section_name_strings(elf);
 	rebuild_symbol_name_strings(elf);
 	order = build_file_order_list(elf);
-	for ( maxslot = 0; order[maxslot].type != EFS_TYPE_END; ++maxslot )
+	for ( maxslot = 0; order[maxslot].type != EFS_TYPE_END; maxslot += 1 )
 		;
 	neworder = (Elf_file_slot *)calloc(maxslot + 1, sizeof(Elf_file_slot));
 	memcpy(neworder, order, sizeof(Elf_file_slot));
@@ -238,32 +238,33 @@ int  layout_srx_file(elf_file *elf)
 		nslotp = neworder + 2;
 		order[1].type = EFS_TYPE_NONE;
 	}
-	for ( ordstr = tp->file_layout_order; *ordstr; ++ordstr )
+	for ( ordstr = tp->file_layout_order; *ordstr; ordstr += 1 )
 	{
 		while ( 1 )
 		{
 			slotp_1 = search_order_slots(*ordstr, elf, order);
 			if ( !slotp_1 )
 				break;
-			memcpy(nslotp++, slotp_1, sizeof(Elf_file_slot));
+			memcpy(nslotp, slotp_1, sizeof(Elf_file_slot));
+			nslotp += 1;
 			slotp_1->type = EFS_TYPE_NONE;
 		}
 	}
 	nslotp->type = EFS_TYPE_END;
 	shrink_file_order_list(neworder);
 	writeback_file_order_list(elf, neworder);
-	for ( slotp_2 = neworder; slotp_2->type != EFS_TYPE_END; ++slotp_2 )
+	for ( slotp_2 = neworder; slotp_2->type != EFS_TYPE_END; slotp_2 += 1 )
 	{
 		if ( slotp_2->type == EFS_TYPE_PROGRAM_HEADER_ENTRY && slotp_2->d.php->phdr.p_type == PT_LOAD && max_seg_align < slotp_2->align )
 		{
 			fprintf(stderr, "Program Header Entry: unsupported align %u\n", slotp_2->align);
-			++error;
-			for ( scp = slotp_2->d.php->scp; *scp; ++scp )
+			error += 1;
+			for ( scp = slotp_2->d.php->scp; *scp; scp += 1 )
 			{
 				if ( max_seg_align < (*scp)->shr.sh_addralign )
 				{
 					fprintf(stderr, "Section '%s' : unsupported section align %d\n", (*scp)->name, (int)((*scp)->shr.sh_addralign));
-					++error;
+					error += 1;
 				}
 			}
 		}
@@ -296,8 +297,11 @@ void  strip_elf(elf_file *elf)
 		if ( syp[s]->refcount <= 0 )
 			syp[s]->number = -1;
 		else
-			syp[d++] = syp[s];
-		++s;
+		{
+			syp[d] = syp[s];
+			d += 1;
+		}
+		s += 1;
 	}
 	scp->shr.sh_size = d * scp->shr.sh_entsize;
 }
@@ -306,7 +310,7 @@ SegConf * lookup_segment(Srx_gen_table *conf, const char * segname, int msgsw)
 {
 	SegConf *i;
 
-	for ( i = conf->segment_list; i->name; ++i )
+	for ( i = conf->segment_list; i->name; i += 1 )
 	{
 		if ( !strcmp(segname, i->name) )
 			return i;
@@ -334,7 +338,7 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 	entrise = relsect->shr.sh_size / relsect->shr.sh_entsize;
 	rp = (elf_rel *)relsect->data;
 	symp = (elf_syment **)relsect->link->data;
-	for ( i = 0; entrise > i; ++i )
+	for ( i = 0; entrise > i; i += 1 )
 	{
 		uint8_t *datal;
 
@@ -422,8 +426,8 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 					*(uint32_t *)datal &= 0xFFFF0000;
 					*(uint32_t *)datal |= data_3;
 				}
-				++rp;
-				++i;
+				rp += 1;
+				i += 1;
 				break;
 			case R_MIPS_REL32:
 			case R_MIPS_GOT16:
@@ -442,7 +446,7 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 				exit(1);
 				return;
 		}
-		++rp;
+		rp += 1;
 	}
 }
 
@@ -470,8 +474,11 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 		if ( elf->scp[s]->shr.sh_type == SHT_REL )
 			fixlocation_an_rel(elf->scp[s], startaddr);
 		else
-			elf->scp[d++] = elf->scp[s];
-		++s;
+		{
+			elf->scp[d] = elf->scp[s];
+			d += 1;
+		}
+		s += 1;
 	}
 	elf->ehp->e_shnum = d;
 	elf->ehp->e_entry += startaddr;
@@ -497,7 +504,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 		eemodinfo->entry += startaddr;
 		eemodinfo->gp_value += startaddr;
 	}
-	for ( i = 0; i < elf->ehp->e_phnum; ++i )
+	for ( i = 0; i < elf->ehp->e_phnum; i += 1 )
 	{
 		if ( elf->php[i].phdr.p_type == PT_LOAD )
 		{
@@ -506,7 +513,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 			break;
 		}
 	}
-	for ( j = 1; j < elf->ehp->e_shnum; ++j )
+	for ( j = 1; j < elf->ehp->e_shnum; j += 1 )
 	{
 		switch ( elf->scp[j]->shr.sh_type )
 		{
@@ -525,7 +532,7 @@ void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 	}
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	syp = (elf_syment **)scp->data;
-	for ( k = 1; entrise > k; ++k )
+	for ( k = 1; entrise > k; k += 1 )
 	{
 		if ( syp[k]->sym.st_shndx == SHN_RADDR || (syp[k]->sym.st_shndx && syp[k]->sym.st_shndx <= 0xFEFF) )
 			syp[k]->sym.st_value += startaddr;
@@ -547,7 +554,7 @@ static void  save_org_addrs(elf_file *elf)
 	else
 		data = 0;
 	reginfop = data;
-	for ( i = 1; i < elf->ehp->e_shnum; ++i )
+	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
 		Sect_org_data *org;
 
@@ -641,8 +648,8 @@ static void  add_reserved_symbol_table(Srx_gen_table *tp, const char * name, int
 	int entries;
 
 	entries = 1;
-	for ( newent_1 = tp->create_symbols; newent_1->name; ++newent_1 )
-		++entries;
+	for ( newent_1 = tp->create_symbols; newent_1->name; newent_1 += 1 )
+		entries += 1;
 	tp->create_symbols = (CreateSymbolConf *)realloc(tp->create_symbols, (entries + 1) * sizeof(CreateSymbolConf));
 	memset(&tp->create_symbols[entries], 0, sizeof(tp->create_symbols[entries]));
 	newent_2 = &tp->create_symbols[entries - 1];
@@ -676,7 +683,7 @@ static void  define_special_section_symbols(elf_file *elf)
 	sectname = (char *)__builtin_alloca(((elf->shstrptr->shr.sh_size + 22) >> 2) << 2);
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	syp = (elf_syment **)(scp->data);
-	for ( i = 1; entrise > i; ++i )
+	for ( i = 1; entrise > i; i += 1 )
 	{
 		sym = syp[i];
 		if ( sym->bind == STB_GLOBAL && !sym->sym.st_shndx )
@@ -710,7 +717,7 @@ static void  create_need_section(elf_file *elf)
 	{
 		return;
 	}
-	for ( i = 1; i < (signed int)(scp->shr.sh_size / scp->shr.sh_entsize); ++i )
+	for ( i = 1; i < (signed int)(scp->shr.sh_size / scp->shr.sh_entsize); i += 1 )
 	{
 		const elf_syment *syment;
 
@@ -735,7 +742,7 @@ static void  create_need_section(elf_file *elf)
 				{
 					SectConf *odr;
 
-					for ( odr = tp->section_list; odr->sect_name_pattern; ++odr )
+					for ( odr = tp->section_list; odr->sect_name_pattern; odr += 1 )
 					{
 						if ( !sect_name_match(odr->sect_name_pattern, csym->sectname) && odr->secttype && odr->sectflag )
 						{
@@ -766,8 +773,8 @@ static int  sect_name_match(const char * pattern, const char * name)
 			return -1;
 		if ( *name < *pattern )
 			return 1;
-		++pattern;
-		++name;
+		pattern += 1;
+		name += 1;
 	}
 	if ( !*pattern && !*name )
 		return 0;
@@ -775,7 +782,7 @@ static int  sect_name_match(const char * pattern, const char * name)
 		return 0;
 	if ( *pattern != '*' )
 		return strcmp(pattern, name);
-	++pattern;
+	pattern += 1;
 	if ( strlen(name) < strlen(pattern) )
 		return strcmp(pattern, name);
 	return strcmp(pattern, &name[strlen(name) - strlen(pattern)]);
@@ -797,7 +804,7 @@ static int  reorder_section_table(elf_file *elf)
 	d = 1;
 	while ( *secorder )
 	{
-		for ( s = 1; sections > s; ++s )
+		for ( s = 1; sections > s; s += 1 )
 		{
 			if ( scp[s] )
 			{
@@ -805,11 +812,11 @@ static int  reorder_section_table(elf_file *elf)
 				{
 					elf->scp[d] = scp[s];
 					scp[s] = 0;
-					++d;
+					d += 1;
 				}
 			}
 		}
-		++secorder;
+		secorder += 1;
 	}
 	free(scp);
 	reorder_symtab(elf);
@@ -822,7 +829,7 @@ static void  create_phdr(elf_file *elf)
 	int i;
 
 	phip = ((Srx_gen_table *)(elf->optdata))->program_header_order;
-	for ( i = 0; phip[i].sw; ++i )
+	for ( i = 0; phip[i].sw; i += 1 )
 		;
 	elf->php = (i != 0) ? (elf_proghead *)malloc(i * sizeof(elf_proghead)) : NULL;
 	if ( elf->php != NULL )
@@ -835,7 +842,7 @@ static void  create_phdr(elf_file *elf)
 	{
 		int j;
 
-		for ( j = 0; phip[j].sw; ++j )
+		for ( j = 0; phip[j].sw; j += 1 )
 		{
 			switch ( phip[j].sw )
 			{
@@ -888,7 +895,7 @@ static void  segment_start_setup(SegConf *seglist, unsigned int bitid, const uns
 			seglist->addr = *moffset;
 			seglist->size = 0;
 		}
-		++seglist;
+		seglist += 1;
 	}
 }
 
@@ -900,11 +907,12 @@ static void  add_section_to_segment(SegConf *seglist, elf_section *scp, unsigned
 		{
 			if ( !seglist->nsect )
 				seglist->addr = scp->shr.sh_addr;
-			seglist->scp = (elf_section **)realloc(seglist->scp, (++seglist->nsect + 1) * sizeof(elf_section *));
+			seglist->nsect += 1;
+			seglist->scp = (elf_section **)realloc(seglist->scp, (seglist->nsect + 1) * sizeof(elf_section *));
 			seglist->scp[seglist->nsect - 1] = scp;
 			seglist->scp[seglist->nsect] = 0;
 		}
-		++seglist;
+		seglist += 1;
 	}
 }
 
@@ -921,7 +929,7 @@ static void  segment_end_setup(SegConf *seglist, unsigned int bitid, unsigned in
 			}
 			seglist->size = *moffset - seglist->addr;
 		}
-		++seglist;
+		seglist += 1;
 	}
 }
 
@@ -1010,7 +1018,7 @@ static void  update_programheader(elf_file *elf)
 			exit(1);
 			return;
 	}
-	for ( n = 0; phip[n].sw; ++n )
+	for ( n = 0; phip[n].sw; n += 1 )
 	{
 		if ( phip[n].sw == SRX_PH_TYPE_TEXT )
 		{
@@ -1022,7 +1030,10 @@ static void  update_programheader(elf_file *elf)
 				nseg_1 = 0;
 				nsect_1 = 0;
 				while ( segp[nseg_1] )
-					nsect_1 += segp[nseg_1++]->nsect;
+				{
+					nsect_1 += segp[nseg_1]->nsect;
+					nseg_1 += 1;
+				}
 				scp = (elf_section **)calloc(nsect_1 + 1, sizeof(elf_section *));
 				elf->php[n].scp = scp;
 				nseg_2 = 0;
@@ -1030,9 +1041,10 @@ static void  update_programheader(elf_file *elf)
 				while ( segp[nseg_2] )
 				{
 					memcpy(&scp[nsect_2], segp[nseg_2]->scp, segp[nseg_2]->nsect * sizeof(elf_section *));
-					nsect_2 += segp[nseg_2++]->nsect;
+					nsect_2 += segp[nseg_2]->nsect;
+					nseg_2 += 1;
 				}
-				for ( s = 0; nsect_2 > s && scp[s]->shr.sh_type == SHT_PROGBITS; ++s )
+				for ( s = 0; nsect_2 > s && scp[s]->shr.sh_type == SHT_PROGBITS; s += 1 )
 				{
 					if ( scp[s]->shr.sh_addralign > align )
 						align = scp[s]->shr.sh_addralign;
@@ -1043,7 +1055,7 @@ static void  update_programheader(elf_file *elf)
 				{
 					if ( scp[s]->shr.sh_addralign > align )
 						align = scp[s]->shr.sh_addralign;
-					++s;
+					s += 1;
 				}
 				elf->php[n].phdr.p_align = align;
 			}
@@ -1067,17 +1079,20 @@ static void  remove_unuse_section(elf_file *elf)
 	d = 0;
 	while ( *sectnames )
 	{
-		for ( i = 1; sections > i; ++i )
+		for ( i = 1; sections > i; i += 1 )
 		{
 			if ( elf->scp[i] )
 			{
 				if ( !sect_name_match(*sectnames, elf->scp[i]->name) )
-					dscp[d++] = elf->scp[i];
+				{
+					dscp[d] = elf->scp[i];
+					d += 1;
+				}
 			}
 		}
-		++sectnames;
+		sectnames += 1;
 	}
-	for ( j = 0; sections > j; ++j )
+	for ( j = 0; sections > j; j += 1 )
 	{
 		if ( dscp[j] )
 			remove_section_by_name(elf, dscp[j]->name);
@@ -1111,12 +1126,12 @@ static int  layout_srx_memory(elf_file *elf)
 	sections = elf->ehp->e_shnum;
 	scp = (elf_section **)calloc(sections + 1, sizeof(elf_section *));
 	memcpy(scp, elf->scp, sections * sizeof(elf_section *));
-	for ( odr = tp->section_list; odr->sect_name_pattern; ++odr )
+	for ( odr = tp->section_list; odr->sect_name_pattern; odr += 1 )
 	{
 		check_change_bit(oldbitid, odr->flag, &updelta, &downdelta);
 		if ( updelta )
 			segment_start_setup(tp->segment_list, updelta, &moffset);
-		for ( s_1 = 1; sections > s_1; ++s_1 )
+		for ( s_1 = 1; sections > s_1; s_1 += 1 )
 		{
 			if ( scp[s_1] && !sect_name_match(odr->sect_name_pattern, scp[s_1]->name) && (scp[s_1]->shr.sh_flags & SHF_ALLOC) != 0 )
 			{
@@ -1132,19 +1147,19 @@ static int  layout_srx_memory(elf_file *elf)
 		if ( downdelta )
 			segment_end_setup(tp->segment_list, downdelta, &moffset, is_ee);
 	}
-	for ( s_2 = 1; sections > s_2; ++s_2 )
+	for ( s_2 = 1; sections > s_2; s_2 += 1 )
 	{
 		if ( scp[s_2] && (scp[s_2]->shr.sh_flags & SHF_ALLOC) != 0 )
 		{
 			for ( s_3 = 1;
 						sections > s_3
 				 && (!scp[s_3] || (scp[s_3]->shr.sh_type != SHT_RELA && scp[s_3]->shr.sh_type != SHT_REL) || scp[s_2] != scp[s_3]->info);
-						++s_3 );
+						s_3 += 1 );
 			if ( sections > s_3 )
 			{
 				fprintf(stderr, "Error: section '%s' needs allocation and has relocation data but not in program segment\n", scp[s_2]->name);
 				scp[s_3] = 0;
-				++error;
+				error += 1;
 			}
 			else
 			{
@@ -1169,7 +1184,7 @@ static CreateSymbolConf * is_reserve_symbol(Srx_gen_table *tp, const char * name
 
 	if ( !name )
 		return 0;
-	for ( csyms = tp->create_symbols; csyms->name; ++csyms )
+	for ( csyms = tp->create_symbols; csyms->name; csyms += 1 )
 	{
 		if ( !strcmp(csyms->name, name) )
 			return csyms;
@@ -1189,7 +1204,7 @@ static int  check_undef_symboles_an_reloc(elf_section *relsect)
 	rp = (elf_rel *)relsect->data;
 	symp = (elf_syment **)relsect->link->data;
 	undefcount = 0;
-	for ( i = 0; entrise > i; ++i )
+	for ( i = 0; entrise > i; i += 1 )
 	{
 		if ( *symp != rp->symptr )
 		{
@@ -1207,16 +1222,16 @@ static int  check_undef_symboles_an_reloc(elf_section *relsect)
 					{
 						fprintf(stderr, "  `%s' unknown symbol type %x\n", rp->symptr->name, rp->symptr->sym.st_shndx);
 					}
-					++undefcount;
+					undefcount += 1;
 				}
 			}
 			else if ( rp->symptr->bind != STB_WEAK )
 			{
 				fprintf(stderr, "  undefined reference to `%s'\n", rp->symptr->name);
-				++undefcount;
+				undefcount += 1;
 			}
 		}
-		++rp;
+		rp += 1;
 	}
 	return undefcount;
 }
@@ -1229,7 +1244,7 @@ static int  check_undef_symboles(elf_file *elf)
 	if ( !elf->scp )
 		return 0;
 	err = 0;
-	for ( s = 1; s < elf->ehp->e_shnum; ++s )
+	for ( s = 1; s < elf->ehp->e_shnum; s += 1 )
 	{
 		if ( elf->scp[s]->shr.sh_type == SHT_REL )
 			err += check_undef_symboles_an_reloc(elf->scp[s]);
@@ -1258,7 +1273,7 @@ static int  create_reserved_symbols(elf_file *elf)
 	csyms_ = 0;
 	if ( !search_section(elf, SHT_SYMTAB) )
 		return 1;
-	for ( csyms = tp->create_symbols; csyms->name; ++csyms )
+	for ( csyms = tp->create_symbols; csyms->name; csyms += 1 )
 	{
 		elf_syment *sym;
 
@@ -1296,7 +1311,7 @@ static int  create_reserved_symbols(elf_file *elf)
 				if ( sym->sym.st_shndx )
 				{
 					fprintf(stderr, "Unexcepted Symbol \"%s\":%s \n", sym->name, SymbolType[sym->type]);
-					++csyms_;
+					csyms_ += 1;
 				}
 				else
 				{
@@ -1385,7 +1400,7 @@ static void  symbol_value_update(elf_file *elf)
 	}
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	syp = (elf_syment **)scp->data;
-	for ( i = 1; entrise > i; ++i )
+	for ( i = 1; entrise > i; i += 1 )
 	{
 		if ( syp[i]->sym.st_shndx )
 		{
@@ -1403,7 +1418,7 @@ static void  rebuild_relocation(elf_file *elf, unsigned int gpvalue)
 	{
 		return;
 	}
-	for ( s = 1; s < elf->ehp->e_shnum; ++s )
+	for ( s = 1; s < elf->ehp->e_shnum; s += 1 )
 	{
 		if ( elf->scp[s]->shr.sh_type == SHT_REL )
 			rebuild_an_relocation(elf->scp[s], gpvalue, ((Srx_gen_table *)(elf->optdata))->target);
@@ -1416,7 +1431,7 @@ static int  check_irx12(elf_file *elf, int cause_irx1)
 
 	if ( elf->ehp->e_type != ET_SCE_IOPRELEXEC )
 		return 0;
-	for ( s = 1; s < elf->ehp->e_shnum; ++s )
+	for ( s = 1; s < elf->ehp->e_shnum; s += 1 )
 	{
 		if ( elf->scp[s]->shr.sh_type == SHT_REL && relocation_is_version2(elf->scp[s]) )
 		{
@@ -1496,7 +1511,7 @@ static void  setup_module_info(elf_file *elf, elf_section *modsect, const char *
 	{
 		return;
 	}
-	for ( i = 0; i < elf->ehp->e_phnum; ++i )
+	for ( i = 0; i < elf->ehp->e_phnum; i += 1 )
 	{
 		if ( elf->php[i].scp && (modsect == *elf->php[i].scp) )
 		{
@@ -1599,7 +1614,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				break;
 			case R_MIPS_HI16:
 				datah = *(uint32_t *)daddr_1 << 16;
-				for ( j_1 = i_1 + 1; entrise > j_1 && rp[next].type == R_MIPS_HI16; ++j_1 )
+				for ( j_1 = i_1 + 1; entrise > j_1 && rp[next].type == R_MIPS_HI16; j_1 += 1 )
 				{
 					if ( rp[next].symptr != rp->symptr )
 					{
@@ -1617,7 +1632,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 						fprintf(stderr, "R_MIPS_HI16s not same offsets\n");
 						exit(1);
 					}
-					++next;
+					next += 1;
 				}
 				if ( j_1 == entrise + 1 || rp[next].type != R_MIPS_LO16 || rp[next].symptr != rp->symptr )
 				{
@@ -1637,7 +1652,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				}
 				else if ( v4 )
 				{
-					for ( j_2 = 0; next > j_2; ++j_2 )
+					for ( j_2 = 0; next > j_2; j_2 += 1 )
 					{
 						daddr_2 = (void *)&relsect->info->data[rp[j_2].rel.r_offset];
 						*(uint32_t *)daddr_2 &= 0xFFFF0000;
@@ -1652,7 +1667,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 							*(uint32_t *)daddr_2 |= (uint16_t)(step >> 2);
 						}
 						rp[j_2].type = R_MIPS_NONE;
-						--rp[j_2].symptr->refcount;
+						rp[j_2].symptr->refcount -= 1;
 						rp[j_2].symptr = *symp;
 					}
 					rp->type = R_MIPSSCE_MHI16;
@@ -1667,7 +1682,7 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 				else
 				{
 					data32_2 = (uint16_t)(((data32_1 >> 15) + 1) >> 1);
-					for ( j_3 = 0; next > j_3; ++j_3 )
+					for ( j_3 = 0; next > j_3; j_3 += 1 )
 					{
 						daddr_3 = (void *)&relsect->info->data[rp[j_3].rel.r_offset];
 						*(uint32_t *)daddr_3 &= 0xFFFF0000;
@@ -1768,11 +1783,11 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 		while ( next > 0 )
 		{
 			rp->rel.r_offset += relsect->info->shr.sh_addr;
-			--rp->symptr->refcount;
+			rp->symptr->refcount -= 1;
 			rp->symptr = *symp;
-			++i_1;
-			++rp;
-			--next;
+			i_1 += 1;
+			rp += 1;
+			next -= 1;
 		}
 	}
 	if ( rmflag > 0 )
@@ -1791,11 +1806,12 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 		{
 			if ( s->type )
 			{
-				memcpy(d++, s, sizeof(elf_rel));
-				++newentrise;
+				memcpy(d, s, sizeof(elf_rel));
+				d += 1;
+				newentrise += 1;
 			}
-			++i_2;
-			++s;
+			i_2 += 1;
+			s += 1;
 		}
 		free(relsect->data);
 		relsect->data = (uint8_t *)newtab;
@@ -1821,7 +1837,7 @@ int  relocation_is_version2(elf_section *relsect)
 
 	entrise = relsect->shr.sh_size / relsect->shr.sh_entsize;
 	rp = (elf_rel *)relsect->data;
-	for ( i = 0; entrise > i; ++i )
+	for ( i = 0; entrise > i; i += 1 )
 	{
 		switch ( rp->type )
 		{
@@ -1832,13 +1848,13 @@ int  relocation_is_version2(elf_section *relsect)
 			case R_MIPS_HI16:
 				if ( i == entrise + 1 || rp[1].type != R_MIPS_LO16 || rp[1].symptr != rp->symptr )
 					return 1;
-				++rp;
-				++i;
+				rp += 1;
+				i += 1;
 				break;
 			default:
 				break;
 		}
-		++rp;
+		rp += 1;
 	}
 	return 0;
 }
@@ -1881,7 +1897,7 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 	printf("===============\nTarget is %s(%d)\n", v1, tp->target);
 	printf("Segment list\n");
 	v8 = 0;
-	for ( scnfp = tp->segment_list; scnfp->name; ++scnfp )
+	for ( scnfp = tp->segment_list; scnfp->name; scnfp += 1 )
 	{
 		printf("  %2d:segment %s\n", v8, scnfp->name);
 		printf(
@@ -1892,7 +1908,7 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 			scnfp->nsect);
 		if ( scnfp->sect_name_patterns )
 		{
-			for ( strp = scnfp->sect_name_patterns; *strp; ++strp )
+			for ( strp = scnfp->sect_name_patterns; *strp; strp += 1 )
 				printf("%s ", *strp);
 			printf("\n");
 		}
@@ -1900,14 +1916,15 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 			printf("        Auto add section: %s\n", scnfp->empty_section->name);
 		if ( scnfp->scp )
 		{
-			for ( scp = scnfp->scp; *scp; ++scp )
+			for ( scp = scnfp->scp; *scp; scp += 1 )
 				printf("        %p: %s\n", *scp, (*scp)->name);
 		}
-		segsig[v8++] = *scnfp->name;
+		segsig[v8] = *scnfp->name;
+		v8 += 1;
 	}
 	printf("\nProgram header order\n");
 	scp_ = 0;
-	for ( phip = tp->program_header_order; phip->sw; ++phip )
+	for ( phip = tp->program_header_order; phip->sw; phip += 1 )
 	{
 		switch ( phip->sw )
 		{
@@ -1916,33 +1933,39 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 				break;
 			case SRX_PH_TYPE_TEXT:
 				printf("  %2d: Segments ", scp_);
-				for ( scnfpp = (const char ***)phip->d.section_name; *scnfpp; ++scnfpp )
+				for ( scnfpp = (const char ***)phip->d.section_name; *scnfpp; scnfpp += 1 )
 					printf("%s ", **scnfpp);
 				printf("\n");
 				break;
 			default:
 				break;
 		}
-		++scp_;
+		scp_ += 1;
 	}
 	printf("\nRemove section list\n");
 	scp_a = 0;
-	for ( strp = tp->removesection_list; *strp; printf("  %2d: %s\n", scp_a++, *strp++) )
-		;
+	for ( strp = tp->removesection_list; *strp; scp_a += 1, strp += 1 )
+	{
+		printf("  %2d: %s\n", scp_a, *strp);
+	}
 	printf("\nSection table order\n");
 	nsegment = 0;
-	for ( strp = tp->section_table_order; *strp; printf("  %2d: %s\n", nsegment++, *strp++) )
-		;
+	for ( strp = tp->section_table_order; *strp; nsegment += 1, strp += 1 )
+	{
+		printf("  %2d: %s\n", nsegment, *strp);
+	}
 	printf("\nFile layout order\n");
 	b = 0;
-	for ( strp = tp->file_layout_order; *strp; printf("  %2d: %s\n", b++, *strp++) )
-		;
+	for ( strp = tp->file_layout_order; *strp; b += 1, strp += 1 )
+	{
+		printf("  %2d: %s\n", b, *strp);
+	}
 	printf("\nmemory layout order\n");
 	i = 0;
-	for ( sctp = tp->section_list; sctp->sect_name_pattern; ++sctp )
+	for ( sctp = tp->section_list; sctp->sect_name_pattern; sctp += 1 )
 	{
 		printf("  %2d: [", i);
-		for ( scnfp_ = 0; v8 > scnfp_; ++scnfp_ )
+		for ( scnfp_ = 0; v8 > scnfp_; scnfp_ += 1 )
 		{
 			printf("%c", ( (sctp->flag & (1 << scnfp_)) != 0 ) ? (unsigned char)(segsig[scnfp_]) : 46);
 		}
@@ -1950,10 +1973,10 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 		if ( sctp->secttype )
 			printf("\t: Auto create type=%x flag=%x", sctp->secttype, sctp->sectflag);
 		printf("\n");
-		++i;
+		i += 1;
 	}
 	printf("\nReserved symbols\n");
-	for ( csyms = tp->create_symbols; csyms->name; ++csyms )
+	for ( csyms = tp->create_symbols; csyms->name; csyms += 1 )
 	{
 		printf(
 			"   %-8s: bind=%d, type=%d, shindex=0x%04x, seflag=%d, seg=%s, sect=%s\n",

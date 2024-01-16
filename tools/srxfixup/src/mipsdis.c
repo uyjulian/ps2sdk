@@ -1587,7 +1587,7 @@ void  format_disasm(Disasm_result *dis, char *buf)
 
 		sprintf(s, "  %-8s", dis->mnemonic);
 		sa = &s[strlen(s)];
-		for ( i = 0; dis->operands[i].tag; ++i )
+		for ( i = 0; dis->operands[i].tag; i += 1 )
 		{
 			format_operand(&dis->operands[i], sa);
 			if ( dis->operands[i + 1].tag )

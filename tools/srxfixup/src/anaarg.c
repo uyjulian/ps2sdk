@@ -20,7 +20,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 	int argca;
 	char **argva;
 
-	for ( i = 0; dopttable[i].option; ++i )
+	for ( i = 0; dopttable[i].option; i += 1 )
 		;
 	opttable = (Opttable *)__builtin_alloca((argc + i) * sizeof(Opttable));
 	memset(opttable, 0, (argc + i) * sizeof(Opttable));
@@ -32,13 +32,13 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 	*nargv = *argv;
 	nargc = 1;
 	argva = argv + 1;
-	for ( argca = argc - 1; ; --argca )
+	for ( argca = argc - 1; ; argca -= 1 )
 	{
 		if ( argca <= 0 )
 		{
-			for ( i = 0; i < nargc + 1; ++i )
+			for ( i = 0; i < nargc + 1; i += 1 )
 				argvp[i] = nargv[i];
-			for ( i = 0; opttable[i].option; ++i )
+			for ( i = 0; opttable[i].option; i += 1 )
 			{
 				if ( opttable[i].vartype == 'l' )
 				{
@@ -50,7 +50,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 		if ( **argva == '-' )
 		{
 			opt = 0;
-			for ( i = 0; opttable[i].option; ++i )
+			for ( i = 0; opttable[i].option; i += 1 )
 			{
 				if ( opttable[i].havearg == ARG_HAVEARG_UNK3 )
 				{
@@ -74,8 +74,8 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 				else if ( argca > 1 )
 				{
 					opt = argva[1];
-					++argva;
-					--argca;
+					argva += 1;
+					argca -= 1;
 				}
 			}
 			if ( opttable[i].havearg != ARG_HAVEARG_REQUIRED || opt )
@@ -102,9 +102,9 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 					case 'i':
 						if ( opt != NULL )
 						{
-							for ( otp = igadd; opttable < otp; --otp )
+							for ( otp = igadd; opttable < otp; otp -= 1 )
 								*otp = otp[-1];
-							++igadd;
+							igadd += 1;
 							opttable->option = opt;
 							opttable->vartype = 'n';
 							opttable->havearg = ARG_HAVEARG_UNK3;
@@ -151,9 +151,10 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 		}
 		else
 		{
-			nargv[nargc++] = *argva;
+			nargv[nargc] = *argva;
+			nargc += 1;
 		}
-		++argva;
+		argva += 1;
 	}
 }
 
