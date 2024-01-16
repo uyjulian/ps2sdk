@@ -251,6 +251,7 @@ static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 	}
 }
 
+// clang-format off
 struct keyword_table_
 {
 	int code;
@@ -272,6 +273,7 @@ struct keyword_table_
 	{ 15, "CreateSymbols" },
 	{ -1, NULL }
 };
+// clang-format on
 
 static TokenTree * make_conf_vector(LowToken **lowtokens)
 {
