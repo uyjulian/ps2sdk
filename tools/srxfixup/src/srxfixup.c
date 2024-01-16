@@ -328,8 +328,8 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 	elf_syment **symp;
 	elf_rel *rp;
 	int rmcount;
-	signed int entrise;
-	signed int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	entrise = relsect->shr.sh_size / relsect->shr.sh_entsize;
 	rp = (elf_rel *)relsect->data;
@@ -337,7 +337,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 	rmcount = 0;
 	for ( i = 0; entrise > i; ++i )
 	{
-		int type;
+		unsigned int type;
 		uint8_t *daddr;
 
 		if ( *symp != rp->symptr )
@@ -350,7 +350,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		{
 			fprintf(
 				stderr,
-				"Panic !! relocation #%d offset=0x%x range out (section limit addr=0x%x-0x%x)\n",
+				"Panic !! relocation #%u offset=0x%x range out (section limit addr=0x%x-0x%x)\n",
 				i,
 				rp->rel.r_offset,
 				relsect->info->shr.sh_addr,
@@ -405,7 +405,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		elf_rel *s;
 		elf_rel *d;
 		elf_rel *newtab;
-		signed int j;
+		unsigned int j;
 
 		newtab = (elf_rel *)calloc(entrise - rmcount, sizeof(elf_rel));
 		d = newtab;

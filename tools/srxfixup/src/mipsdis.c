@@ -334,13 +334,13 @@ static const char * const REGC1[2][32] =
 };
 
 typedef void (*Operand_func)(Disasm_result *result);
-typedef struct _opcode_table_entry 
+typedef struct opcode_table_entry_
 {
 	const char * mnemonic; 
-	const struct _opcode_table *subtable; 
+	const struct opcode_table_ *subtable; 
 	Operand_func opfunc;
 } Opcode_table_entry;
-typedef struct _opcode_table 
+typedef struct opcode_table_
 {
 	int bit_pos; 
 	unsigned int bit_mask; 

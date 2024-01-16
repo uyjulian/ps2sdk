@@ -111,29 +111,29 @@ typedef struct _hdrr
 {
 	short int magic;
 	short int vstamp;
-	int ilineMax;
-	int cbLine;
-	int cbLineOffset;
-	int idnMax;
-	int cbDnOffset;
-	int ipdMax;
-	int cbPdOffset;
-	int isymMax;
-	int cbSymOffset;
-	int ioptMax;
-	int cbOptOffset;
-	int iauxMax;
-	int cbAuxOffset;
-	int issMax;
-	int cbSsOffset;
-	int issExtMax;
-	int cbSsExtOffset;
-	int ifdMax;
-	int cbFdOffset;
-	int crfd;
-	int cbRfdOffset;
-	int iextMax;
-	int cbExtOffset;
+	unsigned int ilineMax;
+	unsigned int cbLine;
+	unsigned int cbLineOffset;
+	unsigned int idnMax;
+	unsigned int cbDnOffset;
+	unsigned int ipdMax;
+	unsigned int cbPdOffset;
+	unsigned int isymMax;
+	unsigned int cbSymOffset;
+	unsigned int ioptMax;
+	unsigned int cbOptOffset;
+	unsigned int iauxMax;
+	unsigned int cbAuxOffset;
+	unsigned int issMax;
+	unsigned int cbSsOffset;
+	unsigned int issExtMax;
+	unsigned int cbSsExtOffset;
+	unsigned int ifdMax;
+	unsigned int cbFdOffset;
+	unsigned int crfd;
+	unsigned int cbRfdOffset;
+	unsigned int iextMax;
+	unsigned int cbExtOffset;
 } hdrr;
 typedef struct _fdr
 {
@@ -246,7 +246,7 @@ typedef struct _elf_section
 	Elf32_Shdr shr;
 	uint8_t *data;
 	const char * name;
-	int number;
+	unsigned int number;
 	struct _elf_section *link;
 	struct _elf_section *info;
 	void *optdata;
@@ -255,9 +255,9 @@ typedef struct _syment
 {
 	Elf32_Sym sym;
 	const char * name;
-	int number;
+	unsigned int number;
 	int bind;
-	int type;
+	unsigned int type;
 	elf_section *shptr;
 	int refcount;
 } elf_syment;
@@ -265,7 +265,7 @@ typedef struct _rel
 {
 	Elf32_Rel rel;
 	elf_syment *symptr;
-	int type;
+	unsigned int type;
 } elf_rel;
 typedef struct _elf_proghead
 {
@@ -288,7 +288,7 @@ typedef struct _elf_file_slot
 {
 	unsigned int offset;
 	unsigned int size;
-	int align;
+	unsigned int align;
 	int type;
 	union _elf_file_slot_d
 	{
@@ -407,15 +407,15 @@ typedef struct disasm_result
 extern int analize_arguments(const Opttable *dopttable, int argc, char **argv);
 
 // elfdump.c
-extern void print_elf(const elf_file *elf, int flag);
-extern void print_elf_ehdr(const elf_file *elf, int flag);
-extern void print_elf_phdr(const elf_file *elf, int flag);
-extern void print_elf_sections(const elf_file *elf, int flag);
-extern void print_elf_reloc(const elf_section *scp, int flag);
-extern void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag);
-extern void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag);
-extern void print_elf_symtbl(const elf_section *scp, int flag);
-extern void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag);
+extern void print_elf(const elf_file *elf, unsigned int flag);
+extern void print_elf_ehdr(const elf_file *elf, unsigned int flag);
+extern void print_elf_phdr(const elf_file *elf, unsigned int flag);
+extern void print_elf_sections(const elf_file *elf, unsigned int flag);
+extern void print_elf_reloc(const elf_section *scp, unsigned int flag);
+extern void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int flag);
+extern void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned int flag);
+extern void print_elf_symtbl(const elf_section *scp, unsigned int flag);
+extern void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int flag);
 
 // elflib.c
 extern elf_file *read_elf(const char * filename);
@@ -432,7 +432,7 @@ extern int is_defined_symbol(const elf_syment *sym);
 extern elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int value, elf_section *scp, int st_shndx);
 extern unsigned int get_symbol_value(const elf_syment *sym, const elf_file *elf);
 extern void reorder_symtab(elf_file *elf);
-extern int adjust_align(int value, int align);
+extern unsigned int adjust_align(unsigned int value, unsigned int align);
 extern void rebuild_section_name_strings(elf_file *elf);
 extern void rebuild_symbol_name_strings(elf_file *elf);
 extern Elf_file_slot *build_file_order_list(const elf_file *elf);
@@ -471,7 +471,7 @@ extern int  relocation_is_version2(elf_section *relsect);
 extern void  dump_srx_gen_table(Srx_gen_table *tp);
 
 // swapmem.c
-extern void  swapmemory(void *aaddr, const char * format, int times);
+extern void  swapmemory(void *aaddr, const char * format, unsigned int times);
 
 // eefixconf.c
 extern const char *ee_defaultconf;

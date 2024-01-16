@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct _sect_org_data
+typedef struct sect_org_data_
 {
 	unsigned int org_addr; 
 	unsigned int org_gp_value;
@@ -24,10 +24,10 @@ static void  create_need_section(elf_file *elf);
 static int  sect_name_match(const char * pattern, const char * name);
 static int  reorder_section_table(elf_file *elf);
 static void  create_phdr(elf_file *elf);
-static void  check_change_bit(int oldbit, int newbit, int *up, int *down);
-static void  segment_start_setup(SegConf *seglist, int bitid, const int *moffset);
-static void  add_section_to_segment(SegConf *seglist, elf_section *scp, int bitid);
-static void  segment_end_setup(SegConf *seglist, int bitid, int *moffset, int ee);
+static void  check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down);
+static void  segment_start_setup(SegConf *seglist, unsigned int bitid, const unsigned int *moffset);
+static void  add_section_to_segment(SegConf *seglist, elf_section *scp, unsigned int bitid);
+static void  segment_end_setup(SegConf *seglist, unsigned int bitid, unsigned int *moffset, int ee);
 static void  update_modinfo(elf_file *elf);
 static void  update_mdebug(elf_file *elf);
 static void  update_programheader(elf_file *elf);
@@ -42,8 +42,8 @@ static void  rebuild_relocation(elf_file *elf, unsigned int gpvalue);
 static int  check_irx12(elf_file *elf, int cause_irx1);
 static void  setup_module_info(elf_file *elf, elf_section *modsect, const char * modulesymbol);
 static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, int target);
-static int  iopmod_size(const Elf32_IopMod *modinfo);
-static int  eemod_size(const Elf32_EeMod *modinfo);
+static size_t  iopmod_size(const Elf32_IopMod *modinfo);
+static size_t  eemod_size(const Elf32_EeMod *modinfo);
 
 int  convert_rel2srx(elf_file *elf, const char * entrysym, int needoutput, int cause_irx1)
 {
@@ -160,7 +160,7 @@ static Elf_file_slot * search_order_slots(const char * ordstr, const elf_file *e
 	}
 	if ( !strncmp(ordstr, "@Program_header_data ", 0x15) )
 	{
-		int n;
+		long n;
 
 		n = strtol(ordstr + 21, NULL, 10);
 		while ( order->type != 100 )
@@ -204,7 +204,7 @@ int  layout_srx_file(elf_file *elf)
 	Elf_file_slot *neworder;
 	Elf_file_slot *order;
 	const char * *ordstr;
-	int max_seg_align;
+	unsigned int max_seg_align;
 	int error;
 	int maxslot;
 
@@ -256,11 +256,11 @@ int  layout_srx_file(elf_file *elf)
 	{
 		if ( slotp_2->type == 3 && slotp_2->d.php->phdr.p_type == PT_LOAD && max_seg_align < slotp_2->align )
 		{
-			fprintf(stderr, "Program Header Entry: unsupported align %d\n", slotp_2->align);
+			fprintf(stderr, "Program Header Entry: unsupported align %u\n", slotp_2->align);
 			++error;
 			for ( scp = slotp_2->d.php->scp; *scp; ++scp )
 			{
-				if ( max_seg_align < (signed int)(*scp)->shr.sh_addralign )
+				if ( max_seg_align < (*scp)->shr.sh_addralign )
 				{
 					fprintf(stderr, "Section '%s' : unsupported section align %d\n", (*scp)->name, (int)((*scp)->shr.sh_addralign));
 					++error;
@@ -277,9 +277,9 @@ void  strip_elf(elf_file *elf)
 {
 	elf_syment **syp;
 	elf_section *scp;
-	int entrise;
-	int d;
-	int s;
+	unsigned int entrise;
+	unsigned int d;
+	unsigned int s;
 
 	remove_section(elf, SHT_MIPS_DEBUG);
 	scp = search_section(elf, SHT_SYMTAB);
@@ -328,8 +328,8 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 	uint16_t data_5;
 	elf_syment **symp;
 	elf_rel *rp;
-	signed int entrise;
-	signed int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	entrise = relsect->shr.sh_size / relsect->shr.sh_entsize;
 	rp = (elf_rel *)relsect->data;
@@ -348,7 +348,7 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 		{
 			fprintf(
 				stderr,
-				"Panic !! relocation #%d offset=0x%x range out (section limit addr=0x%x-0x%x)\n",
+				"Panic !! relocation #%u offset=0x%x range out (section limit addr=0x%x-0x%x)\n",
 				i,
 				rp->rel.r_offset,
 				relsect->info->shr.sh_addr,
@@ -448,9 +448,9 @@ static void  fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 
 void  fixlocation_elf(elf_file *elf, unsigned int startaddr)
 {
-	int entrise;
+	unsigned int entrise;
 	int i;
-	int k;
+	unsigned int k;
 	int d;
 	int s;
 	int j;
@@ -663,8 +663,8 @@ static void  define_special_section_symbols(elf_file *elf)
 	const elf_syment *sym;
 	elf_syment **syp;
 	elf_section *scp;
-	int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 	Srx_gen_table *tp;
 
 	tp = (Srx_gen_table *)(elf->optdata);
@@ -673,7 +673,7 @@ static void  define_special_section_symbols(elf_file *elf)
 	{
 		return;
 	}
-	sectname = (char *)__builtin_alloca(4 * ((elf->shstrptr->shr.sh_size + 22) >> 2));
+	sectname = (char *)__builtin_alloca(((elf->shstrptr->shr.sh_size + 22) >> 2) << 2);
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	syp = (elf_syment **)(scp->data);
 	for ( i = 1; entrise > i; ++i )
@@ -873,13 +873,13 @@ static void  create_phdr(elf_file *elf)
 	}
 }
 
-static void  check_change_bit(int oldbit, int newbit, int *up, int *down)
+static void  check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down)
 {
 	*up = ~oldbit & newbit & (newbit ^ oldbit);
 	*down = ~newbit & oldbit & (newbit ^ oldbit);
 }
 
-static void  segment_start_setup(SegConf *seglist, int bitid, const int *moffset)
+static void  segment_start_setup(SegConf *seglist, unsigned int bitid, const unsigned int *moffset)
 {
 	while ( seglist->name )
 	{
@@ -892,7 +892,7 @@ static void  segment_start_setup(SegConf *seglist, int bitid, const int *moffset
 	}
 }
 
-static void  add_section_to_segment(SegConf *seglist, elf_section *scp, int bitid)
+static void  add_section_to_segment(SegConf *seglist, elf_section *scp, unsigned int bitid)
 {
 	while ( seglist->name )
 	{
@@ -908,7 +908,7 @@ static void  add_section_to_segment(SegConf *seglist, elf_section *scp, int biti
 	}
 }
 
-static void  segment_end_setup(SegConf *seglist, int bitid, int *moffset, int ee)
+static void  segment_end_setup(SegConf *seglist, unsigned int bitid, unsigned int *moffset, int ee)
 {
 	while ( seglist->name )
 	{
@@ -986,8 +986,8 @@ static void  update_programheader(elf_file *elf)
 	SegConf **segp;
 	elf_section **scp;
 	PheaderInfo *phip;
-	int minsegalign;
-	signed int align;
+	unsigned int minsegalign;
+	unsigned int align;
 	int nsect_1;
 	int nsect_2;
 	int nseg_1;
@@ -1034,14 +1034,14 @@ static void  update_programheader(elf_file *elf)
 				}
 				for ( s = 0; nsect_2 > s && scp[s]->shr.sh_type == SHT_PROGBITS; ++s )
 				{
-					if ( (signed int)scp[s]->shr.sh_addralign > align )
+					if ( scp[s]->shr.sh_addralign > align )
 						align = scp[s]->shr.sh_addralign;
 				}
 				elf->php[n].phdr.p_filesz = scp[s - 1]->shr.sh_size + scp[s - 1]->shr.sh_addr - (*scp)->shr.sh_addr;
 				elf->php[n].phdr.p_memsz = scp[nsect_2 - 1]->shr.sh_size + scp[nsect_2 - 1]->shr.sh_addr - (*scp)->shr.sh_addr;
 				while ( nsect_2 > s )
 				{
-					if ( (signed int)scp[s]->shr.sh_addralign > align )
+					if ( scp[s]->shr.sh_addralign > align )
 						align = scp[s]->shr.sh_addralign;
 					++s;
 				}
@@ -1096,10 +1096,10 @@ static int  layout_srx_memory(elf_file *elf)
 	int sections;
 	int s_1;
 	int s_2;
-	int downdelta;
-	int updelta;
-	int oldbitid;
-	int moffset;
+	unsigned int downdelta;
+	unsigned int updelta;
+	unsigned int oldbitid;
+	unsigned int moffset;
 
 	tp = (Srx_gen_table *)elf->optdata;
 	moffset = 0;
@@ -1182,8 +1182,8 @@ static int  check_undef_symboles_an_reloc(elf_section *relsect)
 	elf_syment **symp;
 	elf_rel *rp;
 	int undefcount;
-	signed int entrise;
-	signed int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	entrise = relsect->shr.sh_size / relsect->shr.sh_entsize;
 	rp = (elf_rel *)relsect->data;
@@ -1356,8 +1356,8 @@ static int  create_reserved_symbols(elf_file *elf)
 
 static void  symbol_value_update(elf_file *elf)
 {
-	int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 	elf_syment **syp;
 	elf_section *scp;
 	int target;
@@ -1437,7 +1437,7 @@ static void  setup_module_info(elf_file *elf, elf_section *modsect, const char *
 	int i;
 	char *buf;
 	const char *name;
-	int woff;
+	unsigned int woff;
 	size_t buflen;
 	const unsigned int *modnamep;
 	unsigned int *modidatap;
@@ -1512,9 +1512,9 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 	void * daddr_3;
 	uint32_t data32_1;
 	int data32_2;
-	int datah;
+	uint32_t datah;
 	uint32_t data_1;
-	int data_2;
+	uint32_t data_2;
 	uint32_t data_33;
 	uint16_t data_4;
 	unsigned int data_5;
@@ -1524,11 +1524,11 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 	elf_syment **symp;
 	elf_rel *rp;
 	int rmflag;
-	signed int entrise;
-	signed int j_1;
-	int j_2;
-	int j_3;
-	signed int i_1;
+	unsigned int entrise;
+	unsigned int j_1;
+	unsigned int j_2;
+	unsigned int j_3;
+	unsigned int i_1;
 
 	entrise = relsect->shr.sh_size / relsect->shr.sh_entsize;
 	rp = (elf_rel *)relsect->data;
@@ -1540,11 +1540,11 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 		int v4;
 		uint32_t symvalue;
 		void * daddr_1;
-		int next;
+		unsigned int next;
 
 		if ( relsect->info->shr.sh_size <= rp->rel.r_offset )
 		{
-			fprintf(stderr, "Panic !! relocation #%d offset=0x%x overflow (section size=0x%x)\n", i_1, rp->rel.r_offset, relsect->info->shr.sh_size);
+			fprintf(stderr, "Panic !! relocation #%u offset=0x%x overflow (section size=0x%x)\n", i_1, rp->rel.r_offset, relsect->info->shr.sh_size);
 			exit(1);
 		}
 		next = 1;
@@ -1608,11 +1608,11 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 					}
 					if ( relsect->info->shr.sh_size <= rp[next].rel.r_offset )
 					{
-						fprintf(stderr, "Panic !! relocation #%d offset=0x%x overflow (section size=0x%x)\n", i_1 + next, rp[next].rel.r_offset, relsect->info->shr.sh_size);
+						fprintf(stderr, "Panic !! relocation #%u offset=0x%x overflow (section size=0x%x)\n", i_1 + next, rp[next].rel.r_offset, relsect->info->shr.sh_size);
 						exit(1);
 					}
 					daddr_1 = (void *)&relsect->info->data[rp[next].rel.r_offset];
-					if ( (uint32_t)datah != *(uint32_t *)daddr_1 << 16 )
+					if ( datah != *(uint32_t *)daddr_1 << 16 )
 					{
 						fprintf(stderr, "R_MIPS_HI16s not same offsets\n");
 						exit(1);
@@ -1779,8 +1779,8 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 	{
 		elf_rel *s;
 		elf_rel *d;
-		int newentrise;
-		signed int i_2;
+		unsigned int newentrise;
+		unsigned int i_2;
 
 		newtab = (elf_rel *)calloc(entrise, sizeof(elf_rel));
 		d = newtab;
@@ -1803,12 +1803,12 @@ static void  rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, i
 	}
 }
 
-static int  iopmod_size(const Elf32_IopMod *modinfo)
+static size_t  iopmod_size(const Elf32_IopMod *modinfo)
 {
 	return strlen(modinfo->modulename) + 27;
 }
 
-static int  eemod_size(const Elf32_EeMod *modinfo)
+static size_t  eemod_size(const Elf32_EeMod *modinfo)
 {
 	return strlen(modinfo->modulename) + 43;
 }
@@ -1816,8 +1816,8 @@ static int  eemod_size(const Elf32_EeMod *modinfo)
 int  relocation_is_version2(elf_section *relsect)
 {
 	elf_rel *rp;
-	signed int entrise;
-	signed int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	entrise = relsect->shr.sh_size / relsect->shr.sh_entsize;
 	rp = (elf_rel *)relsect->data;
@@ -1892,7 +1892,7 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 			scnfp->nsect);
 		if ( scnfp->sect_name_patterns )
 		{
-			for ( strp = (const char **)scnfp->sect_name_patterns; *strp; ++strp )
+			for ( strp = scnfp->sect_name_patterns; *strp; ++strp )
 				printf("%s ", *strp);
 			printf("\n");
 		}
@@ -1927,15 +1927,15 @@ void  dump_srx_gen_table(Srx_gen_table *tp)
 	}
 	printf("\nRemove section list\n");
 	scp_a = 0;
-	for ( strp = (const char **)tp->removesection_list; *strp; printf("  %2d: %s\n", scp_a++, *strp++) )
+	for ( strp = tp->removesection_list; *strp; printf("  %2d: %s\n", scp_a++, *strp++) )
 		;
 	printf("\nSection table order\n");
 	nsegment = 0;
-	for ( strp = (const char **)tp->section_table_order; *strp; printf("  %2d: %s\n", nsegment++, *strp++) )
+	for ( strp = tp->section_table_order; *strp; printf("  %2d: %s\n", nsegment++, *strp++) )
 		;
 	printf("\nFile layout order\n");
 	b = 0;
-	for ( strp = (const char **)tp->file_layout_order; *strp; printf("  %2d: %s\n", b++, *strp++) )
+	for ( strp = tp->file_layout_order; *strp; printf("  %2d: %s\n", b++, *strp++) )
 		;
 	printf("\nmemory layout order\n");
 	i = 0;

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct _lowtoken 
+typedef struct lowtoken_
 {
 	const char * str; 
 	int line; 
@@ -31,12 +31,12 @@ enum TokenCode
 	TC_CreateSymbols = 15, 
 	TC_MAX_NUMBER = 16
 };
-typedef struct _TokenTree 
+typedef struct TokenTree_
 {
 	enum TokenCode tkcode; 
 	union TokenTree_value
 	{
-		struct _TokenTree *subtree; 
+		struct TokenTree_ *subtree; 
 		LowToken *lowtoken;
 	} value;
 } TokenTree;
@@ -65,14 +65,14 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result);
 static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag);
 static elf_section * make_empty_section(const char * name, int type, int flag);
 static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree);
-static void  check_change_bit(int oldbit, int newbit, int *up, int *down);
+static void  check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down);
 static int  check_srx_gen_table(Srx_gen_table *tp);
 
 Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 {
 	LowToken *lowtokens;
 	struct fstrbuf *fbuf;
-	int fsize;
+	unsigned int fsize;
 	FILE *fp;
 
 	fp = 0;
@@ -83,7 +83,7 @@ Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 	}
 	if ( infile )
 	{
-		fp = fopen(infile, "r");
+		fp = fopen(infile, "re");
 		if ( !fp )
 		{
 			fprintf(stderr, "\"%s\" can't open\n", infile);
@@ -202,7 +202,7 @@ static int  gettoken(char **strbuf, struct fstrbuf *fb)
 		ch_ = bgetc(fb);
 		if ( ch_ == -1 || (ch_ != '.' && ch_ != '_' && ch_ != '*' && isalnum(ch_) == 0) )
 			break;
-		*cp++ = ch_;
+		*cp++ = (char)(ch_ & 0xFF);
 	}
 	if ( ch_ != -1 )
 		bungetc(fb);
@@ -217,7 +217,7 @@ static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 	cp = strbuf;
 	while ( skipsp(fb) )
 	{
-		char cuchar;
+		int cuchar;
 
 		cuchar = bgetc(fb);
 		if ( cuchar == '@'
@@ -231,7 +231,7 @@ static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 			result->col = fb->col;
 			++result;
 			result->str = 0;
-			*cp++ = cuchar;
+			*cp++ = (char)(cuchar & 0xFF);
 			gettoken(&cp, fb);
 		}
 		else if ( cuchar == '#' )
@@ -245,13 +245,13 @@ static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 			result->col = fb->col;
 			++result;
 			result->str = 0;
-			*cp++ = cuchar;
+			*cp++ = (char)(cuchar & 0xFF);
 			*cp++ = 0;
 		}
 	}
 }
 
-struct _keyword_table
+struct keyword_table_
 {
 	int code;
 	const char * name;
@@ -275,7 +275,7 @@ struct _keyword_table
 
 static TokenTree * make_conf_vector(LowToken **lowtokens)
 {
-	struct _keyword_table *kt;
+	struct keyword_table_ *kt;
 	const LowToken *sltp;
 	LowToken *ltp;
 	int entries;
@@ -322,7 +322,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 			}
 			if ( *ltp->str == '@' )
 			{
-				for ( kt = keyword_table; kt->code >= 0 && strcmp(kt->name, (const char *)ltp->str + 1) != 0; ++kt )
+				for ( kt = keyword_table; kt->code >= 0 && strcmp(kt->name, ltp->str + 1) != 0; ++kt )
 					;
 				if ( kt->code < 0 )
 				{
@@ -828,7 +828,10 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 			case TC_VECTOR:
 				ttp = ttp->value.subtree;
 			default:
-				fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+				if ( ttp->value.lowtoken != NULL )
+				{
+					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+				}
 				free(result);
 				return 0;
 #pragma GCC diagnostic pop
@@ -846,7 +849,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 	}
 }
 
-static void  check_change_bit(int oldbit, int newbit, int *up, int *down)
+static void  check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down)
 {
 	*up = ~oldbit & newbit & (newbit ^ oldbit);
 	*down = ~newbit & oldbit & (newbit ^ oldbit);
@@ -860,15 +863,15 @@ static int  check_srx_gen_table(Srx_gen_table *tp)
 	int b;
 	int i;
 	int error;
-	int defbitid;
-	int downdelta;
-	int updelta;
-	int oldbitid;
+	unsigned int defbitid;
+	unsigned int downdelta;
+	unsigned int updelta;
+	unsigned int oldbitid;
 
 	nsegment = 0;
 	for ( 
 		scnfp = tp->segment_list;
-		scnfp->name;
+		scnfp && scnfp->name;
 		++scnfp )
 		++nsegment;
 	defbitid = 0;

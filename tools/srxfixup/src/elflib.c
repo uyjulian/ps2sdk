@@ -13,19 +13,19 @@ static void renumber_a_symtab(elf_section *scp);
 static void renumber_symtab(elf_file *elf);
 static void write_symtab(elf_file *elf, int sctindex, FILE *fp);
 static void write_rel(elf_file *elf, int sctindex, FILE *fp);
-static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE *fp);
+static void write_mips_symbolic(elf_mips_symbolic_data *sycb, unsigned int basepos, FILE *fp);
 static void reorder_an_symtab(elf_file *elf, elf_section *scp);
-static int search_string_table(const char * tbltop, int endindex, const char * str);
+static size_t search_string_table(const char * tbltop, size_t endindex, const char * str);
 static void rebuild_a_symbol_name_strings(elf_section *scp);
 static int comp_Elf_file_slot(const void *a1, const void *a2);
 
 elf_file *read_elf(const char * filename)
 {
-	int ident;
+	uint32_t ident;
 	elf_file *elf;
 	FILE *fp;
 
-	fp = fopen(filename, "rb");
+	fp = fopen(filename, "rbe");
 	if ( !fp )
 	{
 		fprintf(stderr, "`%s' can't open\n", filename);
@@ -147,8 +147,8 @@ elf_file *read_elf(const char * filename)
 		}
 		for ( i_4 = 0; ; ++i_4 )
 		{
-			signed int size;
-			signed int pos_3;
+			unsigned int size;
+			unsigned int pos_3;
 
 			if ( count_2 <= i_4 )
 			{
@@ -159,14 +159,14 @@ elf_file *read_elf(const char * filename)
 
 				for ( i_5 = 0; count_2 > i_5; ++i_5 )
 				{
-					signed int pos_4;
+					unsigned int pos_4;
 
 					pos_4 = elf->scp[i_5]->shr.sh_offset;
 					switch ( elf->scp[i_5]->shr.sh_type )
 					{
 						case SHT_SYMTAB:
 						case SHT_DYNSYM:
-							if ( pos_4 > 0
+							if ( pos_4 != 0
 								&& elf->scp[i_5]->shr.sh_size )
 							{
 								fseek(fp, pos_4, 0);
@@ -179,10 +179,10 @@ elf_file *read_elf(const char * filename)
 				}
 				for ( i_6 = 0; count_2 > i_6; ++i_6 )
 				{
-					signed int pos_5;
+					unsigned int pos_5;
 
 					pos_5 = elf->scp[i_6]->shr.sh_offset;
-					if ( elf->scp[i_6]->shr.sh_type == SHT_REL && pos_5 > 0 && elf->scp[i_6]->shr.sh_size )
+					if ( elf->scp[i_6]->shr.sh_type == SHT_REL && pos_5 != 0 && elf->scp[i_6]->shr.sh_size )
 					{
 						fseek(fp, pos_5, 0);
 						read_rel(elf, i_6, fp);
@@ -252,7 +252,7 @@ elf_file *read_elf(const char * filename)
 			}
 			pos_3 = elf->scp[i_4]->shr.sh_offset;
 			size = elf->scp[i_4]->shr.sh_size;
-			if ( pos_3 > 0 && size > 0 )
+			if ( pos_3 != 0 && size != 0 )
 			{
 				fseek(fp, pos_3, 0);
 				switch ( elf->scp[i_4]->shr.sh_type )
@@ -268,7 +268,7 @@ elf_file *read_elf(const char * filename)
 							fprintf(stderr, "%s: Could not read ELF section contents\n", filename);
 							exit(1);
 						}
-						swapmemory(elf->scp[i_4]->data, "l", (unsigned int)size >> 2);
+						swapmemory(elf->scp[i_4]->data, "l", size >> 2);
 						break;
 					case SHT_SYMTAB:
 					case SHT_NOBITS:
@@ -322,8 +322,8 @@ static void read_symtab(elf_file *elf, int sctindex, FILE *fp)
 {
 	elf_syment **result;
 	elf_section *sp_x;
-	int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	sp_x = elf->scp[sctindex];
 	entrise = sp_x->shr.sh_size / sp_x->shr.sh_entsize;
@@ -355,8 +355,8 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 	elf_syment **symp;
 	elf_rel *result;
 	elf_section *sp_x;
-	int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	sp_x = elf->scp[sctindex];
 	entrise = sp_x->shr.sh_size / sp_x->shr.sh_entsize;
@@ -403,9 +403,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbDnOffset > 0 )
 	{
-		int size_2;
+		size_t size_2;
 
-		size_2 = 8 * sycb->head.idnMax;
+		size_2 = 8L * sycb->head.idnMax;
 		sycb->cbDn_Ptr = (char *)malloc(size_2);
 		fseek(fp, sycb->head.cbDnOffset, 0);
 		if ( fread(sycb->cbDn_Ptr, size_2, 1, fp) != 1 )
@@ -417,9 +417,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbPdOffset > 0 )
 	{
-		int size_3;
+		size_t size_3;
 
-		size_3 = 52 * sycb->head.ipdMax;
+		size_3 = 52L * sycb->head.ipdMax;
 		sycb->cbPd_Ptr = (char *)malloc(size_3);
 		fseek(fp, sycb->head.cbPdOffset, 0);
 		if ( fread(sycb->cbPd_Ptr, size_3, 1, fp) != 1 )
@@ -431,9 +431,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbSymOffset > 0 )
 	{
-		int size_4;
+		size_t size_4;
 
-		size_4 = 12 * sycb->head.isymMax;
+		size_4 = 12L * sycb->head.isymMax;
 		sycb->cbSym_Ptr = (char *)malloc(size_4);
 		fseek(fp, sycb->head.cbSymOffset, 0);
 		if ( fread(sycb->cbSym_Ptr, size_4, 1, fp) != 1 )
@@ -445,9 +445,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbOptOffset > 0 )
 	{
-		int size_5;
+		size_t size_5;
 
-		size_5 = 12 * sycb->head.ioptMax;
+		size_5 = 12L * sycb->head.ioptMax;
 		sycb->cbOpt_Ptr = (char *)malloc(size_5);
 		fseek(fp, sycb->head.cbOptOffset, 0);
 		if ( fread(sycb->cbOpt_Ptr, size_5, 1, fp) != 1 )
@@ -459,9 +459,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbAuxOffset > 0 )
 	{
-		int size_6;
+		size_t size_6;
 
-		size_6 = 4 * sycb->head.iauxMax;
+		size_6 = 4L * sycb->head.iauxMax;
 		sycb->cbAux_Ptr = (char *)malloc(size_6);
 		fseek(fp, sycb->head.cbAuxOffset, 0);
 		if ( fread(sycb->cbAux_Ptr, size_6, 1, fp) != 1 )
@@ -499,9 +499,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbFdOffset > 0 )
 	{
-		int size_9;
+		size_t size_9;
 
-		size_9 = 72 * sycb->head.ifdMax;
+		size_9 = 72L * sycb->head.ifdMax;
 		sycb->cbFd_Ptr = (char *)malloc(size_9);
 		fseek(fp, sycb->head.cbFdOffset, 0);
 		if ( fread(sycb->cbFd_Ptr, size_9, 1, fp) != 1 )
@@ -513,9 +513,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbRfdOffset > 0 )
 	{
-		int size_A;
+		size_t size_A;
 
-		size_A = 4 * sycb->head.crfd;
+		size_A = 4L * sycb->head.crfd;
 		sycb->cbRfd_Ptr = (char *)malloc(size_A);
 		fseek(fp, sycb->head.cbRfdOffset, 0);
 		if ( fread(sycb->cbRfd_Ptr, size_A, 1, fp) != 1 )
@@ -527,9 +527,9 @@ static elf_mips_symbolic_data *read_mips_symbolic(FILE *fp)
 	}
 	if ( sycb->head.cbExtOffset > 0 )
 	{
-		int size_B;
+		size_t size_B;
 
-		size_B = 16 * sycb->head.iextMax;
+		size_B = 16L * sycb->head.iextMax;
 		sycb->cbExt_Ptr = (char *)malloc(size_B);
 		fseek(fp, sycb->head.cbExtOffset, 0);
 		if ( fread(sycb->cbExt_Ptr, size_B, 1, fp) != 1 )
@@ -560,7 +560,7 @@ int write_elf(elf_file *elf, const char * filename)
 {
 	FILE *fp;
 
-	fp = fopen(filename, "wb");
+	fp = fopen(filename, "wbe");
 	if ( !fp )
 	{
 		perror(filename);
@@ -631,11 +631,11 @@ int write_elf(elf_file *elf, const char * filename)
 		for ( i_5 = 0; count_2 > i_5; ++i_5 )
 		{
 			unsigned int size;
-			signed int pos;
+			unsigned int pos;
 
 			pos = elf->scp[i_5]->shr.sh_offset;
 			size = elf->scp[i_5]->shr.sh_size;
-			if ( pos > 0 && (int)size > 0 )
+			if ( pos != 0 && size != 0 )
 			{
 				fseek(fp, pos, 0);
 				switch ( elf->scp[i_5]->shr.sh_type )
@@ -685,8 +685,8 @@ int write_elf(elf_file *elf, const char * filename)
 static void renumber_a_symtab(elf_section *scp)
 {
 	elf_syment **syp;
-	signed int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	syp = (elf_syment **)scp->data;
@@ -717,8 +717,8 @@ static void write_symtab(elf_file *elf, int sctindex, FILE *fp)
 	Elf32_Sym sym;
 	elf_syment **syp;
 	elf_section *sp_x;
-	int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	sp_x = elf->scp[sctindex];
 	entrise = sp_x->shr.sh_size / sp_x->shr.sh_entsize;
@@ -739,8 +739,8 @@ static void write_rel(elf_file *elf, int sctindex, FILE *fp)
 	Elf32_Rel rel;
 	elf_rel *rp;
 	elf_section *sp_x;
-	int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	sp_x = elf->scp[sctindex];
 	entrise = sp_x->shr.sh_size / sp_x->shr.sh_entsize;
@@ -749,7 +749,7 @@ static void write_rel(elf_file *elf, int sctindex, FILE *fp)
 	for ( i = 0; entrise > i; ++i )
 	{
 		memcpy(&rel, &rp[i], sizeof(rel));
-		if ( rp[i].symptr->number == -1 )
+		if ( rp[i].symptr->number == (unsigned int)(-1) )
 		{
 			fprintf(stderr, "Internal error !!\n");
 			fprintf(stderr, " relocation entry have no symbol\nabort\n");
@@ -761,14 +761,14 @@ static void write_rel(elf_file *elf, int sctindex, FILE *fp)
 	}
 }
 
-static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE *fp)
+static void write_mips_symbolic(elf_mips_symbolic_data *sycb, unsigned int basepos, FILE *fp)
 {
-	int pos;
+	unsigned int pos;
 
 	pos = basepos + 96;
 	if ( sycb->head.cbLineOffset > 0 )
 	{
-		int size_1;
+		size_t size_1;
 
 		size_1 = sycb->head.cbLine;
 		sycb->head.cbLineOffset = pos;
@@ -778,9 +778,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbDnOffset > 0 )
 	{
-		int size_2;
+		size_t size_2;
 
-		size_2 = 8 * sycb->head.idnMax;
+		size_2 = 8L * sycb->head.idnMax;
 		sycb->head.cbDnOffset = pos;
 		pos += size_2;
 		fseek(fp, sycb->head.cbDnOffset, 0);
@@ -790,9 +790,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbPdOffset > 0 )
 	{
-		int size_3;
+		size_t size_3;
 
-		size_3 = 52 * sycb->head.ipdMax;
+		size_3 = 52L * sycb->head.ipdMax;
 		sycb->head.cbPdOffset = pos;
 		pos += size_3;
 		fseek(fp, sycb->head.cbPdOffset, 0);
@@ -802,9 +802,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbSymOffset > 0 )
 	{
-		int size_4;
+		size_t size_4;
 
-		size_4 = 12 * sycb->head.isymMax;
+		size_4 = 12L * sycb->head.isymMax;
 		sycb->head.cbSymOffset = pos;
 		pos += size_4;
 		fseek(fp, sycb->head.cbSymOffset, 0);
@@ -814,9 +814,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbOptOffset > 0 )
 	{
-		int size_5;
+		size_t size_5;
 
-		size_5 = 12 * sycb->head.ioptMax;
+		size_5 = 12L * sycb->head.ioptMax;
 		pos += size_5;
 		fseek(fp, sycb->head.cbOptOffset, 0);
 		swapmemory(sycb->cbOpt_Ptr, "lll", sycb->head.ioptMax);
@@ -825,9 +825,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbAuxOffset > 0 )
 	{
-		int size_6;
+		size_t size_6;
 
-		size_6 = 4 * sycb->head.iauxMax;
+		size_6 = 4L * sycb->head.iauxMax;
 		sycb->head.cbAuxOffset = pos;
 		pos += size_6;
 		fseek(fp, sycb->head.cbAuxOffset, 0);
@@ -837,7 +837,7 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbSsOffset > 0 )
 	{
-		int size_7;
+		size_t size_7;
 
 		size_7 = sycb->head.issMax;
 		sycb->head.cbSsOffset = pos;
@@ -847,7 +847,7 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbSsExtOffset > 0 )
 	{
-		int size_8;
+		size_t size_8;
 
 		size_8 = sycb->head.issExtMax;
 		sycb->head.cbSsExtOffset = pos;
@@ -857,9 +857,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbFdOffset > 0 )
 	{
-		int size_9;
+		size_t size_9;
 
-		size_9 = 72 * sycb->head.ifdMax;
+		size_9 = 72L * sycb->head.ifdMax;
 		sycb->head.cbFdOffset = pos;
 		pos += size_9;
 		fseek(fp, sycb->head.cbFdOffset, 0);
@@ -869,9 +869,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbRfdOffset > 0 )
 	{
-		int size_A;
+		size_t size_A;
 
-		size_A = 4 * sycb->head.crfd;
+		size_A = 4L * sycb->head.crfd;
 		sycb->head.cbRfdOffset = pos;
 		pos += size_A;
 		fseek(fp, sycb->head.cbRfdOffset, 0);
@@ -881,9 +881,9 @@ static void write_mips_symbolic(elf_mips_symbolic_data *sycb, int basepos, FILE 
 	}
 	if ( sycb->head.cbExtOffset > 0 )
 	{
-		int size_B;
+		size_t size_B;
 
-		size_B = 16 * sycb->head.iextMax;
+		size_B = 16L * sycb->head.iextMax;
 		sycb->head.cbExtOffset = pos;
 		fseek(fp, sycb->head.cbExtOffset, 0);
 		swapmemory(sycb->cbExt_Ptr, "sslll", sycb->head.iextMax);
@@ -997,8 +997,8 @@ unsigned int *get_section_data(elf_file *elf, unsigned int addr)
 
 elf_syment *search_global_symbol(const char * name, elf_file *elf)
 {
-	int entrise;
-	int i;
+	unsigned int entrise;
+	unsigned int i;
 	elf_syment **syp;
 	elf_section *scp;
 
@@ -1028,7 +1028,7 @@ int is_defined_symbol(const elf_syment *sym)
 
 elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int value, elf_section *scp, int st_shndx)
 {
-	int entrise;
+	unsigned int entrise;
 	elf_syment *sym;
 	elf_syment **newtab;
 	elf_section *symtbl;
@@ -1070,13 +1070,13 @@ static void reorder_an_symtab(elf_file *elf, elf_section *scp)
 	int sections;
 	elf_syment **oldtab;
 	elf_syment **newtab;
-	signed int entrise;
+	unsigned int entrise;
 	int sc;
 	unsigned int d;
-	int i;
-	int j;
-	int k;
-	int m;
+	unsigned int i;
+	unsigned int j;
+	unsigned int k;
+	unsigned int m;
 
 	sections = elf->ehp->e_shnum;
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
@@ -1146,7 +1146,7 @@ void reorder_symtab(elf_file *elf)
 	}
 }
 
-int adjust_align(int value, int align)
+unsigned int adjust_align(unsigned int value, unsigned int align)
 {
 	return ~(align - 1) & (align + value - 1);
 }
@@ -1179,9 +1179,9 @@ void rebuild_section_name_strings(elf_file *elf)
 	}
 }
 
-static int search_string_table(const char * tbltop, int endindex, const char * str)
+static size_t search_string_table(const char * tbltop, size_t endindex, const char * str)
 {
-	int idx;
+	size_t idx;
 
 	for ( idx = 1; endindex > idx; idx += strlen(&tbltop[idx]) + 1 )
 	{
@@ -1195,11 +1195,11 @@ static void rebuild_a_symbol_name_strings(elf_section *scp)
 {
 	elf_section *strtab;
 	elf_syment **syp;
-	int offset;
+	size_t offset;
 	size_t namesize;
-	signed int entrise;
-	int i_1;
-	int i_2;
+	unsigned int entrise;
+	unsigned int i_1;
+	unsigned int i_2;
 
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	strtab = scp->link;
@@ -1380,7 +1380,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 
 void  shrink_file_order_list(Elf_file_slot *efs)
 {
-	int slot;
+	unsigned int slot;
 
 	slot = 0;
 	while ( efs->type != 100 )
@@ -1436,7 +1436,7 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 
 void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 {
-	int offset;
+	unsigned int offset;
 	unsigned int size_tmp;
 	unsigned int offset_tmp;
 	char tmp[100];
@@ -1449,13 +1449,13 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 	printf("\n");
 	for ( slot = efs; slot->type != 100; ++slot )
 	{
-		int oldend_1;
-		int size_1;
-		signed int startpos_1;
+		unsigned int oldend_1;
+		unsigned int size_1;
+		unsigned int startpos_1;
 
 		oldend_1 = slot->size;
 		startpos_1 = slot->offset;
-		if ( oldend_1 <= 0 )
+		if ( oldend_1 == 0 )
 			offset = slot->offset;
 		else
 			offset = oldend_1 + startpos_1 - 1;
@@ -1483,7 +1483,7 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 				name = "internal error Unknown EFS type !!!!";
 				break;
 		}
-		if ( startpos_1 > (int)(offset_tmp + 1) )
+		if ( startpos_1 > offset_tmp + 1 )
 			printf("%36s = %08x-%08x (%06x)\n", "**Blank**", offset_tmp + 1, startpos_1 - 1, startpos_1 - offset_tmp - 1);
 		offset_tmp = size_1;
 		printf("%36s = %08x-%08x (%06x)\n", name, startpos_1, size_1, oldend_1);
@@ -1494,19 +1494,19 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 			size_tmp = slot->offset;
 			for ( i = 0; scp[i]; ++i )
 			{
-				int oldend_2;
-				int size_2;
-				signed int startpos_2;
+				unsigned int oldend_2;
+				unsigned int size_2;
+				unsigned int startpos_2;
 
 				if ( scp[i]->shr.sh_type == SHT_NOBITS )
 					oldend_2 = 0;
 				else
 					oldend_2 = scp[i]->shr.sh_size;
 				startpos_2 = scp[i]->shr.sh_offset;
-				size_2 = (oldend_2 <= 0) ? (scp[i]->shr.sh_offset) : (Elf32_Off)(oldend_2 + startpos_2 - 1);
+				size_2 = (oldend_2 == 0) ? (scp[i]->shr.sh_offset) : (Elf32_Off)(oldend_2 + startpos_2 - 1);
 				sprintf(tmp, "(%s)", scp[i]->name);
 				name = tmp;
-				if ( startpos_2 > (int)(size_tmp + 1) )
+				if ( startpos_2 > size_tmp + 1 )
 					printf("%36s | %08x-%08x (%06x)\n", "**Blank**", size_tmp + 1, startpos_2 - 1, startpos_2 - size_tmp - 1);
 				size_tmp = size_2;
 				printf("%36s | %08x-%08x (%06x)\n", name, startpos_2, size_2, scp[i]->shr.sh_size);

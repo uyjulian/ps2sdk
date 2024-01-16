@@ -14,17 +14,17 @@ struct rellink
 struct name2num 
 {
 	const char * name; 
-	int num;
+	unsigned int num;
 };
 
-static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, int *relentries, unsigned int *baseoff);
-static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int addr, struct rellink *result);
+static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, unsigned int *relentries, unsigned int *baseoff);
+static void search_rel_data(const elf_rel *rpbase, unsigned int relentries, unsigned int addr, struct rellink *result);
 static void dumpb(const char * head, unsigned int address, unsigned int size, const uint8_t *data);
 static void dumph(const char * head, unsigned int address, unsigned int size, const uint16_t *data);
 static void dumpw(const char * head, unsigned int address, unsigned int size, const uint32_t *data);
-static const char * num2name(const struct name2num *table, int num);
+static const char * num2name(const struct name2num *table, unsigned int num);
 
-void print_elf(const elf_file *elf, int flag)
+void print_elf(const elf_file *elf, unsigned int flag)
 {
 	if ( elf == NULL )
 	{
@@ -79,7 +79,7 @@ static const struct name2num E_machine_name[] =
 	{ NULL, 0 },
 };
 
-void print_elf_ehdr(const elf_file *elf, int flag)
+void print_elf_ehdr(const elf_file *elf, unsigned int flag)
 {
 	if ( (flag & 1) == 0 )
 	{
@@ -133,7 +133,7 @@ static const struct name2num P_type_name[] =
 	{ NULL, 0 },
 };
 
-void print_elf_phdr(const elf_file *elf, int flag)
+void print_elf_phdr(const elf_file *elf, unsigned int flag)
 {
 	int i;
 
@@ -183,7 +183,7 @@ static const struct name2num S_type_name[] =
 	{ NULL, 0 },
 };
 
-void print_elf_sections(const elf_file *elf, int flag)
+void print_elf_sections(const elf_file *elf, unsigned int flag)
 {
 	int i;
 
@@ -313,26 +313,26 @@ static const struct name2num R_MIPS_Type[] =
 	{ NULL, 0 },
 };
 
-void print_elf_reloc(const elf_section *scp, int flag)
+void print_elf_reloc(const elf_section *scp, unsigned int flag)
 {
 	const elf_rel *rp;
-	signed int entrise;
-	signed int i;
+	unsigned int entrise;
+	unsigned int i;
 
 	if ( (flag & 2) == 0 )
 	{
 		return;
 	}
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
-	if ( entrise > 0 )
+	if ( entrise != 0 )
 	{
 		printf("   ###: r_offset  r_type                r_sym\n");
 		printf("   ---  --------  --------------------  -----------------------------------\n");
 	}
 	rp = (elf_rel *)scp->data;
-	for ( i = 0; entrise > i; ++i )
+	for ( i = 0; i < entrise; ++i )
 	{
-		printf("   %3d: 0x%06x  0x%02x %-16s ", i, rp[i].rel.r_offset, rp[i].type, num2name(R_MIPS_Type, rp[i].type));
+		printf("   %3u: 0x%06x  0x%02x %-16s ", i, rp[i].rel.r_offset, rp[i].type, num2name(R_MIPS_Type, rp[i].type));
 		if ( rp[i].symptr->type == STT_SECTION )
 		{
 			printf("0x%03x[%s]\n", rp[i].rel.r_info >> 8, rp[i].symptr->shptr->name);
@@ -345,7 +345,7 @@ void print_elf_reloc(const elf_section *scp, int flag)
 	printf("\n");
 }
 
-void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
+void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int flag)
 {
 	int v7;
 	const elf_rel *rp;
@@ -356,10 +356,9 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 	unsigned int baseoff;
 	unsigned int addr;
 	const unsigned int *codes;
-	int relentries;
+	unsigned int relentries;
 	size_t steps;
 	int d;
-	int j;
 	int i;
 
 	if ( (flag & 8) == 0 )
@@ -384,6 +383,8 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 	{
 		if ( rel[i].rp && rel[i].rp->type == R_MIPSSCE_MHI16 )
 		{
+			int j;
+
 			j = i;
 			for ( d = (int16_t)(codes[i] & 0xFFFF); d; d = (int16_t)(codes[j] & 0xFFFF) )
 			{
@@ -398,8 +399,10 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 		format_disasm(dis[i], pb);
 		if ( rel[i].rp || rel[i].mhrp )
 		{
-			for ( j = strlen(pb); j <= 47; ++j )
-				pb[j] = 32;
+			size_t k;
+
+			for ( k = strlen(pb); k <= 47; ++k )
+				pb[k] = 32;
 			pb[48] = 0;
 			sprintf(&pb[strlen(pb)], "%3d:", rel[i].rid);
 			if ( rel[i].rp )
@@ -444,7 +447,7 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, int flag)
 	free(rel);
 }
 
-static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, int *relentries, unsigned int *baseoff)
+static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, unsigned int *relentries, unsigned int *baseoff)
 {
 	elf_section *relscp;
 	int i;
@@ -481,13 +484,13 @@ static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_
 	}
 }
 
-static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int addr, struct rellink *result)
+static void search_rel_data(const elf_rel *rpbase, unsigned int relentries, unsigned int addr, struct rellink *result)
 {
 	int j;
 
 	result->rid = -1;
 	result->rp = 0;
-	for ( j = 0; relentries > j; ++j )
+	for ( j = 0; j < (int)relentries; ++j )
 	{
 		if ( rpbase[j].type != R_MIPSSCE_ADDEND && addr == rpbase[j].rel.r_offset )
 		{
@@ -500,7 +503,7 @@ static void search_rel_data(const elf_rel *rpbase, int relentries, unsigned int 
 
 static void dumpb(const char * head, unsigned int address, unsigned int size, const uint8_t *data)
 {
-	char cbuf[20];
+	uint8_t cbuf[20];
 	unsigned int addr;
 	unsigned int off2;
 	unsigned int off1;
@@ -508,7 +511,7 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 	addr = address & 0xFFFFFFF0;
 	off1 = 0;
 	off2 = size;
-	strcpy(cbuf, "........ ........");
+	strcpy((char *)cbuf, "........ ........");
 	while ( off2 > off1 )
 	{
 		if ( (addr & 0xF) == 0 )
@@ -523,7 +526,7 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 			if ( data[off1] > 0x1F && data[off1] <= 0x7E )
 			{
 				unsigned int v4;
-				char *v5;
+				uint8_t *v5;
 
 				v4 = addr & 0xF;
 				if ( v4 <= 7 )
@@ -539,7 +542,7 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 		{
 			printf("%s", cbuf);
 			printf("\n");
-			strcpy(cbuf, "........ ........");
+			strcpy((char *)cbuf, "........ ........");
 		}
 		if ( address <= addr )
 			++off1;
@@ -554,7 +557,7 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 		{
 			printf("%s", cbuf);
 			printf("\n");
-			strcpy(cbuf, "........ ........");
+			strcpy((char *)cbuf, "........ ........");
 		}
 		++addr;
 	}
@@ -630,11 +633,11 @@ static void dumpw(const char * head, unsigned int address, unsigned int size, co
 	}
 }
 
-void print_elf_datadump(const elf_file *elf, const elf_section *scp, int flag)
+void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned int flag)
 {
 	elf_rel *rpbase;
 	struct rellink rel;
-	int relentries;
+	unsigned int relentries;
 	unsigned int baseoff;
 	unsigned int *dumpbuf;
 
@@ -740,11 +743,11 @@ static const struct name2num SymbolSpSection[] =
 	{ NULL, 0 },
 };
 
-void print_elf_symtbl(const elf_section *scp, int flag)
+void print_elf_symtbl(const elf_section *scp, unsigned int flag)
 {
 	elf_syment **syp;
-	signed int entirse;
-	int i;
+	unsigned int entirse;
+	unsigned int i;
 
 	if ( (flag & 4) == 0 )
 	{
@@ -757,9 +760,9 @@ void print_elf_symtbl(const elf_section *scp, int flag)
 		printf("   ###: name        bind       type        st_value  st_size st_shndx\n");
 		printf("   ---  ----------- ---------- ----------- ---------- ------ ------------------\n");
 	}
-	for ( i = 1; entirse > i; ++i )
+	for ( i = 1; i < entirse; ++i )
 	{
-		printf("   %3d: ", i);
+		printf("   %3u: ", i);
 		if ( syp[i]->name && strlen(syp[i]->name) > 0xB )
 		{
 			printf("%s\n                    ", syp[i]->name);
@@ -787,7 +790,7 @@ void print_elf_symtbl(const elf_section *scp, int flag)
 	printf("\n");
 }
 
-static const char * num2name(const struct name2num *table, int num)
+static const char * num2name(const struct name2num *table, unsigned int num)
 {
 	static char buf_28[30];
 
@@ -797,8 +800,7 @@ static const char * num2name(const struct name2num *table, int num)
 			return table->name;
 		++table;
 	}
-	memcpy(buf_28, "? ", 2);
-	sprintf(&buf_28[2], "0x%x", num);
+	sprintf(buf_28, "? 0x%x", num);
 	return buf_28;
 }
 
@@ -817,10 +819,10 @@ static const struct name2num StorageClasse[] =
 	{ NULL, 0 },
 };
 
-void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
+void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int flag)
 {
 	fdr *fdrp;
-	int ifd;
+	unsigned int ifd;
 
 	if ( (flag & 0x200) == 0 || symbol == NULL )
 	{
@@ -829,58 +831,58 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 	printf(" Symbol header\n");
 	printf("      magic=0x%x      vstamp=0x%x\n", symbol->head.magic, symbol->head.vstamp);
 	printf(
-		"      ilineMax= %4d   cbLine=       %6d    cbLineOffset=%d(0x%05x)\n",
+		"      ilineMax= %4u   cbLine=       %6u    cbLineOffset=%u(0x%05x)\n",
 		symbol->head.ilineMax,
 		symbol->head.cbLine,
 		symbol->head.cbLineOffset,
 		symbol->head.cbLineOffset);
 	printf(
-		"      idnMax=   %4d   cbDnOffset=   %6d(0x%05x)\n",
+		"      idnMax=   %4u   cbDnOffset=   %6u(0x%05x)\n",
 		symbol->head.idnMax,
 		symbol->head.cbDnOffset,
 		symbol->head.cbDnOffset);
 	printf(
-		"      ipdMax=   %4d   cbPdOffset=   %6d(0x%05x)\n",
+		"      ipdMax=   %4u   cbPdOffset=   %6u(0x%05x)\n",
 		symbol->head.ipdMax,
 		symbol->head.cbPdOffset,
 		symbol->head.cbPdOffset);
 	printf(
-		"      isymMax=  %4d   cbSymOffset=  %6d(0x%05x)\n",
+		"      isymMax=  %4u   cbSymOffset=  %6u(0x%05x)\n",
 		symbol->head.isymMax,
 		symbol->head.cbSymOffset,
 		symbol->head.cbSymOffset);
 	printf(
-		"      ioptMax=  %4d   cbOptOffset=  %6d(0x%05x)\n",
+		"      ioptMax=  %4u   cbOptOffset=  %6u(0x%05x)\n",
 		symbol->head.ioptMax,
 		symbol->head.cbOptOffset,
 		symbol->head.cbOptOffset);
 	printf(
-		"      iauxMax=  %4d   cbAuxOffset=  %6d(0x%05x)\n",
+		"      iauxMax=  %4u   cbAuxOffset=  %6u(0x%05x)\n",
 		symbol->head.iauxMax,
 		symbol->head.cbAuxOffset,
 		symbol->head.cbAuxOffset);
 	printf(
-		"      issMax=   %4d   cbSsOffset=   %6d(0x%05x)\n",
+		"      issMax=   %4u   cbSsOffset=   %6u(0x%05x)\n",
 		symbol->head.issMax,
 		symbol->head.cbSsOffset,
 		symbol->head.cbSsOffset);
 	printf(
-		"      issExtMax=%4d   cbSsExtOffset=%6d(0x%05x)\n",
+		"      issExtMax=%4u   cbSsExtOffset=%6u(0x%05x)\n",
 		symbol->head.issExtMax,
 		symbol->head.cbSsExtOffset,
 		symbol->head.cbSsExtOffset);
 	printf(
-		"      ifdMax=   %4d   cbFdOffset=   %6d(0x%05x)\n",
+		"      ifdMax=   %4u   cbFdOffset=   %6u(0x%05x)\n",
 		symbol->head.ifdMax,
 		symbol->head.cbFdOffset,
 		symbol->head.cbFdOffset);
 	printf(
-		"      crfd=     %4d   cbRfdOffset=  %6d(0x%05x)\n",
+		"      crfd=     %4u   cbRfdOffset=  %6u(0x%05x)\n",
 		symbol->head.crfd,
 		symbol->head.cbRfdOffset,
 		symbol->head.cbRfdOffset);
 	printf(
-		"      iextMax=  %4d   cbExtOffset=  %6d(0x%05x)\n",
+		"      iextMax=  %4u   cbExtOffset=  %6u(0x%05x)\n",
 		symbol->head.iextMax,
 		symbol->head.cbExtOffset,
 		symbol->head.cbExtOffset);
@@ -922,7 +924,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 	if ( symbol->head.iextMax > 0 )
 	{
 		extr *ep;
-		int i_3;
+		unsigned int i_3;
 
 		ep = (extr *)symbol->cbExt_Ptr;
 		printf("  External symbols\n");
@@ -935,7 +937,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 			type_1 = ep->asym.sy_bits & 0x3F;
 			class_1 = (ep->asym.sy_bits >> 6) & 0x1F;
 			idx_1 = ep->asym.sy_bits >> 12;
-			printf("   %3d: res,ifd=%04x,%04hx", i_3, ep->reserved, (unsigned short)(ep->ifd));
+			printf("   %3u: res,ifd=%04x,%04hx", i_3, ep->reserved, (unsigned short)(ep->ifd));
 			printf(", 0x%08x", ep->asym.value);
 			printf(", %8s:%-7s 0x%05x ", num2name(SymbolTypes, type_1), num2name(StorageClasse, class_1), idx_1);
 			printf("%s\n", &symbol->cbSsExt_Ptr[ep->asym.iss]);
@@ -950,7 +952,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, int flag)
 		const char *issBase;
 
 		issBase = &symbol->cbSs_Ptr[fdrp->issBase];
-		printf("  %3d: %-40s addr=0x%08x \n", ifd, &issBase[fdrp->rss], fdrp->adr);
+		printf("  %3u: %-40s addr=0x%08x \n", ifd, &issBase[fdrp->rss], fdrp->adr);
 		if ( fdrp->csym > 0 )
 		{
 			symr *syp_1;
