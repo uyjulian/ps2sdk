@@ -46,7 +46,7 @@ struct fstrbuf
 	int col; 
 	const char * cp; 
 	const char * ep; 
-	char buf[1];
+	char buf[];
 };
 
 static int  bgetc(struct fstrbuf *fb);
@@ -89,9 +89,9 @@ Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 			fprintf(stderr, "\"%s\" can't open\n", infile);
 			return 0;
 		}
-		fseek(fp, 0, 2);
+		fseek(fp, 0, SEEK_END);
 		fsize = ftell(fp) + 4;
-		fseek(fp, 0, 0);
+		fseek(fp, 0, SEEK_SET);
 	}
 	else
 	{
