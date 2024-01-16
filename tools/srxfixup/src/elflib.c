@@ -201,9 +201,8 @@ elf_file *read_elf(const char * filename)
 					{
 						case PT_LOAD:
 							elf->php[i_8].scp = (elf_section **)calloc(count_2, sizeof(elf_section *));
-							s = 1;
 							d = 0;
-							while ( count_2 > s )
+							for ( s = 1; s < count_2; s += 1 )
 							{
 								unsigned int p_filesz;
 								unsigned int p_offset;
@@ -231,7 +230,6 @@ elf_file *read_elf(const char * filename)
 									default:
 										break;
 								}
-								s += 1;
 							}
 							break;
 						case PT_MIPS_REGINFO:
@@ -927,10 +925,9 @@ elf_section *remove_section(elf_file *elf, Elf32_Word shtype)
 			break;
 		}
 	}
-	while ( s < elf->ehp->e_shnum )
+	for ( ; s < elf->ehp->e_shnum; s += 1 )
 	{
 		elf->scp[s] = elf->scp[s + 1];
-		s += 1;
 	}
 	return rmsec;
 }
@@ -950,10 +947,9 @@ elf_section *remove_section_by_name(elf_file *elf, const char * secname)
 			break;
 		}
 	}
-	while ( s < elf->ehp->e_shnum )
+	for ( ; s < elf->ehp->e_shnum; s += 1 )
 	{
 		elf->scp[s] = elf->scp[s + 1];
-		s += 1;
 	}
 	return rmsec;
 }
@@ -1175,14 +1171,12 @@ void rebuild_section_name_strings(elf_file *elf)
 		free(elf->shstrptr->data);
 	elf->shstrptr->data = (uint8_t *)calloc(1, namesize);
 	elf->shstrptr->shr.sh_size = namesize;
-	i_2 = 1;
 	offset = 1;
-	while ( i_2 < elf->ehp->e_shnum )
+	for ( i_2 = 1; i_2 < elf->ehp->e_shnum; i_2 += 1 )
 	{
 		strcpy((char *)&elf->shstrptr->data[offset], elf->scp[i_2]->name);
 		elf->scp[i_2]->shr.sh_name = offset;
 		offset += strlen(elf->scp[i_2]->name) + 1;
-		i_2 += 1;
 	}
 }
 
@@ -1190,7 +1184,7 @@ static size_t search_string_table(const char * tbltop, size_t endindex, const ch
 {
 	size_t idx;
 
-	for ( idx = 1; endindex > idx; idx += strlen(&tbltop[idx]) + 1 )
+	for ( idx = 1; idx < endindex; idx += strlen(&tbltop[idx]) + 1 )
 	{
 		if ( !strcmp(str, &tbltop[idx]) )
 			return idx;
@@ -1212,16 +1206,15 @@ static void rebuild_a_symbol_name_strings(elf_section *scp)
 	strtab = scp->link;
 	syp = (elf_syment **)scp->data;
 	namesize = 1;
-	for ( i_1 = 1; entrise > i_1; i_1 += 1 )
+	for ( i_1 = 1; i_1 < entrise; i_1 += 1 )
 	{
 		namesize = (syp[i_1] != NULL && syp[i_1]->name != NULL) ? (strlen(syp[i_1]->name) + namesize + 1) : namesize;
 	}
 	if ( strtab->data )
 		free(strtab->data);
 	strtab->data = (uint8_t *)calloc(1, namesize);
-	i_2 = 1;
 	offset = 1;
-	while ( entrise > i_2 )
+	for ( i_2 = 1; i_2 < entrise; i_2 += 1 )
 	{
 		if ( syp[i_2] != NULL && syp[i_2]->name != NULL )
 		{
@@ -1233,7 +1226,6 @@ static void rebuild_a_symbol_name_strings(elf_section *scp)
 				offset += strlen(syp[i_2]->name) + 1;
 			}
 		}
-		i_2 += 1;
 	}
 	strtab->shr.sh_size = offset;
 }
@@ -1333,9 +1325,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 		resolt[1].offset = resolt->size;
 		resolt[1].size = sizeof(Elf32_Phdr) * elf->ehp->e_phnum;
 		resolt[1].align = 4;
-		seg = 0;
-		d_1 = 2;
-		while ( seg < elf->ehp->e_phnum )
+		for ( seg = 0, d_1 = 2; seg < elf->ehp->e_phnum; seg += 1, d_1 += 1 )
 		{
 			elf_section **phdscp;
 
@@ -1348,7 +1338,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 			{
 				int s_1;
 
-				for ( s_1 = 0; sections > s_1; s_1 += 1 )
+				for ( s_1 = 0; s_1 < sections; s_1 += 1 )
 				{
 					if ( *phdscp == scp[s_1] )
 					{
@@ -1357,8 +1347,6 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 					}
 				}
 			}
-			seg += 1;
-			d_1 += 1;
 		}
 	}
 	resolt[d_1].type = EFS_TYPE_SECTION_HEADER_TABLE;
@@ -1366,7 +1354,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 	resolt[d_1].size = sizeof(Elf32_Shdr) * elf->ehp->e_shnum;
 	resolt[d_1].align = 4;
 	d_2 = d_1 + 1;
-	for ( s_2 = 1; sections > s_2; s_2 += 1 )
+	for ( s_2 = 1; s_2 < sections; s_2 += 1 )
 	{
 		if ( scp[s_2] )
 		{
@@ -1390,14 +1378,13 @@ void  shrink_file_order_list(Elf_file_slot *efs)
 	unsigned int slot;
 
 	slot = 0;
-	while ( efs->type != EFS_TYPE_END )
+	for ( ; efs->type != EFS_TYPE_END; efs += 1 )
 	{
 		unsigned int foffset;
 
 		foffset = adjust_align(slot, efs->align);
 		efs->offset = foffset;
 		slot = efs->size + foffset;
-		efs += 1;
 	}
 }
 
@@ -1407,7 +1394,7 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 	unsigned int segoffset;
 	int i;
 
-	while ( efs->type != EFS_TYPE_END )
+	for ( ; efs->type != EFS_TYPE_END; efs += 1 )
 	{
 		switch ( efs->type )
 		{
@@ -1437,7 +1424,6 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 			default:
 				break;
 		}
-		efs += 1;
 	}
 }
 

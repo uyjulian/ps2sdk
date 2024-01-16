@@ -31,8 +31,7 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 	argvp = argv;
 	*nargv = *argv;
 	nargc = 1;
-	argva = argv + 1;
-	for ( argca = argc - 1; ; argca -= 1 )
+	for ( argca = argc - 1, argva = argv + 1; ; argca -= 1, argva += 1 )
 	{
 		if ( argca <= 0 )
 		{
@@ -154,7 +153,6 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 			nargv[nargc] = *argva;
 			nargc += 1;
 		}
-		argva += 1;
 	}
 }
 

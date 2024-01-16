@@ -199,10 +199,8 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 	}
 	if ( (flag & 1) != 0 )
 		printf(" Section header\n");
-	for ( i = 1; ; i += 1 )
+	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
-		if ( i >= elf->ehp->e_shnum )
-			return;
 		if ( (flag & 1) != 0 || ((flag & 2) != 0 && elf->scp[i]->shr.sh_type == SHT_REL) )
 		{
 			printf(" %2d: %-12s sh_name=0x%04x sh_type=%s\n", i, elf->scp[i]->name, elf->scp[i]->shr.sh_name, num2name(S_type_name, elf->scp[i]->shr.sh_type));
@@ -367,7 +365,7 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 	unsigned int relentries;
 	size_t steps;
 	int d;
-	int i;
+	unsigned int i;
 
 	if ( (flag & 8) == 0 )
 	{
@@ -378,21 +376,17 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 	dis = (Disasm_result **)malloc(steps * sizeof(Disasm_result *));
 	search_rel_section(elf, scp, &rpbase, &relentries, &baseoff);
 	rel = (struct rellink *)calloc(steps, sizeof(struct rellink));
-	i = 0;
-	addr = 0;
-	while ( (int)steps > i )
+	for ( i = 0, addr = 0; i < steps; i += 1, addr += 4 )
 	{
 		dis[i] = disassemble(addr, codes[i]);
 		gen_asmmacro(dis[i]);
 		search_rel_data(rpbase, relentries, baseoff + addr, &rel[i]);
-		i += 1;
-		addr += 4;
 	}
-	for ( i = 0; (int)steps > i; i += 1 )
+	for ( i = 0; i < steps; i += 1 )
 	{
 		if ( rel[i].rp && rel[i].rp->type == R_MIPSSCE_MHI16 )
 		{
-			int j;
+			unsigned int j;
 
 			j = i;
 			for ( d = (int16_t)(codes[i] & 0xFFFF); d; d = (int16_t)(codes[j] & 0xFFFF) )
@@ -403,7 +397,7 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 			}
 		}
 	}
-	for ( i = 0; (int)steps > i; i += 1 )
+	for ( i = 0; i < steps; i += 1 )
 	{
 		format_disasm(dis[i], pb);
 		if ( rel[i].rp || rel[i].mhrp )
@@ -521,7 +515,7 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 	off1 = 0;
 	off2 = size;
 	strcpy((char *)cbuf, "........ ........");
-	while ( off2 > off1 )
+	for ( ; off1 < off2; addr += 1 )
 	{
 		if ( (addr & 0xF) == 0 )
 			printf("%s%08x: ", head, addr);
@@ -555,9 +549,8 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 		}
 		if ( address <= addr )
 			off1 += 1;
-		addr += 1;
 	}
-	while ( (addr & 0xF) != 0 )
+	for ( ; (addr & 0xF) != 0; addr += 1 )
 	{
 		printf("-- ");
 		if ( (((uint8_t)addr + 1) & 3) == 0 )
@@ -568,7 +561,6 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 			printf("\n");
 			strcpy((char *)cbuf, "........ ........");
 		}
-		addr += 1;
 	}
 }
 
@@ -582,7 +574,7 @@ static void dumph(const char * head, unsigned int address, unsigned int size, co
 	addr &= 0xF0;
 	off2 = addr;
 	off1 = 0;
-	while ( size > off1 )
+	for ( ; off1 < size; off2 += 2 )
 	{
 		if ( (off2 & 0xF) == 0 )
 			printf("%s%08x: ", head, off2);
@@ -596,16 +588,14 @@ static void dumph(const char * head, unsigned int address, unsigned int size, co
 			printf("\n");
 		if ( address <= off2 )
 			off1 += 2;
-		off2 += 2;
 	}
-	while ( (off2 & 0xF) != 0 )
+	for ( ; (off2 & 0xF) != 0; off2 += 2 )
 	{
 		printf("---- ");
 		if ( (((uint8_t)off2 + 2) & 3) == 0 )
 			printf("  ");
 		if ( (off2 & 0xF) == 14 )
 			printf("\n");
-		off2 += 2;
 	}
 }
 
@@ -619,7 +609,7 @@ static void dumpw(const char * head, unsigned int address, unsigned int size, co
 	v4 &= 0xF0;
 	addr = v4;
 	off1 = 0;
-	while ( size > off1 )
+	for ( ; off1 < size; addr += 4 )
 	{
 		if ( (addr & 0xF) == 0 )
 			printf("%s%08x: ", head, addr);
@@ -631,14 +621,13 @@ static void dumpw(const char * head, unsigned int address, unsigned int size, co
 			printf("\n");
 		if ( address <= addr )
 			off1 += 4;
-		addr += 4;
+		
 	}
-	while ( (addr & 0xF) != 0 )
+	for ( ; (addr & 0xF) != 0; addr += 4 )
 	{
 		printf("--------  ");
 		if ( (addr & 0xF) == 12 )
 			printf("\n");
-		addr += 4;
 	}
 }
 
@@ -681,14 +670,14 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 		unsigned int offset;
 
 		search_rel_section(elf, scp, &rpbase, &relentries, &baseoff);
-		for ( offset = 0; scp->shr.sh_size > offset; offset += 16 )
+		for ( offset = 0; offset < scp->shr.sh_size; offset += 16 )
 		{
 			dumpw("          ", offset, ( scp->shr.sh_size > offset + 16 ) ? 16 : (scp->shr.sh_size - offset), &dumpbuf[offset / 4]);
 			if ( (flag & 0x80) != 0 )
 			{
 				int i;
 
-				for ( i = 0; i <= 15 && scp->shr.sh_size > offset + i; i += 4 )
+				for ( i = 0; i <= 15 && (offset + i) < scp->shr.sh_size; i += 4 )
 				{
 					search_rel_data(rpbase, relentries, baseoff + offset + i, &rel);
 					if ( rel.rid >= 0 )
@@ -805,11 +794,10 @@ static const char * num2name(const struct name2num *table, unsigned int num)
 {
 	static char buf_28[30];
 
-	while ( table->name )
+	for ( ; table->name; table += 1 )
 	{
 		if ( num == table->num )
 			return table->name;
-		table += 1;
 	}
 	sprintf(buf_28, "? 0x%x", num);
 	return buf_28;
@@ -909,11 +897,9 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 		cp_1 = symbol->cbSs_Ptr;
 		cpend_1 = &cp_1[symbol->head.issMax];
 		printf("  Local strings\n");
-		i_1 = 0;
-		while ( cpend_1 > cp_1 )
+		for ( i_1 = 0; cp_1 < cpend_1; i_1 += 1 )
 		{
 			printf("   %3d(%5d): %s\n", i_1, (int)(cp_1 - symbol->cbSs_Ptr), cp_1);
-			i_1 += 1;
 			cp_1 += strlen(cp_1) + 1;
 		}
 		printf("\n");
@@ -927,11 +913,9 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 		cp_2 = symbol->cbSsExt_Ptr;
 		cpend_2 = &cp_2[symbol->head.issExtMax];
 		printf("  External strings\n");
-		i_2 = 0;
-		while ( cpend_2 > cp_2 )
+		for ( i_2 = 0; cp_2 < cpend_2; i_2 += 1 )
 		{
 			printf("   %3d(%5d): %s\n", i_2, (int)(cp_2 - symbol->cbSsExt_Ptr), cp_2);
-			i_2 += 1;
 			cp_2 += strlen(cp_2) + 1;
 		}
 		printf("\n");
@@ -943,7 +927,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 		ep = (extr *)symbol->cbExt_Ptr;
 		printf("  External symbols\n");
-		for ( i_3 = 0; symbol->head.iextMax > i_3; i_3 += 1 )
+		for ( i_3 = 0; i_3 < symbol->head.iextMax; i_3 += 1 )
 		{
 			unsigned int idx_1;
 			unsigned int class_1;
@@ -962,7 +946,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 	}
 	printf("  Local informations\n");
 	fdrp = (fdr *)symbol->cbFd_Ptr;
-	for ( ifd = 0; symbol->head.ifdMax > ifd; ifd += 1 )
+	for ( ifd = 0; ifd < symbol->head.ifdMax; ifd += 1 )
 	{
 		const char *issBase;
 
@@ -975,7 +959,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 			syp_1 = (symr *)&symbol->cbSym_Ptr[sizeof(symr) * fdrp->isymBase];
 			printf("      Local symbols\n");
-			for ( i_4 = 0; fdrp->csym > i_4; i_4 += 1 )
+			for ( i_4 = 0; i_4 < fdrp->csym; i_4 += 1 )
 			{
 				unsigned int idx_2;
 				unsigned int class_2;
@@ -1037,7 +1021,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 			printf("      Auxillary symbol entries\n");
 			ip_1 = (unsigned int *)&symbol->cbAux_Ptr[sizeof(unsigned int) * fdrp->iauxBase];
-			for ( i_6 = 0; fdrp->caux > i_6; i_6 += 1 )
+			for ( i_6 = 0; i_6 < fdrp->caux; i_6 += 1 )
 			{
 				printf("      %3d: 0x%08lx \n", i_6, (unsigned long)(*ip_1));
 				ip_1 += 1;
@@ -1050,7 +1034,7 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 
 			printf("      File indirect entries\n");
 			ip_2 = (unsigned int *)&symbol->cbRfd_Ptr[sizeof(unsigned int) * fdrp->rfdBase];
-			for ( i_7 = 0; fdrp->crfd > i_7; i_7 += 1 )
+			for ( i_7 = 0; i_7 < fdrp->crfd; i_7 += 1 )
 			{
 				printf("      %3d: 0x%08lx \n", i_7, (unsigned long)(*ip_2));
 				ip_2 += 1;

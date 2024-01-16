@@ -1507,7 +1507,7 @@ Disasm_result * disassemble(unsigned int addr, unsigned int data)
 
 	optable = opcode_root_table;
 	v3 = (Disasm_result *)calloc(1, sizeof(Disasm_result));
-	while ( 1 )
+	for ( ;; )
 	{
 		op = &optable->entries[(data >> optable->bit_pos) & optable->bit_mask];
 		if ( !op->subtable )

@@ -334,7 +334,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 	rp = (elf_rel *)relsect->data;
 	symp = (elf_syment **)relsect->link->data;
 	rmcount = 0;
-	for ( i = 0; entrise > i; i += 1 )
+	for ( i = 0; i < entrise; i += 1 )
 	{
 		unsigned int type;
 		uint8_t *daddr;
@@ -409,7 +409,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		newtab = (elf_rel *)calloc(entrise - rmcount, sizeof(elf_rel));
 		d = newtab;
 		s = (elf_rel *)relsect->data;
-		for ( j = 0; entrise > j; j += 1 )
+		for ( j = 0; j < entrise; j += 1 )
 		{
 			if ( s->type )
 			{
