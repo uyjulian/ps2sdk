@@ -5,24 +5,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct rellink 
+struct rellink
 {
-	int rid; 
-	const elf_rel *rp; 
+	int rid;
+	const elf_rel *rp;
 	const elf_rel *mhrp;
 };
-struct name2num 
+struct name2num
 {
-	const char * name; 
+	const char *name;
 	unsigned int num;
 };
 
-static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, unsigned int *relentries, unsigned int *baseoff);
+static void search_rel_section(
+	const elf_file *elf, const elf_section *scp, elf_rel **result, unsigned int *relentries, unsigned int *baseoff);
 static void search_rel_data(const elf_rel *rpbase, unsigned int relentries, unsigned int addr, struct rellink *result);
-static void dumpb(const char * head, unsigned int address, unsigned int size, const uint8_t *data);
-static void dumph(const char * head, unsigned int address, unsigned int size, const uint16_t *data);
-static void dumpw(const char * head, unsigned int address, unsigned int size, const uint32_t *data);
-static const char * num2name(const struct name2num *table, unsigned int num);
+static void dumpb(const char *head, unsigned int address, unsigned int size, const uint8_t *data);
+static void dumph(const char *head, unsigned int address, unsigned int size, const uint16_t *data);
+static void dumpw(const char *head, unsigned int address, unsigned int size, const uint32_t *data);
+static const char *num2name(const struct name2num *table, unsigned int num);
 
 void print_elf(const elf_file *elf, unsigned int flag)
 {
@@ -109,11 +110,17 @@ void print_elf_ehdr(const elf_file *elf, unsigned int flag)
 		elf->ehp->e_shoff);
 	printf("   e_flags = 0x%08x ", elf->ehp->e_flags);
 	if ( (elf->ehp->e_flags & EF_MIPS_NOREORDER) != 0 )
+	{
 		printf("EF_MIPS_NOREORDER ");
+	}
 	if ( (elf->ehp->e_flags & EF_MIPS_PIC) != 0 )
+	{
 		printf("EF_MIPS_PIC");
+	}
 	if ( (elf->ehp->e_flags & EF_MIPS_CPIC) != 0 )
+	{
 		printf("EF_MIPS_CPIC");
+	}
 	printf("\n");
 	printf(
 		"   e_ehsize = 0x%04x,  e_phentsize = 0x%04x, e_phnum = 0x%04x\n",
@@ -161,11 +168,17 @@ void print_elf_phdr(const elf_file *elf, unsigned int flag)
 			(int)(elf->php[i].phdr.p_align));
 		printf("     p_flags=0x%08x ( ", elf->php[i].phdr.p_flags);
 		if ( (elf->php[i].phdr.p_flags & PF_X) != 0 )
+		{
 			printf("PF_X ");
+		}
 		if ( (elf->php[i].phdr.p_flags & PF_W) != 0 )
+		{
 			printf("PF_W ");
+		}
 		if ( (elf->php[i].phdr.p_flags & PF_R) != 0 )
+		{
 			printf("PF_R ");
+		}
 		printf(")\n");
 		if ( elf->php[i].scp )
 		{
@@ -173,7 +186,9 @@ void print_elf_phdr(const elf_file *elf, unsigned int flag)
 
 			printf("     include sections = ");
 			for ( j = 0; elf->php[i].scp[j]; j += 1 )
+			{
 				printf("%s ", elf->php[i].scp[j]->name);
+			}
 			printf("\n");
 		}
 	}
@@ -198,21 +213,36 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 		return;
 	}
 	if ( (flag & 1) != 0 )
+	{
 		printf(" Section header\n");
+	}
 	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
 		if ( (flag & 1) != 0 || ((flag & 2) != 0 && elf->scp[i]->shr.sh_type == SHT_REL) )
 		{
-			printf(" %2d: %-12s sh_name=0x%04x sh_type=%s\n", i, elf->scp[i]->name, elf->scp[i]->shr.sh_name, num2name(S_type_name, elf->scp[i]->shr.sh_type));
+			printf(
+				" %2d: %-12s sh_name=0x%04x sh_type=%s\n",
+				i,
+				elf->scp[i]->name,
+				elf->scp[i]->shr.sh_name,
+				num2name(S_type_name, elf->scp[i]->shr.sh_type));
 			printf("        sh_flas=0x%08x ( ", elf->scp[i]->shr.sh_flags);
 			if ( (elf->scp[i]->shr.sh_flags & SHF_WRITE) != 0 )
+			{
 				printf("SHF_WRITE ");
+			}
 			if ( (elf->scp[i]->shr.sh_flags & SHF_ALLOC) != 0 )
+			{
 				printf("SHF_ALLOC ");
+			}
 			if ( (elf->scp[i]->shr.sh_flags & SHF_EXECINSTR) != 0 )
+			{
 				printf("SHF_EXECINSTR ");
+			}
 			if ( (elf->scp[i]->shr.sh_flags & SHF_MIPS_GPREL) != 0 )
+			{
 				printf("SHF_MIPS_GPREL ");
+			}
 			printf(")\n");
 			printf(
 				"        sh_addr,sh_offset,sh_size=0x%06x,0x%06x,0x%06x, sh_addralign=%2d\n",
@@ -246,10 +276,7 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 
 					data = (Elf32_IopMod *)elf->scp[i]->data;
 					printf(
-						"        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n",
-						data->moduleinfo,
-						data->entry,
-						data->gp_value);
+						"        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n", data->moduleinfo, data->entry, data->gp_value);
 					printf(
 						"        text_size=0x%08x, data_size=0x%08x, bss_size=0x%08x\n",
 						data->text_size,
@@ -263,7 +290,8 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 					const Elf32_EeMod *data;
 
 					data = (Elf32_EeMod *)elf->scp[i]->data;
-					printf("        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n", data->moduleinfo, data->entry, data->gp_value);
+					printf(
+						"        moduleinfo=0x%08x, entry=0x%08x, gpvalue=0x%08x\n", data->moduleinfo, data->entry, data->gp_value);
 					printf(
 						"        text_size=0x%08x, data_size=0x%08x, bss_size=0x%08x\n",
 						data->text_size,
@@ -295,10 +323,16 @@ void print_elf_sections(const elf_file *elf, unsigned int flag)
 		{
 			if ( (elf->scp[i]->shr.sh_flags & SHF_EXECINSTR) != 0 && elf->ehp->e_machine == EM_MIPS )
 			{
-				if ( ((elf->ehp->e_flags & EF_MIPS_MACH) == EF_MIPS_MACH_5900) && ((elf->ehp->e_flags & EF_MIPS_ARCH) == EF_MIPS_ARCH_3) )
+				if (
+					((elf->ehp->e_flags & EF_MIPS_MACH) == EF_MIPS_MACH_5900)
+					&& ((elf->ehp->e_flags & EF_MIPS_ARCH) == EF_MIPS_ARCH_3) )
+				{
 					initdisasm(2, -1, 0, 0, 0);
+				}
 				else
+				{
 					initdisasm(1, -1, 0, 0, 0);
+				}
 				print_elf_disasm(elf, elf->scp[i], flag);
 			}
 			else
@@ -405,7 +439,9 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 			size_t k;
 
 			for ( k = strlen(pb); k <= 47; k += 1 )
+			{
 				pb[k] = 32;
+			}
 			pb[48] = 0;
 			sprintf(&pb[strlen(pb)], "%3d:", rel[i].rid);
 			if ( rel[i].rp )
@@ -420,7 +456,12 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 			}
 			if ( rp->symptr->type == STT_SECTION )
 			{
-				sprintf(&pb[strlen(pb)], "  %s %d '%s'", num2name(R_MIPS_Type, rp->type), (int)(rp->rel.r_info >> 8), rp->symptr->shptr->name);
+				sprintf(
+					&pb[strlen(pb)],
+					"  %s %d '%s'",
+					num2name(R_MIPS_Type, rp->type),
+					(int)(rp->rel.r_info >> 8),
+					rp->symptr->shptr->name);
 			}
 			else
 			{
@@ -439,7 +480,13 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 						v7 = ' ';
 						break;
 				}
-				sprintf(&pb[strlen(pb)], "%c %s %d %s", v7, num2name(R_MIPS_Type, rp->type), (int)(rp->rel.r_info >> 8), rp->symptr->name ?: "");
+				sprintf(
+					&pb[strlen(pb)],
+					"%c %s %d %s",
+					v7,
+					num2name(R_MIPS_Type, rp->type),
+					(int)(rp->rel.r_info >> 8),
+					rp->symptr->name ?: "");
 			}
 		}
 		printf("    %s\n", pb);
@@ -450,7 +497,8 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 	free(rel);
 }
 
-static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_rel **result, unsigned int *relentries, unsigned int *baseoff)
+static void search_rel_section(
+	const elf_file *elf, const elf_section *scp, elf_rel **result, unsigned int *relentries, unsigned int *baseoff)
 {
 	elf_section *relscp;
 	int i;
@@ -460,7 +508,9 @@ static void search_rel_section(const elf_file *elf, const elf_section *scp, elf_
 	{
 		relscp = elf->scp[i];
 		if ( relscp->shr.sh_type == SHT_REL && scp == relscp->info )
+		{
 			break;
+		}
 	}
 	if ( i < elf->ehp->e_shnum )
 	{
@@ -504,7 +554,7 @@ static void search_rel_data(const elf_rel *rpbase, unsigned int relentries, unsi
 	}
 }
 
-static void dumpb(const char * head, unsigned int address, unsigned int size, const uint8_t *data)
+static void dumpb(const char *head, unsigned int address, unsigned int size, const uint8_t *data)
 {
 	uint8_t cbuf[20];
 	unsigned int addr;
@@ -518,7 +568,9 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 	for ( ; off1 < off2; addr += 1 )
 	{
 		if ( (addr & 0xF) == 0 )
+		{
 			printf("%s%08x: ", head, addr);
+		}
 		if ( address > addr )
 		{
 			printf("-- ");
@@ -533,14 +585,20 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 
 				v4 = addr & 0xF;
 				if ( v4 <= 7 )
+				{
 					v5 = &cbuf[v4];
+				}
 				else
+				{
 					v5 = &cbuf[v4 + 1];
+				}
 				*v5 = data[off1];
 			}
 		}
 		if ( (((uint8_t)addr + 1) & 3) == 0 )
+		{
 			printf(" ");
+		}
 		if ( (addr & 0xF) == 15 )
 		{
 			printf("%s", cbuf);
@@ -548,13 +606,17 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 			strcpy((char *)cbuf, "........ ........");
 		}
 		if ( address <= addr )
+		{
 			off1 += 1;
+		}
 	}
 	for ( ; (addr & 0xF) != 0; addr += 1 )
 	{
 		printf("-- ");
 		if ( (((uint8_t)addr + 1) & 3) == 0 )
+		{
 			printf(" ");
+		}
 		if ( (addr & 0xF) == 15 )
 		{
 			printf("%s", cbuf);
@@ -564,7 +626,7 @@ static void dumpb(const char * head, unsigned int address, unsigned int size, co
 	}
 }
 
-static void dumph(const char * head, unsigned int address, unsigned int size, const uint16_t *data)
+static void dumph(const char *head, unsigned int address, unsigned int size, const uint16_t *data)
 {
 	unsigned int addr;
 	unsigned int off2;
@@ -577,29 +639,45 @@ static void dumph(const char * head, unsigned int address, unsigned int size, co
 	for ( ; off1 < size; off2 += 2 )
 	{
 		if ( (off2 & 0xF) == 0 )
+		{
 			printf("%s%08x: ", head, off2);
+		}
 		if ( address > off2 )
+		{
 			printf("---- ");
+		}
 		else
+		{
 			printf("%04x ", data[off1 >> 1]);
+		}
 		if ( (((uint8_t)off2 + 2) & 3) == 0 )
+		{
 			printf("  ");
+		}
 		if ( (off2 & 0xF) == 14 )
+		{
 			printf("\n");
+		}
 		if ( address <= off2 )
+		{
 			off1 += 2;
+		}
 	}
 	for ( ; (off2 & 0xF) != 0; off2 += 2 )
 	{
 		printf("---- ");
 		if ( (((uint8_t)off2 + 2) & 3) == 0 )
+		{
 			printf("  ");
+		}
 		if ( (off2 & 0xF) == 14 )
+		{
 			printf("\n");
+		}
 	}
 }
 
-static void dumpw(const char * head, unsigned int address, unsigned int size, const uint32_t *data)
+static void dumpw(const char *head, unsigned int address, unsigned int size, const uint32_t *data)
 {
 	unsigned int v4;
 	unsigned int off1;
@@ -612,22 +690,33 @@ static void dumpw(const char * head, unsigned int address, unsigned int size, co
 	for ( ; off1 < size; addr += 4 )
 	{
 		if ( (addr & 0xF) == 0 )
+		{
 			printf("%s%08x: ", head, addr);
+		}
 		if ( address > addr )
+		{
 			printf("--------  ");
+		}
 		else
+		{
 			printf("%08x  ", data[off1 >> 2]);
+		}
 		if ( (addr & 0xF) == 12 )
+		{
 			printf("\n");
+		}
 		if ( address <= addr )
+		{
 			off1 += 4;
-		
+		}
 	}
 	for ( ; (addr & 0xF) != 0; addr += 4 )
 	{
 		printf("--------  ");
 		if ( (addr & 0xF) == 12 )
+		{
 			printf("\n");
+		}
 	}
 }
 
@@ -640,7 +729,9 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 	unsigned int *dumpbuf;
 
 	if ( (flag & 0xF0) == 0 )
+	{
 		return;
+	}
 	dumpbuf = (unsigned int *)calloc(1, scp->shr.sh_size + 4);
 	memcpy(dumpbuf, scp->data, scp->shr.sh_size);
 	switch ( scp->shr.sh_type )
@@ -672,7 +763,11 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 		search_rel_section(elf, scp, &rpbase, &relentries, &baseoff);
 		for ( offset = 0; offset < scp->shr.sh_size; offset += 16 )
 		{
-			dumpw("          ", offset, ( scp->shr.sh_size > offset + 16 ) ? 16 : (scp->shr.sh_size - offset), &dumpbuf[offset / 4]);
+			dumpw(
+				"          ",
+				offset,
+				(scp->shr.sh_size > offset + 16) ? 16 : (scp->shr.sh_size - offset),
+				&dumpbuf[offset / 4]);
 			if ( (flag & 0x80) != 0 )
 			{
 				int i;
@@ -686,7 +781,11 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 						printf(" [%3d]", rel.rid);
 						if ( rel.rp->symptr->type == STT_SECTION )
 						{
-							printf("  %s %d '%s'", num2name(R_MIPS_Type, rel.rp->type), (int)(rel.rp->rel.r_info >> 8), rel.rp->symptr->shptr->name);
+							printf(
+								"  %s %d '%s'",
+								num2name(R_MIPS_Type, rel.rp->type),
+								(int)(rel.rp->rel.r_info >> 8),
+								rel.rp->symptr->shptr->name);
 						}
 						else
 						{
@@ -707,7 +806,12 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 									v7 = ' ';
 									break;
 							}
-							printf("%c %s %d %s", v7, num2name(R_MIPS_Type, rel.rp->type), (int)(rel.rp->rel.r_info >> 8), rel.rp->symptr->name ?: "");
+							printf(
+								"%c %s %d %s",
+								v7,
+								num2name(R_MIPS_Type, rel.rp->type),
+								(int)(rel.rp->rel.r_info >> 8),
+								rel.rp->symptr->name ?: "");
 						}
 						printf("\n");
 					}
@@ -771,7 +875,12 @@ void print_elf_symtbl(const elf_section *scp, unsigned int flag)
 		{
 			printf("%-11s ", syp[i]->name ?: "<no name>");
 		}
-		printf("%-10s %-11s 0x%08x 0x%04x ", num2name(SymbolBinding, syp[i]->bind), num2name(SymbolType, syp[i]->type), syp[i]->sym.st_value, syp[i]->sym.st_size);
+		printf(
+			"%-10s %-11s 0x%08x 0x%04x ",
+			num2name(SymbolBinding, syp[i]->bind),
+			num2name(SymbolType, syp[i]->type),
+			syp[i]->sym.st_value,
+			syp[i]->sym.st_size);
 		if ( syp[i]->shptr )
 		{
 			printf("%2d '%s'", syp[i]->sym.st_shndx, syp[i]->shptr->name);
@@ -784,20 +893,24 @@ void print_elf_symtbl(const elf_section *scp, unsigned int flag)
 			printf("%s(0x%x)", num2name(SymbolSpSection, st_shndx), st_shndx);
 		}
 		if ( syp[i]->sym.st_other )
+		{
 			printf("  st_other=0x%x", syp[i]->sym.st_other);
+		}
 		printf("\n");
 	}
 	printf("\n");
 }
 
-static const char * num2name(const struct name2num *table, unsigned int num)
+static const char *num2name(const struct name2num *table, unsigned int num)
 {
 	static char buf_28[30];
 
 	for ( ; table->name; table += 1 )
 	{
 		if ( num == table->num )
+		{
 			return table->name;
+		}
 	}
 	sprintf(buf_28, "? 0x%x", num);
 	return buf_28;
@@ -1045,37 +1158,3 @@ void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int f
 	}
 	printf("\n");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

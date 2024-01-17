@@ -5,47 +5,47 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void  getrs(unsigned int data, Operand *opr);
-static void  getrt(unsigned int data, Operand *opr);
-static void  getrd(unsigned int data, Operand *opr);
-static void  getc0rd_iop(unsigned int data, Operand *opr);
-static void  getc0rd_ee(unsigned int data, Operand *opr);
-static void  getczrd(unsigned int data, Operand *opr);
-static void  getshamt(unsigned int data, Operand *opr);
-static void  getfs(unsigned int data, Operand *opr);
-static void  getft(unsigned int data, Operand *opr);
-static void  getfd(unsigned int data, Operand *opr);
-static void  getczfs(unsigned int data, Operand *opr);
-static void  getbroff(unsigned int addr, unsigned int data, Operand *opr);
-static void  Rs(Disasm_result *result);
-static void  Rd(Disasm_result *result);
-static void  Rdrs(Disasm_result *result);
-static void  Rsrt(Disasm_result *result);
-static void  Rtc0rd_iop(Disasm_result *result);
-static void  Rtc0rd_ee(Disasm_result *result);
-static void  Rtczrd(Disasm_result *result);
-static void  Rdrsrt(Disasm_result *result);
-static void  Rdrtrs(Disasm_result *result);
-static void  Rdrtshamt(Disasm_result *result);
-static void  Rsseimm(Disasm_result *result);
-static void  Rtrsseimm(Disasm_result *result);
-static void  Rtrsimm(Disasm_result *result);
+static void getrs(unsigned int data, Operand *opr);
+static void getrt(unsigned int data, Operand *opr);
+static void getrd(unsigned int data, Operand *opr);
+static void getc0rd_iop(unsigned int data, Operand *opr);
+static void getc0rd_ee(unsigned int data, Operand *opr);
+static void getczrd(unsigned int data, Operand *opr);
+static void getshamt(unsigned int data, Operand *opr);
+static void getfs(unsigned int data, Operand *opr);
+static void getft(unsigned int data, Operand *opr);
+static void getfd(unsigned int data, Operand *opr);
+static void getczfs(unsigned int data, Operand *opr);
+static void getbroff(unsigned int addr, unsigned int data, Operand *opr);
+static void Rs(Disasm_result *result);
+static void Rd(Disasm_result *result);
+static void Rdrs(Disasm_result *result);
+static void Rsrt(Disasm_result *result);
+static void Rtc0rd_iop(Disasm_result *result);
+static void Rtc0rd_ee(Disasm_result *result);
+static void Rtczrd(Disasm_result *result);
+static void Rdrsrt(Disasm_result *result);
+static void Rdrtrs(Disasm_result *result);
+static void Rdrtshamt(Disasm_result *result);
+static void Rsseimm(Disasm_result *result);
+static void Rtrsseimm(Disasm_result *result);
+static void Rtrsimm(Disasm_result *result);
 #if 0
 static void  Rdimm(Disasm_result *result);
 static void  Rsimm(Disasm_result *result);
 #endif
-static void  Rtimm(Disasm_result *result);
-static void  Rsrtbroff(Disasm_result *result);
-static void  Rsbroff(Disasm_result *result);
-static void  Rtoffbase(Disasm_result *result);
-static void  Fdfs(Disasm_result *result);
-static void  Fsft(Disasm_result *result);
-static void  Fdfsft(Disasm_result *result);
-static void  Rtczfs(Disasm_result *result);
-static void  Code20(Disasm_result *result);
-static void  Jtarget(Disasm_result *result);
-static void  Cofun(Disasm_result *result);
-static void  Bcft(Disasm_result *result);
+static void Rtimm(Disasm_result *result);
+static void Rsrtbroff(Disasm_result *result);
+static void Rsbroff(Disasm_result *result);
+static void Rtoffbase(Disasm_result *result);
+static void Fdfs(Disasm_result *result);
+static void Fsft(Disasm_result *result);
+static void Fdfsft(Disasm_result *result);
+static void Rtczfs(Disasm_result *result);
+static void Code20(Disasm_result *result);
+static void Jtarget(Disasm_result *result);
+static void Cofun(Disasm_result *result);
+static void Bcft(Disasm_result *result);
 
 // clang-format off
 static int regnmsw[5] = { 1, 1, 0, 1, 0 };
@@ -338,182 +338,194 @@ static const char * const REGC1[2][32] =
 typedef void (*Operand_func)(Disasm_result *result);
 typedef struct opcode_table_entry_
 {
-	const char * mnemonic; 
-	const struct opcode_table_ *subtable; 
+	const char *mnemonic;
+	const struct opcode_table_ *subtable;
 	Operand_func opfunc;
 } Opcode_table_entry;
 typedef struct opcode_table_
 {
-	int bit_pos; 
-	unsigned int bit_mask; 
+	int bit_pos;
+	unsigned int bit_mask;
 	const Opcode_table_entry *entries;
 } Opcode_table;
 
-static void  getrs(unsigned int data, Operand *opr)
+static void getrs(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_reg;
 	opr->reg = (data >> 21) & 0x1F;
 }
 
-static void  getrt(unsigned int data, Operand *opr)
+static void getrt(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_reg;
 	opr->reg = (data >> 16) & 0x1F;
 }
 
-static void  getrd(unsigned int data, Operand *opr)
+static void getrd(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_reg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-static void  getc0rd_iop(unsigned int data, Operand *opr)
+static void getc0rd_iop(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c0reg_iop;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-static void  getc0rd_ee(unsigned int data, Operand *opr)
+static void getc0rd_ee(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c0reg_ee;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-static void  getczrd(unsigned int data, Operand *opr)
+static void getczrd(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_czreg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-static void  getshamt(unsigned int data, Operand *opr)
+static void getshamt(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_shamt;
 	opr->data = (data >> 6) & 0x1F;
 }
 
-static void  getfs(unsigned int data, Operand *opr)
+static void getfs(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-static void  getft(unsigned int data, Operand *opr)
+static void getft(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 16) & 0x1F;
 }
 
-static void  getfd(unsigned int data, Operand *opr)
+static void getfd(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 6) & 0x1F;
 }
 
-static void  getczfs(unsigned int data, Operand *opr)
+static void getczfs(unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_c1reg;
 	opr->reg = (data >> 11) & 0x1F;
 }
 
-static void  getbroff(unsigned int addr, unsigned int data, Operand *opr)
+static void getbroff(unsigned int addr, unsigned int data, Operand *opr)
 {
 	opr->tag = OprTag_jtarget;
 	if ( (data & 0x8000) != 0 )
+	{
 		opr->data = 4 * (uint16_t)data - 0x40000;
+	}
 	else
+	{
 		opr->data = 4 * (uint16_t)data;
+	}
 	opr->data += 4 + addr;
 }
 
-static void  Rs(Disasm_result *result)
+static void Rs(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 }
 
-static void  Rd(Disasm_result *result)
+static void Rd(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 }
 
-static void  Rdrs(Disasm_result *result)
+static void Rdrs(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
 }
 
-static void  Rsrt(Disasm_result *result)
+static void Rsrt(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 }
 
-static void  Rtc0rd_iop(Disasm_result *result)
+static void Rtc0rd_iop(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getc0rd_iop(result->data, &result->operands[1]);
 }
 
-static void  Rtc0rd_ee(Disasm_result *result)
+static void Rtc0rd_ee(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getc0rd_ee(result->data, &result->operands[1]);
 }
 
-static void  Rtczrd(Disasm_result *result)
+static void Rtczrd(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getczrd(result->data, &result->operands[1]);
 }
 
-static void  Rdrsrt(Disasm_result *result)
+static void Rdrsrt(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
 	getrt(result->data, &result->operands[2]);
 }
 
-static void  Rdrtrs(Disasm_result *result)
+static void Rdrtrs(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 	getrs(result->data, &result->operands[2]);
 }
 
-static void  Rdrtshamt(Disasm_result *result)
+static void Rdrtshamt(Disasm_result *result)
 {
 	getrd(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 	getshamt(result->data, &result->operands[2]);
 }
 
-static void  Rsseimm(Disasm_result *result)
+static void Rsseimm(Disasm_result *result)
 {
 	unsigned int imm;
 
 	getrs(result->data, result->operands);
 	if ( (int16_t)(result->data & 0xFFFF) < 0 )
+	{
 		imm = (result->data & 0xFFFF) - 0x10000;
+	}
 	else
+	{
 		imm = (result->data & 0xFFFF);
+	}
 	result->operands[1].tag = OprTag_imm;
 	result->operands[1].data = imm;
 }
 
-static void  Rtrsseimm(Disasm_result *result)
+static void Rtrsseimm(Disasm_result *result)
 {
 	unsigned int imm;
 
 	getrt(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
 	if ( (int16_t)(result->data & 0xFFFF) < 0 )
+	{
 		imm = (result->data & 0xFFFF) - 0x10000;
+	}
 	else
+	{
 		imm = (result->data & 0xFFFF);
+	}
 	result->operands[2].tag = OprTag_imm;
 	result->operands[2].data = imm;
 }
 
-static void  Rtrsimm(Disasm_result *result)
+static void Rtrsimm(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getrs(result->data, &result->operands[1]);
@@ -537,96 +549,108 @@ static void  Rsimm(Disasm_result *result)
 }
 #endif
 
-static void  Rtimm(Disasm_result *result)
+static void Rtimm(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	result->operands[1].tag = OprTag_imm;
 	result->operands[1].data = (result->data & 0xFFFF);
 }
 
-static void  Rsrtbroff(Disasm_result *result)
+static void Rsrtbroff(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	getrt(result->data, &result->operands[1]);
 	getbroff(result->addr, result->data, &result->operands[2]);
 }
 
-static void  Rsbroff(Disasm_result *result)
+static void Rsbroff(Disasm_result *result)
 {
 	getrs(result->data, result->operands);
 	getbroff(result->addr, result->data, &result->operands[1]);
 }
 
-static void  Rtoffbase(Disasm_result *result)
+static void Rtoffbase(Disasm_result *result)
 {
 	unsigned int off;
 
 	if ( (int16_t)(result->data & 0xFFFF) < 0 )
+	{
 		off = (result->data & 0xFFFF) - 0x10000;
+	}
 	else
+	{
 		off = (result->data & 0xFFFF);
+	}
 	getrt(result->data, result->operands);
 	result->operands[1].tag = OprTag_regoffset;
 	result->operands[1].data = off;
 	result->operands[1].reg = (result->data >> 21) & 0x1F;
 }
 
-static void  Fdfs(Disasm_result *result)
+static void Fdfs(Disasm_result *result)
 {
 	getfd(result->data, result->operands);
 	getfs(result->data, &result->operands[1]);
 }
 
-static void  Fsft(Disasm_result *result)
+static void Fsft(Disasm_result *result)
 {
 	getfs(result->data, result->operands);
 	getft(result->data, &result->operands[1]);
 }
 
-static void  Fdfsft(Disasm_result *result)
+static void Fdfsft(Disasm_result *result)
 {
 	getfd(result->data, result->operands);
 	getfs(result->data, &result->operands[1]);
 	getft(result->data, &result->operands[2]);
 }
 
-static void  Rtczfs(Disasm_result *result)
+static void Rtczfs(Disasm_result *result)
 {
 	getrt(result->data, result->operands);
 	getczfs(result->data, &result->operands[1]);
 }
 
-static void  Code20(Disasm_result *result)
+static void Code20(Disasm_result *result)
 {
 	result->operands[0].tag = OprTag_code20;
 	result->operands[0].data = (result->data >> 6) & 0xFFFFF;
 }
 
-static void  Jtarget(Disasm_result *result)
+static void Jtarget(Disasm_result *result)
 {
 	result->operands[0].tag = OprTag_jtarget;
 	result->operands[0].data = (4 * (result->data & 0x3FFFFFF)) | (result->addr & 0xF0000000);
 }
 
-static void  Cofun(Disasm_result *result)
+static void Cofun(Disasm_result *result)
 {
 	result->operands[0].tag = OprTag_code25;
 	result->operands[0].data = result->data & 0x1FFFFFF;
 }
 
-static void  Bcft(Disasm_result *result)
+static void Bcft(Disasm_result *result)
 {
 	result->mnemonic[0] = 98;
 	result->mnemonic[1] = 99;
 	result->mnemonic[2] = result->mnemonic[3];
 	if ( (result->data & 0x10000) != 0 )
+	{
 		result->mnemonic[3] = 116;
+	}
 	else
+	{
 		result->mnemonic[3] = 102;
+	}
 	if ( (result->data & 0x20000) != 0 )
+	{
 		result->mnemonic[4] = 108;
+	}
 	else
+	{
 		result->mnemonic[4] = 0;
+	}
 	result->mnemonic[5] = 0;
 	getbroff(result->addr, result->data, result->operands);
 }
@@ -1435,13 +1459,12 @@ static const Opcode_table ee_opcode_root_table = { 26, 63, ee_opcode_root_table_
 static const Opcode_table * opcode_root_table = &iop_opcode_root_table;
 // clang-format on
 
-void  gen_asmmacro(Disasm_result *result)
+void gen_asmmacro(Disasm_result *result)
 {
 	if ( result->data )
 	{
-		if ( !strcmp("beq", result->mnemonic)
-			&& result->operands[0].tag == OprTag_reg
-			&& result->operands[1].tag == OprTag_reg
+		if (
+			!strcmp("beq", result->mnemonic) && result->operands[0].tag == OprTag_reg && result->operands[1].tag == OprTag_reg
 			&& result->operands[1].reg == result->operands[0].reg )
 		{
 			strcpy(result->mnemonic, "b");
@@ -1473,7 +1496,7 @@ void  gen_asmmacro(Disasm_result *result)
 	}
 }
 
-void  initdisasm(int arch, int regform0, int regform1, int regform2, int regform3)
+void initdisasm(int arch, int regform0, int regform1, int regform2, int regform3)
 {
 	switch ( arch )
 	{
@@ -1489,17 +1512,25 @@ void  initdisasm(int arch, int regform0, int regform1, int regform2, int regform
 	if ( regform0 != -1 )
 	{
 		if ( !regform0 || regform0 == 1 )
+		{
 			regnmsw[0] = regform0;
+		}
 		if ( !regform1 || regform1 == 1 )
+		{
 			regnmsw[1] = regform0;
+		}
 		if ( !regform2 || regform2 == 1 )
+		{
 			regnmsw[2] = regform0;
+		}
 		if ( !regform3 || regform3 == 1 )
+		{
 			regnmsw[3] = regform3;
+		}
 	}
 }
 
-Disasm_result * disassemble(unsigned int addr, unsigned int data)
+Disasm_result *disassemble(unsigned int addr, unsigned int data)
 {
 	Disasm_result *v3;
 	const Opcode_table_entry *op;
@@ -1511,7 +1542,9 @@ Disasm_result * disassemble(unsigned int addr, unsigned int data)
 	{
 		op = &optable->entries[(data >> optable->bit_pos) & optable->bit_mask];
 		if ( !op->subtable )
+		{
 			break;
+		}
 		optable = op->subtable;
 	}
 	v3->addr = addr;
@@ -1520,20 +1553,26 @@ Disasm_result * disassemble(unsigned int addr, unsigned int data)
 	{
 		strcpy(v3->mnemonic, op->mnemonic);
 		if ( op->opfunc )
+		{
 			op->opfunc(v3);
+		}
 	}
 	return v3;
 }
 
-void  shex(char * buf, unsigned int data)
+void shex(char *buf, unsigned int data)
 {
 	if ( (data & 0x80000000) != 0 )
+	{
 		sprintf(buf, "-0x%x", -data);
+	}
 	else
+	{
 		sprintf(buf, "0x%x", data);
+	}
 }
 
-void  format_operand(const Operand *opr, char *buf)
+void format_operand(const Operand *opr, char *buf)
 {
 	switch ( opr->tag )
 	{
@@ -1574,7 +1613,7 @@ void  format_operand(const Operand *opr, char *buf)
 	}
 }
 
-void  format_disasm(Disasm_result *dis, char *buf)
+void format_disasm(Disasm_result *dis, char *buf)
 {
 	char *s;
 
@@ -1591,74 +1630,10 @@ void  format_disasm(Disasm_result *dis, char *buf)
 		{
 			format_operand(&dis->operands[i], sa);
 			if ( dis->operands[i + 1].tag )
+			{
 				strcat(sa, ", ");
+			}
 			sa += strlen(sa);
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -7,68 +7,68 @@
 
 typedef struct lowtoken_
 {
-	const char * str; 
-	int line; 
+	const char *str;
+	int line;
 	int col;
 } LowToken;
-enum TokenCode 
+enum TokenCode
 {
-	TC_NULL = 0, 
-	TC_STRING = 1, 
-	TC_VECTOR = 2, 
-	TC_IOP = 3, 
-	TC_EE = 4, 
-	TC_Define = 5, 
-	TC_Segments_name = 6, 
-	TC_Memory_segment = 7, 
-	TC_remove = 8, 
-	TC_Program_header_order = 9, 
-	TC_Program_header_data = 10, 
-	TC_Segment_data = 11, 
-	TC_segment = 12, 
-	TC_createinfo = 13, 
-	TC_Section_header_table = 14, 
-	TC_CreateSymbols = 15, 
+	TC_NULL = 0,
+	TC_STRING = 1,
+	TC_VECTOR = 2,
+	TC_IOP = 3,
+	TC_EE = 4,
+	TC_Define = 5,
+	TC_Segments_name = 6,
+	TC_Memory_segment = 7,
+	TC_remove = 8,
+	TC_Program_header_order = 9,
+	TC_Program_header_data = 10,
+	TC_Segment_data = 11,
+	TC_segment = 12,
+	TC_createinfo = 13,
+	TC_Section_header_table = 14,
+	TC_CreateSymbols = 15,
 	TC_MAX_NUMBER = 16
 };
 typedef struct TokenTree_
 {
-	enum TokenCode tkcode; 
+	enum TokenCode tkcode;
 	union TokenTree_value
 	{
-		struct TokenTree_ *subtree; 
+		struct TokenTree_ *subtree;
 		LowToken *lowtoken;
 	} value;
 } TokenTree;
-struct fstrbuf 
+struct fstrbuf
 {
-	int line; 
-	int col; 
-	const char * cp; 
-	const char * ep; 
+	int line;
+	int col;
+	const char *cp;
+	const char *ep;
 	char buf[];
 };
 
-static int  bgetc(struct fstrbuf *fb);
-static void  bungetc(struct fstrbuf *fb);
-static int  skipsp(struct fstrbuf *fb);
-static int  skip_to_eol(struct fstrbuf *fb);
-static int  gettoken(char **strbuf, struct fstrbuf *fb);
-static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb);
-static TokenTree * make_conf_vector(LowToken **lowtokens);
-static TokenTree * make_conf_tree(LowToken *lowtokens);
-static int  get_vector_len(TokenTree *ttp);
-static int  get_stringvector_len(const char * *str);
-static const char * * add_stringvector(const char * *str, const char * newstr);
-static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp, Srx_gen_table *conf);
-static int  gen_define(TokenTree *ttp, Srx_gen_table *result);
-static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag);
-static elf_section * make_empty_section(const char * name, int type, int flag);
-static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree);
-static void  check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down);
-static int  check_srx_gen_table(Srx_gen_table *tp);
+static int bgetc(struct fstrbuf *fb);
+static void bungetc(struct fstrbuf *fb);
+static int skipsp(struct fstrbuf *fb);
+static int skip_to_eol(struct fstrbuf *fb);
+static int gettoken(char **strbuf, struct fstrbuf *fb);
+static void split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb);
+static TokenTree *make_conf_vector(LowToken **lowtokens);
+static TokenTree *make_conf_tree(LowToken *lowtokens);
+static int get_vector_len(TokenTree *ttp);
+static int get_stringvector_len(const char **str);
+static const char **add_stringvector(const char **str, const char *newstr);
+static int setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp, Srx_gen_table *conf);
+static int gen_define(TokenTree *ttp, Srx_gen_table *result);
+static void get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag);
+static elf_section *make_empty_section(const char *name, int type, int flag);
+static Srx_gen_table *make_srx_gen_table(TokenTree *tokentree);
+static void check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down);
+static int check_srx_gen_table(Srx_gen_table *tp);
 
-Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
+Srx_gen_table *read_conf(const char *indata, const char *infile, int dumpopt)
 {
 	LowToken *lowtokens;
 	struct fstrbuf *fbuf;
@@ -97,7 +97,8 @@ Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 	{
 		fsize = strlen(indata);
 	}
-	lowtokens = (LowToken *)calloc(((sizeof(LowToken) + 2) * (fsize + 1) + (sizeof(LowToken) - 1)) / sizeof(LowToken), sizeof(LowToken));
+	lowtokens = (LowToken *)calloc(
+		((sizeof(LowToken) + 2) * (fsize + 1) + (sizeof(LowToken) - 1)) / sizeof(LowToken), sizeof(LowToken));
 	fbuf = (struct fstrbuf *)malloc(fsize + sizeof(struct fstrbuf) + 1);
 	fbuf->cp = fbuf->buf;
 	fbuf->line = 1;
@@ -120,7 +121,9 @@ Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 
 			ch_ = bgetc(fbuf);
 			if ( ch_ == -1 )
+			{
 				break;
+			}
 			fputc(ch_, stdout);
 		}
 		free(lowtokens);
@@ -143,12 +146,14 @@ Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt)
 	return srx_gen_table;
 }
 
-static int  bgetc(struct fstrbuf *fb)
+static int bgetc(struct fstrbuf *fb)
 {
 	int ret;
 
 	if ( fb->ep <= fb->cp )
+	{
 		return -1;
+	}
 	if ( *fb->cp == '\n' )
 	{
 		fb->line += 1;
@@ -163,59 +168,69 @@ static int  bgetc(struct fstrbuf *fb)
 	return ret;
 }
 
-static void  bungetc(struct fstrbuf *fb)
+static void bungetc(struct fstrbuf *fb)
 {
 	if ( fb->cp > fb->buf )
 	{
 		fb->cp -= 1;
 		fb->col -= 1;
 		if ( *fb->cp == '\n' )
+		{
 			fb->line -= 1;
+		}
 	}
 }
 
-static int  skipsp(struct fstrbuf *fb)
+static int skipsp(struct fstrbuf *fb)
 {
 	int ch_;
 
 	do
+	{
 		ch_ = bgetc(fb);
-	while ( ch_ != -1 && isspace(ch_) != 0 );
+	} while ( ch_ != -1 && isspace(ch_) != 0 );
 	if ( ch_ != -1 )
+	{
 		bungetc(fb);
+	}
 	return ch_ != -1;
 }
 
-static int  skip_to_eol(struct fstrbuf *fb)
+static int skip_to_eol(struct fstrbuf *fb)
 {
 	int ch_;
 
 	do
+	{
 		ch_ = bgetc(fb);
-	while ( ch_ != -1 && ch_ != '\n' && ch_ != '\r' );
+	} while ( ch_ != -1 && ch_ != '\n' && ch_ != '\r' );
 	return ch_ != -1;
 }
 
-static int  gettoken(char **strbuf, struct fstrbuf *fb)
+static int gettoken(char **strbuf, struct fstrbuf *fb)
 {
 	int ch_;
 	char *cp;
 
-	for ( cp = *strbuf; ; *cp = 0 )
+	for ( cp = *strbuf;; *cp = 0 )
 	{
 		ch_ = bgetc(fb);
 		if ( ch_ == -1 || (ch_ != '.' && ch_ != '_' && ch_ != '*' && isalnum(ch_) == 0) )
+		{
 			break;
+		}
 		*cp = (char)(ch_ & 0xFF);
 		cp += 1;
 	}
 	if ( ch_ != -1 )
+	{
 		bungetc(fb);
+	}
 	*strbuf = cp + 1;
 	return ch_ != -1;
 }
 
-static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
+static void split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 {
 	char *cp;
 
@@ -225,11 +240,7 @@ static void  split_conf(LowToken *result, char *strbuf, struct fstrbuf *fb)
 		int cuchar;
 
 		cuchar = bgetc(fb);
-		if ( cuchar == '@'
-			|| cuchar == '.'
-			|| cuchar == '_'
-			|| cuchar == '*'
-			|| isalnum(cuchar) != 0 )
+		if ( cuchar == '@' || cuchar == '.' || cuchar == '_' || cuchar == '*' || isalnum(cuchar) != 0 )
 		{
 			result->str = cp;
 			result->line = fb->line;
@@ -283,7 +294,7 @@ struct keyword_table_
 };
 // clang-format on
 
-static TokenTree * make_conf_vector(LowToken **lowtokens)
+static TokenTree *make_conf_vector(LowToken **lowtokens)
 {
 	struct keyword_table_ *kt;
 	const LowToken *sltp;
@@ -299,14 +310,14 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 	{
 		{
 			TokenTree *realloc_tmp = (TokenTree *)realloc(v14, (entries + 2) * sizeof(TokenTree));
-			if (realloc_tmp == NULL)
+			if ( realloc_tmp == NULL )
 			{
 				fprintf(stderr, "Failure to allocate token tree\n");
 				exit(1);
 			}
 			v14 = realloc_tmp;
 		}
-		
+
 		if ( !strcmp(ltp->str, "{") )
 		{
 			sltp = ltp;
@@ -322,11 +333,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 		}
 		else
 		{
-			if ( *ltp->str != '@'
-				&& *ltp->str != '.'
-				&& *ltp->str != '_'
-				&& *ltp->str != '*'
-				&& isalnum(*ltp->str) == 0 )
+			if ( *ltp->str != '@' && *ltp->str != '.' && *ltp->str != '_' && *ltp->str != '*' && isalnum(*ltp->str) == 0 )
 			{
 				fprintf(stderr, "make_conf_vector(): unexcepted data '%s' line:%d col=%d\n", ltp->str, ltp->line, ltp->col);
 				exit(1);
@@ -334,7 +341,9 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 			if ( *ltp->str == '@' )
 			{
 				for ( kt = keyword_table; kt->code >= 0 && strcmp(kt->name, ltp->str + 1) != 0; kt += 1 )
+				{
 					;
+				}
 				if ( kt->code < 0 )
 				{
 					fprintf(stderr, "make_conf_vector(): unknown keyword '%s' line:%d col=%d\n", ltp->str, ltp->line, ltp->col);
@@ -356,7 +365,7 @@ static TokenTree * make_conf_vector(LowToken **lowtokens)
 	return v14;
 }
 
-static TokenTree * make_conf_tree(LowToken *lowtokens)
+static TokenTree *make_conf_tree(LowToken *lowtokens)
 {
 	TokenTree *v4;
 
@@ -365,45 +374,54 @@ static TokenTree * make_conf_tree(LowToken *lowtokens)
 	v4->value.subtree = make_conf_vector(&lowtokens);
 	if ( lowtokens->str )
 	{
-		fprintf(stderr, "make_conf_tree(): unexcepted data '%s' line:%d col=%d\n", lowtokens->str, lowtokens->line, lowtokens->col);
+		fprintf(
+			stderr,
+			"make_conf_tree(): unexcepted data '%s' line:%d col=%d\n",
+			lowtokens->str,
+			lowtokens->line,
+			lowtokens->col);
 		exit(1);
 	}
 	return v4;
 }
 
-static int  get_vector_len(TokenTree *ttp)
+static int get_vector_len(TokenTree *ttp)
 {
 	int v2;
 
 	for ( v2 = 0; ttp->tkcode; v2 += 1, ttp += 1 )
+	{
 		;
+	}
 	return v2;
 }
 
-static int  get_stringvector_len(const char * *str)
+static int get_stringvector_len(const char **str)
 {
 	int v2;
 
 	for ( v2 = 0; *str; v2 += 1, str += 1 )
+	{
 		;
+	}
 	return v2;
 }
 
-static const char * * add_stringvector(const char * *str, const char * newstr)
+static const char **add_stringvector(const char **str, const char *newstr)
 {
 	int stringvector_len;
-	const char * *result;
+	const char **result;
 	int nstr;
 
 	stringvector_len = get_stringvector_len(str);
 	nstr = stringvector_len + 1;
-	result = (const char * *)realloc(str, (stringvector_len + 2) * sizeof(const char *));
+	result = (const char **)realloc(str, (stringvector_len + 2) * sizeof(const char *));
 	result[nstr - 1] = newstr;
 	result[nstr] = 0;
 	return result;
 }
 
-static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp, Srx_gen_table *conf)
+static int setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp, Srx_gen_table *conf)
 {
 	if ( !strcmp("GLOBAL", ttp[1].value.lowtoken->str) )
 	{
@@ -476,7 +494,7 @@ static int  setup_reserved_symbol_table(CreateSymbolConf *result, TokenTree *ttp
 	return 0;
 }
 
-static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
+static int gen_define(TokenTree *ttp, Srx_gen_table *result)
 {
 	PheaderInfo *phrlist;
 	SegConf *segp;
@@ -498,7 +516,12 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 	{
 		if ( ttp[1].tkcode != TC_VECTOR )
 		{
-			fprintf(stderr, "argument not found for '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+			fprintf(
+				stderr,
+				"argument not found for '%s' line:%d col=%d\n",
+				ttp->value.lowtoken->str,
+				ttp->value.lowtoken->line,
+				ttp->value.lowtoken->col);
 			return 1;
 		}
 		arg = ttp[1].value.subtree;
@@ -511,7 +534,7 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 				for ( m = 0; m < entries_1; m += 1 )
 				{
 					seglist[m].name = arg[m].value.lowtoken->str;
-					seglist[m].sect_name_patterns = (const char * *)calloc(1, sizeof(const char *));
+					seglist[m].sect_name_patterns = (const char **)calloc(1, sizeof(const char *));
 				}
 				break;
 			case TC_Memory_segment:
@@ -520,7 +543,9 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 				{
 					segp = lookup_segment(result, arg[i].value.lowtoken->str, 1);
 					if ( !segp )
+					{
 						return 1;
+					}
 					segp->bitid = 1 << (segp - result->segment_list);
 				}
 				break;
@@ -543,12 +568,11 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 							phrlist[j].d.segment_list = (SegConf **)calloc(nseg + 1, sizeof(SegConf *));
 							for ( n = 0; n < nseg; n += 1 )
 							{
-								phrlist[j].d.segment_list[n] = lookup_segment(
-																			 result,
-																			 subarg[n].value.lowtoken->str,
-																			 1);
+								phrlist[j].d.segment_list[n] = lookup_segment(result, subarg[n].value.lowtoken->str, 1);
 								if ( !phrlist[j].d.segment_list[n] )
+								{
 									return 1;
+								}
 							}
 							break;
 						default:
@@ -567,18 +591,25 @@ static int  gen_define(TokenTree *ttp, Srx_gen_table *result)
 						return 1;
 					}
 					if ( setup_reserved_symbol_table(&result->create_symbols[k], arg[k].value.subtree, result) )
+					{
 						return 1;
+					}
 				}
 				break;
 			default:
-				fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+				fprintf(
+					stderr,
+					"unexcepted data '%s' line:%d col=%d\n",
+					ttp->value.lowtoken->str,
+					ttp->value.lowtoken->line,
+					ttp->value.lowtoken->col);
 				return 1;
 		}
 	}
 	return 0;
 }
 
-static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag)
+static void get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag)
 {
 	int flag;
 	int type;
@@ -615,7 +646,7 @@ static void  get_section_type_flag(TokenTree *ttp, int *rtype, int *rflag)
 	*rflag = flag;
 }
 
-static elf_section * make_empty_section(const char * name, int type, int flag)
+static elf_section *make_empty_section(const char *name, int type, int flag)
 {
 	elf_section *result;
 
@@ -629,7 +660,7 @@ static elf_section * make_empty_section(const char * name, int type, int flag)
 	return result;
 }
 
-static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
+static Srx_gen_table *make_srx_gen_table(TokenTree *tokentree)
 {
 	SegConf *seg_1;
 	SegConf *seg_2;
@@ -644,7 +675,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 	int secttype;
 	unsigned int bitid;
 	int nsect;
-	const char * *strp;
+	const char **strp;
 	const char *str;
 	char *str2;
 
@@ -657,9 +688,9 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 	}
 	ttp = tokentree->value.subtree;
 	nsect = 0;
-	result->section_table_order = (const char * *)calloc(1, sizeof(const char *));
-	result->file_layout_order = (const char * *)calloc(1, sizeof(const char *));
-	result->removesection_list = (const char * *)calloc(1, sizeof(const char *));
+	result->section_table_order = (const char **)calloc(1, sizeof(const char *));
+	result->file_layout_order = (const char **)calloc(1, sizeof(const char *));
+	result->removesection_list = (const char **)calloc(1, sizeof(const char *));
 	result->section_list = (SectConf *)calloc(1, sizeof(SectConf));
 	for ( ; ttp->tkcode; )
 	{
@@ -697,7 +728,9 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					{
 						seg_1 = lookup_segment(result, ttp2_1->value.lowtoken->str, 1);
 						if ( !seg_1 )
+						{
 							return 0;
+						}
 						seg_1->sect_name_patterns = add_stringvector(seg_1->sect_name_patterns, str);
 						bitid |= seg_1->bitid;
 					}
@@ -726,7 +759,7 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 							result->section_list[nsect - 1].sectflag = sectflag;
 						}
 						seg_2 = NULL;
-						for ( ttp2_2 = ttp1[1].value.subtree; ; ttp2_2 += 1 )
+						for ( ttp2_2 = ttp1[1].value.subtree;; ttp2_2 += 1 )
 						{
 							if ( ttp2_2->tkcode == TC_NULL )
 							{
@@ -735,9 +768,13 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 							}
 							seg_2 = lookup_segment(result, ttp2_2->value.lowtoken->str, 1);
 							if ( !seg_2 )
+							{
 								break;
+							}
 							if ( !seg_2->empty_section )
+							{
 								seg_2->empty_section = make_empty_section(str, secttype, sectflag);
+							}
 						}
 						if ( !seg_2 )
 						{
@@ -747,14 +784,20 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 					}
 					else
 					{
-						fprintf(stderr, "Illegal @createinfo line:%d col=%d\n", ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
+						fprintf(
+							stderr, "Illegal @createinfo line:%d col=%d\n", ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
 						free(result);
 						return 0;
 					}
 				}
 				else
 				{
-					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp1->value.lowtoken->str, ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
+					fprintf(
+						stderr,
+						"unexcepted data '%s' line:%d col=%d\n",
+						ttp1->value.lowtoken->str,
+						ttp1->value.lowtoken->line,
+						ttp1->value.lowtoken->col);
 					free(result);
 					return 0;
 				}
@@ -770,7 +813,12 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 			case TC_Define:
 				if ( !ttp1 )
 				{
-					fprintf(stderr, "argument not found for '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+					fprintf(
+						stderr,
+						"argument not found for '%s' line:%d col=%d\n",
+						ttp->value.lowtoken->str,
+						ttp->value.lowtoken->line,
+						ttp->value.lowtoken->col);
 					free(result);
 					return 0;
 				}
@@ -786,11 +834,21 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 				{
 					if ( ttp1 )
 					{
-						fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp1->value.lowtoken->str, ttp1->value.lowtoken->line, ttp1->value.lowtoken->col);
+						fprintf(
+							stderr,
+							"unexcepted data '%s' line:%d col=%d\n",
+							ttp1->value.lowtoken->str,
+							ttp1->value.lowtoken->line,
+							ttp1->value.lowtoken->col);
 					}
 					else
 					{
-						fprintf(stderr, "%s missing '{ <n> }' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+						fprintf(
+							stderr,
+							"%s missing '{ <n> }' line:%d col=%d\n",
+							ttp->value.lowtoken->str,
+							ttp->value.lowtoken->line,
+							ttp->value.lowtoken->col);
 					}
 					free(result);
 					return 0;
@@ -814,7 +872,9 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 						if ( seg_3 )
 						{
 							for ( strp = seg_3->sect_name_patterns; *strp; strp += 1 )
+							{
 								result->file_layout_order = add_stringvector(result->file_layout_order, *strp);
+							}
 							ttp1 += 1;
 							continue;
 						}
@@ -834,7 +894,12 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 			default:
 				if ( ttp->value.lowtoken != NULL )
 				{
-					fprintf(stderr, "unexcepted data '%s' line:%d col=%d\n", ttp->value.lowtoken->str, ttp->value.lowtoken->line, ttp->value.lowtoken->col);
+					fprintf(
+						stderr,
+						"unexcepted data '%s' line:%d col=%d\n",
+						ttp->value.lowtoken->str,
+						ttp->value.lowtoken->line,
+						ttp->value.lowtoken->col);
 				}
 				free(result);
 				return 0;
@@ -853,13 +918,13 @@ static Srx_gen_table * make_srx_gen_table(TokenTree *tokentree)
 	}
 }
 
-static void  check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down)
+static void check_change_bit(unsigned int oldbit, unsigned int newbit, unsigned int *up, unsigned int *down)
 {
 	*up = ~oldbit & newbit & (newbit ^ oldbit);
 	*down = ~newbit & oldbit & (newbit ^ oldbit);
 }
 
-static int  check_srx_gen_table(Srx_gen_table *tp)
+static int check_srx_gen_table(Srx_gen_table *tp)
 {
 	SegConf *scnfp;
 	SectConf *sctp;
@@ -872,11 +937,10 @@ static int  check_srx_gen_table(Srx_gen_table *tp)
 	unsigned int oldbitid;
 
 	nsegment = 0;
-	for ( 
-		scnfp = tp->segment_list;
-		scnfp && scnfp->name;
-		scnfp += 1 )
+	for ( scnfp = tp->segment_list; scnfp && scnfp->name; scnfp += 1 )
+	{
 		nsegment += 1;
+	}
 	defbitid = 0;
 	oldbitid = 0;
 	error = 0;
@@ -901,51 +965,3 @@ static int  check_srx_gen_table(Srx_gen_table *tp)
 	}
 	return error;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

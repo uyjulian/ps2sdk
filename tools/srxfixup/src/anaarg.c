@@ -21,7 +21,9 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 	char **argva;
 
 	for ( i = 0; dopttable[i].option; i += 1 )
+	{
 		;
+	}
 	opttable = (Opttable *)__builtin_alloca((argc + i) * sizeof(Opttable));
 	memset(opttable, 0, (argc + i) * sizeof(Opttable));
 	memcpy(opttable, dopttable, i * sizeof(Opttable));
@@ -31,12 +33,14 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 	argvp = argv;
 	*nargv = *argv;
 	nargc = 1;
-	for ( argca = argc - 1, argva = argv + 1; ; argca -= 1, argva += 1 )
+	for ( argca = argc - 1, argva = argv + 1;; argca -= 1, argva += 1 )
 	{
 		if ( argca <= 0 )
 		{
 			for ( i = 0; i < nargc + 1; i += 1 )
+			{
 				argvp[i] = nargv[i];
+			}
 			for ( i = 0; opttable[i].option; i += 1 )
 			{
 				if ( opttable[i].vartype == 'l' )
@@ -54,16 +58,22 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 				if ( opttable[i].havearg == ARG_HAVEARG_UNK3 )
 				{
 					if ( !strcmp(opttable[i].option, *argva) )
+					{
 						break;
+					}
 				}
 				else
 				{
 					if ( !strncmp(opttable[i].option, *argva, strlen(opttable[i].option)) )
+					{
 						break;
+					}
 				}
 			}
 			if ( !opttable[i].option )
+			{
 				return -1;
+			}
 			if ( opttable[i].havearg != ARG_HAVEARG_NONE && opttable[i].havearg != ARG_HAVEARG_UNK3 )
 			{
 				if ( opttable[i].havearg == ARG_HAVEARG_UNK4 || (*argva)[strlen(opttable[i].option)] )
@@ -102,7 +112,9 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 						if ( opt != NULL )
 						{
 							for ( otp = igadd; opttable < otp; otp -= 1 )
+							{
 								*otp = otp[-1];
+							}
 							igadd += 1;
 							opttable->option = opt;
 							opttable->vartype = 'n';
@@ -155,4 +167,3 @@ int analize_arguments(const Opttable *dopttable, int argc, char **argv)
 		}
 	}
 }
-

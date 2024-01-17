@@ -245,7 +245,7 @@ typedef struct _elf_section
 {
 	Elf32_Shdr shr;
 	uint8_t *data;
-	const char * name;
+	const char *name;
 	unsigned int number;
 	struct _elf_section *link;
 	struct _elf_section *info;
@@ -254,7 +254,7 @@ typedef struct _elf_section
 typedef struct _syment
 {
 	Elf32_Sym sym;
-	const char * name;
+	const char *name;
 	unsigned int number;
 	int bind;
 	unsigned int type;
@@ -271,7 +271,7 @@ typedef struct _elf_proghead
 {
 	Elf32_Phdr phdr;
 	elf_section **scp;
-	void *optdata; // Not used
+	void *optdata;  // Not used
 } elf_proghead;
 typedef struct _elffile
 {
@@ -301,65 +301,65 @@ typedef struct _elf_file_slot
 
 typedef struct _segconf
 {
-	const char * name;
+	const char *name;
 	int bitid;
-	const char * *sect_name_patterns; 
-	elf_section *empty_section; 
-	int nsect; 
-	elf_section **scp; 
-	unsigned int addr; 
+	const char **sect_name_patterns;
+	elf_section *empty_section;
+	int nsect;
+	elf_section **scp;
+	unsigned int addr;
 	unsigned int size;
 } SegConf;
 typedef struct _pheader_info
 {
-	int sw; 
+	int sw;
 	union _pheader_info_d
 	{
-		const char * section_name;
+		const char *section_name;
 		SegConf **segment_list;
 	} d;
 } PheaderInfo;
 typedef struct _sectconf
 {
-	const char * sect_name_pattern; 
-	unsigned int flag; 
-	int secttype; 
+	const char *sect_name_pattern;
+	unsigned int flag;
+	int secttype;
 	int sectflag;
 } SectConf;
 typedef struct _crtsymconf
 {
-	const char * name; 
-	int bind; 
-	int type; 
-	SegConf *segment; 
-	const char * sectname; 
-	int shindex; 
+	const char *name;
+	int bind;
+	int type;
+	SegConf *segment;
+	const char *sectname;
+	int shindex;
 	int seflag;
 } CreateSymbolConf;
 typedef struct _srx_gen_table
 {
-	int target; 
-	SegConf *segment_list; 
-	CreateSymbolConf *create_symbols; 
-	PheaderInfo *program_header_order; 
-	SectConf *section_list; 
-	const char * *removesection_list; 
-	const char * *section_table_order; 
-	const char * *file_layout_order;
+	int target;
+	SegConf *segment_list;
+	CreateSymbolConf *create_symbols;
+	PheaderInfo *program_header_order;
+	SectConf *section_list;
+	const char **removesection_list;
+	const char **section_table_order;
+	const char **file_layout_order;
 } Srx_gen_table;
 
 // anaarg.c, srxfixup.c
 
-typedef struct _opt_strings 
+typedef struct _opt_strings
 {
-	struct _opt_strings *next; 
-	const char * string;
+	struct _opt_strings *next;
+	const char *string;
 } Opt_strings;
-typedef struct _opttable 
+typedef struct _opttable
 {
-	const char * option; 
-	int havearg; 
-	char vartype; 
+	const char *option;
+	int havearg;
+	char vartype;
 	void *var;
 } Opttable;
 
@@ -374,30 +374,30 @@ typedef struct _slink
 
 typedef enum OperandTag
 {
-	OprTag_none = 0, 
-	OprTag_reg = 1, 
-	OprTag_c0reg_iop = 2, 
-	OprTag_c0reg_ee = 3, 
-	OprTag_czreg = 4, 
-	OprTag_c1reg = 5, 
-	OprTag_imm = 6, 
-	OprTag_shamt = 7, 
-	OprTag_jtarget = 8, 
-	OprTag_regoffset = 9, 
-	OprTag_code20 = 10, 
+	OprTag_none = 0,
+	OprTag_reg = 1,
+	OprTag_c0reg_iop = 2,
+	OprTag_c0reg_ee = 3,
+	OprTag_czreg = 4,
+	OprTag_c1reg = 5,
+	OprTag_imm = 6,
+	OprTag_shamt = 7,
+	OprTag_jtarget = 8,
+	OprTag_regoffset = 9,
+	OprTag_code20 = 10,
 	OprTag_code25 = 11
 } OperandTag;
 typedef struct operand
 {
-	enum OperandTag tag; 
-	unsigned char reg; 
+	enum OperandTag tag;
+	unsigned char reg;
 	unsigned int data;
 } Operand;
-typedef struct disasm_result 
+typedef struct disasm_result
 {
-	unsigned int addr; 
-	unsigned int data; 
-	char mnemonic[16]; 
+	unsigned int addr;
+	unsigned int data;
+	char mnemonic[16];
 	Operand operands[4];
 } Disasm_result;
 
@@ -418,60 +418,61 @@ extern void print_elf_symtbl(const elf_section *scp, unsigned int flag);
 extern void print_elf_mips_symbols(const elf_mips_symbolic_data *symbol, unsigned int flag);
 
 // elflib.c
-extern elf_file *read_elf(const char * filename);
+extern elf_file *read_elf(const char *filename);
 extern int layout_elf_file(elf_file *elf);
-extern int write_elf(elf_file *elf, const char * filename);
+extern int write_elf(elf_file *elf, const char *filename);
 extern void add_section(elf_file *elf, elf_section *scp);
 extern elf_section *remove_section(elf_file *elf, Elf32_Word shtype);
-extern elf_section *remove_section_by_name(elf_file *elf, const char * secname);
+extern elf_section *remove_section_by_name(elf_file *elf, const char *secname);
 extern elf_section *search_section(elf_file *elf, Elf32_Word stype);
-extern elf_section *search_section_by_name(elf_file *elf, const char * secname);
+extern elf_section *search_section_by_name(elf_file *elf, const char *secname);
 extern unsigned int *get_section_data(elf_file *elf, unsigned int addr);
-extern elf_syment *search_global_symbol(const char * name, elf_file *elf);
+extern elf_syment *search_global_symbol(const char *name, elf_file *elf);
 extern int is_defined_symbol(const elf_syment *sym);
-extern elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int value, elf_section *scp, int st_shndx);
+extern elf_syment *
+add_symbol(elf_file *elf, const char *name, int bind, int type, int value, elf_section *scp, int st_shndx);
 extern unsigned int get_symbol_value(const elf_syment *sym, const elf_file *elf);
 extern void reorder_symtab(elf_file *elf);
 extern unsigned int adjust_align(unsigned int value, unsigned int align);
 extern void rebuild_section_name_strings(elf_file *elf);
 extern void rebuild_symbol_name_strings(elf_file *elf);
 extern Elf_file_slot *build_file_order_list(const elf_file *elf);
-extern void  shrink_file_order_list(Elf_file_slot *efs);
-extern void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs);
+extern void shrink_file_order_list(Elf_file_slot *efs);
+extern void writeback_file_order_list(elf_file *elf, Elf_file_slot *efs);
 extern void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs);
 
 // mipsdis.c
-extern void  gen_asmmacro(Disasm_result *result);
-extern void  initdisasm(int arch, int regform0, int regform1, int regform2, int regform3);
-extern Disasm_result * disassemble(unsigned int addr, unsigned int data);
-extern void  shex(char *buf, unsigned int data);
-extern void  format_operand(const Operand *opr, char *buf);
-extern void  format_disasm(Disasm_result *dis, char *buf);
+extern void gen_asmmacro(Disasm_result *result);
+extern void initdisasm(int arch, int regform0, int regform1, int regform2, int regform3);
+extern Disasm_result *disassemble(unsigned int addr, unsigned int data);
+extern void shex(char *buf, unsigned int data);
+extern void format_operand(const Operand *opr, char *buf);
+extern void format_disasm(Disasm_result *dis, char *buf);
 
 // readconf.c
-extern Srx_gen_table * read_conf(const char * indata, const char * infile, int dumpopt);
+extern Srx_gen_table *read_conf(const char *indata, const char *infile, int dumpopt);
 
 // ring.c
-extern SLink * add_ring_top(SLink *tailp, SLink *elementp);
-extern SLink * add_ring_tail(SLink *tailp, SLink *elementp);
-extern SLink * joint_ring(SLink *tailp, SLink *otherring);
-extern SLink * ring_to_liner(SLink *tailp);
+extern SLink *add_ring_top(SLink *tailp, SLink *elementp);
+extern SLink *add_ring_tail(SLink *tailp, SLink *elementp);
+extern SLink *joint_ring(SLink *tailp, SLink *otherring);
+extern SLink *ring_to_liner(SLink *tailp);
 
 // srxfixup.c
-extern void usage(const char * myname);
-extern void stripusage(const char * myname);
+extern void usage(const char *myname);
+extern void stripusage(const char *myname);
 
 // srxgen.c
-extern int  convert_rel2srx(elf_file *elf, const char * entrysym, int needoutput, int cause_irx1);
-extern int  layout_srx_file(elf_file *elf);
-extern void  strip_elf(elf_file *elf);
-extern SegConf * lookup_segment(Srx_gen_table *conf, const char * segname, int msgsw);
-extern void  fixlocation_elf(elf_file *elf, unsigned int startaddr);
-extern int  relocation_is_version2(elf_section *relsect);
-extern void  dump_srx_gen_table(Srx_gen_table *tp);
+extern int convert_rel2srx(elf_file *elf, const char *entrysym, int needoutput, int cause_irx1);
+extern int layout_srx_file(elf_file *elf);
+extern void strip_elf(elf_file *elf);
+extern SegConf *lookup_segment(Srx_gen_table *conf, const char *segname, int msgsw);
+extern void fixlocation_elf(elf_file *elf, unsigned int startaddr);
+extern int relocation_is_version2(elf_section *relsect);
+extern void dump_srx_gen_table(Srx_gen_table *tp);
 
 // swapmem.c
-extern void  swapmemory(void *aaddr, const char * format, unsigned int times);
+extern void swapmemory(void *aaddr, const char *format, unsigned int times);
 
 // eefixconf.c
 extern const char *ee_defaultconf;
@@ -486,9 +487,9 @@ enum Ei_class_name_enum
 	ELFCLASS64 = 2,
 };
 
-#define XEACH_Ei_class_name_enum() \
-	X(ELFCLASSNONE) \
-	X(ELFCLASS32) \
+#define XEACH_Ei_class_name_enum()                                                                                     \
+	X(ELFCLASSNONE)                                                                                                      \
+	X(ELFCLASS32)                                                                                                        \
 	X(ELFCLASS64)
 
 enum E_type_name_enum
@@ -504,15 +505,15 @@ enum E_type_name_enum
 	ET_SCE_EERELEXEC2 = 0xFF91,
 };
 
-#define XEACH_E_type_name_enum() \
-	X(ET_NONE) \
-	X(ET_REL) \
-	X(ET_EXEC) \
-	X(ET_DYN) \
-	X(ET_CORE) \
-	X(ET_SCE_IOPRELEXEC) \
-	X(ET_SCE_IOPRELEXEC2) \
-	X(ET_SCE_EERELEXEC) \
+#define XEACH_E_type_name_enum()                                                                                       \
+	X(ET_NONE)                                                                                                           \
+	X(ET_REL)                                                                                                            \
+	X(ET_EXEC)                                                                                                           \
+	X(ET_DYN)                                                                                                            \
+	X(ET_CORE)                                                                                                           \
+	X(ET_SCE_IOPRELEXEC)                                                                                                 \
+	X(ET_SCE_IOPRELEXEC2)                                                                                                \
+	X(ET_SCE_EERELEXEC)                                                                                                  \
 	X(ET_SCE_EERELEXEC2)
 
 enum Ei_data_name_enum
@@ -522,9 +523,9 @@ enum Ei_data_name_enum
 	ELFDATA2MSB = 2,
 };
 
-#define XEACH_Ei_data_name_enum() \
-	X(ELFDATANONE) \
-	X(ELFDATA2LSB) \
+#define XEACH_Ei_data_name_enum()                                                                                      \
+	X(ELFDATANONE)                                                                                                       \
+	X(ELFDATA2LSB)                                                                                                       \
 	X(ELFDATA2MSB)
 
 enum E_version_name_enum
@@ -533,8 +534,8 @@ enum E_version_name_enum
 	EV_CURRENT = 1,
 };
 
-#define XEACH_E_version_name_enum() \
-	X(EV_NONE) \
+#define XEACH_E_version_name_enum()                                                                                    \
+	X(EV_NONE)                                                                                                           \
 	X(EV_CURRENT)
 
 enum E_machine_name_enum
@@ -555,20 +556,20 @@ enum E_machine_name_enum
 	EM_SH = 42,
 };
 
-#define XEACH_E_machine_name_enum() \
-	X(EM_NONE) \
-	X(EM_M32) \
-	X(EM_SPARC) \
-	X(EM_386) \
-	X(EM_68K) \
-	X(EM_88K) \
-	X(EM_860) \
-	X(EM_MIPS) \
-	X(EM_MIPS_RS4_BE) \
-	X(EM_SPARC64) \
-	X(EM_PARISC) \
-	X(EM_SPARC32PLUS) \
-	X(EM_PPC) \
+#define XEACH_E_machine_name_enum()                                                                                    \
+	X(EM_NONE)                                                                                                           \
+	X(EM_M32)                                                                                                            \
+	X(EM_SPARC)                                                                                                          \
+	X(EM_386)                                                                                                            \
+	X(EM_68K)                                                                                                            \
+	X(EM_88K)                                                                                                            \
+	X(EM_860)                                                                                                            \
+	X(EM_MIPS)                                                                                                           \
+	X(EM_MIPS_RS4_BE)                                                                                                    \
+	X(EM_SPARC64)                                                                                                        \
+	X(EM_PARISC)                                                                                                         \
+	X(EM_SPARC32PLUS)                                                                                                    \
+	X(EM_PPC)                                                                                                            \
 	X(EM_SH)
 
 enum P_type_name_enum
@@ -586,17 +587,17 @@ enum P_type_name_enum
 	PT_SCE_EEMOD = 0x70000090,
 };
 
-#define XEACH_P_type_name_enum() \
-	X(PT_NULL) \
-	X(PT_LOAD) \
-	X(PT_DYNAMIC) \
-	X(PT_INTERP) \
-	X(PT_NOTE) \
-	X(PT_SHLIB) \
-	X(PT_PHDR) \
-	X(PT_MIPS_REGINFO) \
-	X(PT_MIPS_RTPROC) \
-	X(PT_SCE_IOPMOD) \
+#define XEACH_P_type_name_enum()                                                                                       \
+	X(PT_NULL)                                                                                                           \
+	X(PT_LOAD)                                                                                                           \
+	X(PT_DYNAMIC)                                                                                                        \
+	X(PT_INTERP)                                                                                                         \
+	X(PT_NOTE)                                                                                                           \
+	X(PT_SHLIB)                                                                                                          \
+	X(PT_PHDR)                                                                                                           \
+	X(PT_MIPS_REGINFO)                                                                                                   \
+	X(PT_MIPS_RTPROC)                                                                                                    \
+	X(PT_SCE_IOPMOD)                                                                                                     \
 	X(PT_SCE_EEMOD)
 
 enum S_type_name_enum
@@ -623,26 +624,26 @@ enum S_type_name_enum
 	SHT_SCE_EEMOD = 0x70000090,
 };
 
-#define XEACH_S_type_name_enum() \
-	X(SHT_NULL) \
-	X(SHT_PROGBITS) \
-	X(SHT_SYMTAB) \
-	X(SHT_STRTAB) \
-	X(SHT_RELA) \
-	X(SHT_HASH) \
-	X(SHT_DYNAMIC) \
-	X(SHT_NOTE) \
-	X(SHT_NOBITS) \
-	X(SHT_REL) \
-	X(SHT_SHLIB) \
-	X(SHT_DYNSYM) \
-	X(SHT_MIPS_LIBLIST) \
-	X(SHT_MIPS_CONFLICT) \
-	X(SHT_MIPS_GPTAB) \
-	X(SHT_MIPS_UCODE) \
-	X(SHT_MIPS_DEBUG) \
-	X(SHT_MIPS_REGINFO) \
-	X(SHT_SCE_IOPMOD) \
+#define XEACH_S_type_name_enum()                                                                                       \
+	X(SHT_NULL)                                                                                                          \
+	X(SHT_PROGBITS)                                                                                                      \
+	X(SHT_SYMTAB)                                                                                                        \
+	X(SHT_STRTAB)                                                                                                        \
+	X(SHT_RELA)                                                                                                          \
+	X(SHT_HASH)                                                                                                          \
+	X(SHT_DYNAMIC)                                                                                                       \
+	X(SHT_NOTE)                                                                                                          \
+	X(SHT_NOBITS)                                                                                                        \
+	X(SHT_REL)                                                                                                           \
+	X(SHT_SHLIB)                                                                                                         \
+	X(SHT_DYNSYM)                                                                                                        \
+	X(SHT_MIPS_LIBLIST)                                                                                                  \
+	X(SHT_MIPS_CONFLICT)                                                                                                 \
+	X(SHT_MIPS_GPTAB)                                                                                                    \
+	X(SHT_MIPS_UCODE)                                                                                                    \
+	X(SHT_MIPS_DEBUG)                                                                                                    \
+	X(SHT_MIPS_REGINFO)                                                                                                  \
+	X(SHT_SCE_IOPMOD)                                                                                                    \
 	X(SHT_SCE_EEMOD)
 
 enum R_MIPS_Type_enum
@@ -672,29 +673,29 @@ enum R_MIPS_Type_enum
 	R_MIPSSCE_ADDEND = 251,
 };
 
-#define XEACH_R_MIPS_Type_enum() \
-	X(R_MIPS_NONE) \
-	X(R_MIPS_16) \
-	X(R_MIPS_32) \
-	X(R_MIPS_REL32) \
-	X(R_MIPS_26) \
-	X(R_MIPS_HI16) \
-	X(R_MIPS_LO16) \
-	X(R_MIPS_GPREL16) \
-	X(R_MIPS_LITERAL) \
-	X(R_MIPS_GOT16) \
-	X(R_MIPS_PC16) \
-	X(R_MIPS_CALL16) \
-	X(R_MIPS_GPREL32) \
-	X(R_MIPS_GOTHI16) \
-	X(R_MIPS_GOTLO16) \
-	X(R_MIPS_CALLHI16) \
-	X(R_MIPS_CALLLO16) \
-	X(R_MIPS_DVP_11_PCREL) \
-	X(R_MIPS_DVP_27_S4) \
-	X(R_MIPS_DVP_11_S4) \
-	X(R_MIPS_DVP_U15_S3) \
-	X(R_MIPSSCE_MHI16) \
+#define XEACH_R_MIPS_Type_enum()                                                                                       \
+	X(R_MIPS_NONE)                                                                                                       \
+	X(R_MIPS_16)                                                                                                         \
+	X(R_MIPS_32)                                                                                                         \
+	X(R_MIPS_REL32)                                                                                                      \
+	X(R_MIPS_26)                                                                                                         \
+	X(R_MIPS_HI16)                                                                                                       \
+	X(R_MIPS_LO16)                                                                                                       \
+	X(R_MIPS_GPREL16)                                                                                                    \
+	X(R_MIPS_LITERAL)                                                                                                    \
+	X(R_MIPS_GOT16)                                                                                                      \
+	X(R_MIPS_PC16)                                                                                                       \
+	X(R_MIPS_CALL16)                                                                                                     \
+	X(R_MIPS_GPREL32)                                                                                                    \
+	X(R_MIPS_GOTHI16)                                                                                                    \
+	X(R_MIPS_GOTLO16)                                                                                                    \
+	X(R_MIPS_CALLHI16)                                                                                                   \
+	X(R_MIPS_CALLLO16)                                                                                                   \
+	X(R_MIPS_DVP_11_PCREL)                                                                                               \
+	X(R_MIPS_DVP_27_S4)                                                                                                  \
+	X(R_MIPS_DVP_11_S4)                                                                                                  \
+	X(R_MIPS_DVP_U15_S3)                                                                                                 \
+	X(R_MIPSSCE_MHI16)                                                                                                   \
 	X(R_MIPSSCE_ADDEND)
 
 enum SymbolBinding_enum
@@ -704,9 +705,9 @@ enum SymbolBinding_enum
 	STB_WEAK = 2,
 };
 
-#define XEACH_SymbolBinding_enum() \
-	X(STB_LOCAL) \
-	X(STB_GLOBAL) \
+#define XEACH_SymbolBinding_enum()                                                                                     \
+	X(STB_LOCAL)                                                                                                         \
+	X(STB_GLOBAL)                                                                                                        \
 	X(STB_WEAK)
 
 enum SymbolType_enum
@@ -718,11 +719,11 @@ enum SymbolType_enum
 	STT_FILE = 4,
 };
 
-#define XEACH_SymbolType_enum() \
-	X(STT_NOTYPE) \
-	X(STT_OBJECT) \
-	X(STT_FUNC) \
-	X(STT_SECTION) \
+#define XEACH_SymbolType_enum()                                                                                        \
+	X(STT_NOTYPE)                                                                                                        \
+	X(STT_OBJECT)                                                                                                        \
+	X(STT_FUNC)                                                                                                          \
+	X(STT_SECTION)                                                                                                       \
 	X(STT_FILE)
 
 enum SymbolSpSection_enum
@@ -738,15 +739,15 @@ enum SymbolSpSection_enum
 	SHN_COMMON = 0xFFF2,
 };
 
-#define XEACH_SymbolSpSection_enum() \
-	X(SHN_UNDEF) \
-	X(SHN_MIPS_ACOMMON) \
-	X(SHN_MIPS_TEXT) \
-	X(SHN_MIPS_DATA) \
-	X(SHN_MIPS_SCOMMON) \
-	X(SHN_MIPS_SUNDEFINED) \
-	X(SHN_RADDR) \
-	X(SHN_ABS) \
+#define XEACH_SymbolSpSection_enum()                                                                                   \
+	X(SHN_UNDEF)                                                                                                         \
+	X(SHN_MIPS_ACOMMON)                                                                                                  \
+	X(SHN_MIPS_TEXT)                                                                                                     \
+	X(SHN_MIPS_DATA)                                                                                                     \
+	X(SHN_MIPS_SCOMMON)                                                                                                  \
+	X(SHN_MIPS_SUNDEFINED)                                                                                               \
+	X(SHN_RADDR)                                                                                                         \
+	X(SHN_ABS)                                                                                                           \
 	X(SHN_COMMON)
 
 enum SymbolTypes_enum
@@ -779,32 +780,32 @@ enum SymbolTypes_enum
 	stMax = 64,
 };
 
-#define XEACH_SymbolTypes_enum() \
-	X(stNil) \
-	X(stGlobal) \
-	X(stStatic) \
-	X(stParam) \
-	X(stLocal) \
-	X(stLabel) \
-	X(stProc) \
-	X(stBlock) \
-	X(stEnd) \
-	X(stMember) \
-	X(stTypedef) \
-	X(stFile) \
-	X(stRegReloc) \
-	X(stForward) \
-	X(stStaticProc) \
-	X(stConstant) \
-	X(stStaParam) \
-	X(stStruct) \
-	X(stUnion) \
-	X(stEnum) \
-	X(stIndirect) \
-	X(stStr) \
-	X(stNumber) \
-	X(stExpr) \
-	X(stType) \
+#define XEACH_SymbolTypes_enum()                                                                                       \
+	X(stNil)                                                                                                             \
+	X(stGlobal)                                                                                                          \
+	X(stStatic)                                                                                                          \
+	X(stParam)                                                                                                           \
+	X(stLocal)                                                                                                           \
+	X(stLabel)                                                                                                           \
+	X(stProc)                                                                                                            \
+	X(stBlock)                                                                                                           \
+	X(stEnd)                                                                                                             \
+	X(stMember)                                                                                                          \
+	X(stTypedef)                                                                                                         \
+	X(stFile)                                                                                                            \
+	X(stRegReloc)                                                                                                        \
+	X(stForward)                                                                                                         \
+	X(stStaticProc)                                                                                                      \
+	X(stConstant)                                                                                                        \
+	X(stStaParam)                                                                                                        \
+	X(stStruct)                                                                                                          \
+	X(stUnion)                                                                                                           \
+	X(stEnum)                                                                                                            \
+	X(stIndirect)                                                                                                        \
+	X(stStr)                                                                                                             \
+	X(stNumber)                                                                                                          \
+	X(stExpr)                                                                                                            \
+	X(stType)                                                                                                            \
 	X(stMax)
 
 enum StorageClasse_enum
@@ -842,37 +843,37 @@ enum StorageClasse_enum
 	scMax = 32,
 };
 
-#define XEACH_StorageClasse_enum() \
-	X(scNil) \
-	X(scText) \
-	X(scData) \
-	X(scBss) \
-	X(scRegister) \
-	X(scAbs) \
-	X(scUndef) \
-	X(scUndefined) \
-	X(scCdbLocal) \
-	X(scBits) \
-	X(scCdbSystem) \
-	X(scDbx) \
-	X(scRegImage) \
-	X(scInfo) \
-	X(scUserStruct) \
-	X(scSData) \
-	X(scSBss) \
-	X(scRData) \
-	X(scVar) \
-	X(scCommon) \
-	X(scSCommon) \
-	X(scVarRegister) \
-	X(scVariant) \
-	X(scSUndefined) \
-	X(scInit) \
-	X(scBasedVar) \
-	X(scXData) \
-	X(scPData) \
-	X(scFini) \
-	X(scRConst) \
+#define XEACH_StorageClasse_enum()                                                                                     \
+	X(scNil)                                                                                                             \
+	X(scText)                                                                                                            \
+	X(scData)                                                                                                            \
+	X(scBss)                                                                                                             \
+	X(scRegister)                                                                                                        \
+	X(scAbs)                                                                                                             \
+	X(scUndef)                                                                                                           \
+	X(scUndefined)                                                                                                       \
+	X(scCdbLocal)                                                                                                        \
+	X(scBits)                                                                                                            \
+	X(scCdbSystem)                                                                                                       \
+	X(scDbx)                                                                                                             \
+	X(scRegImage)                                                                                                        \
+	X(scInfo)                                                                                                            \
+	X(scUserStruct)                                                                                                      \
+	X(scSData)                                                                                                           \
+	X(scSBss)                                                                                                            \
+	X(scRData)                                                                                                           \
+	X(scVar)                                                                                                             \
+	X(scCommon)                                                                                                          \
+	X(scSCommon)                                                                                                         \
+	X(scVarRegister)                                                                                                     \
+	X(scVariant)                                                                                                         \
+	X(scSUndefined)                                                                                                      \
+	X(scInit)                                                                                                            \
+	X(scBasedVar)                                                                                                        \
+	X(scXData)                                                                                                           \
+	X(scPData)                                                                                                           \
+	X(scFini)                                                                                                            \
+	X(scRConst)                                                                                                          \
 	X(scMax)
 
 enum elf_header_flags

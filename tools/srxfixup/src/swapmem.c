@@ -16,7 +16,7 @@
 #include <string.h>
 #endif
 
-void  swapmemory(void *aaddr, const char * format, unsigned int times)
+void swapmemory(void *aaddr, const char *format, unsigned int times)
 {
 #ifdef SWAPMEM_IS_NOT_BIG_ENDIAN
 	unsigned int i;
@@ -27,9 +27,9 @@ void  swapmemory(void *aaddr, const char * format, unsigned int times)
 	format_len = strlen(format);
 
 	aaddr_cur = aaddr;
-	for (i = 0; i < times; i += 1)
+	for ( i = 0; i < times; i += 1 )
 	{
-		for (j = 0; j < format_len; j += 1)
+		for ( j = 0; j < format_len; j += 1 )
 		{
 			switch ( format[j] )
 			{
@@ -55,4 +55,3 @@ void  swapmemory(void *aaddr, const char * format, unsigned int times)
 	(void)times;
 #endif
 }
-

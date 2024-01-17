@@ -15,11 +15,11 @@ static void write_symtab(elf_file *elf, int sctindex, FILE *fp);
 static void write_rel(elf_file *elf, int sctindex, FILE *fp);
 static void write_mips_symbolic(elf_mips_symbolic_data *sycb, unsigned int basepos, FILE *fp);
 static void reorder_an_symtab(elf_file *elf, elf_section *scp);
-static size_t search_string_table(const char * tbltop, size_t endindex, const char * str);
+static size_t search_string_table(const char *tbltop, size_t endindex, const char *str);
 static void rebuild_a_symbol_name_strings(elf_section *scp);
 static int comp_Elf_file_slot(const void *a1, const void *a2);
 
-elf_file *read_elf(const char * filename)
+elf_file *read_elf(const char *filename)
 {
 	uint32_t ident;
 	elf_file *elf;
@@ -143,9 +143,11 @@ elf_file *read_elf(const char * filename)
 					break;
 			}
 			if ( i_3 == elf->ehp->e_shstrndx )
+			{
 				elf->shstrptr = elf->scp[i_3];
+			}
 		}
-		for ( i_4 = 0; ; i_4 += 1 )
+		for ( i_4 = 0;; i_4 += 1 )
 		{
 			unsigned int size;
 			unsigned int pos_3;
@@ -166,8 +168,7 @@ elf_file *read_elf(const char * filename)
 					{
 						case SHT_SYMTAB:
 						case SHT_DYNSYM:
-							if ( pos_4 != 0
-								&& elf->scp[i_5]->shr.sh_size )
+							if ( pos_4 != 0 && elf->scp[i_5]->shr.sh_size )
 							{
 								fseek(fp, pos_4, SEEK_SET);
 								read_symtab(elf, i_5, fp);
@@ -190,7 +191,8 @@ elf_file *read_elf(const char * filename)
 				}
 				for ( i_7 = 0; count_2 > i_7; i_7 += 1 )
 				{
-					elf->scp[i_7]->name = strdup((elf->shstrptr != NULL) ? ((char *)&elf->shstrptr->data[elf->scp[i_7]->shr.sh_name]) : "");
+					elf->scp[i_7]->name =
+						strdup((elf->shstrptr != NULL) ? ((char *)&elf->shstrptr->data[elf->scp[i_7]->shr.sh_name]) : "");
 				}
 				for ( i_8 = 0; i_8 < elf->ehp->e_phnum; i_8 += 1 )
 				{
@@ -212,7 +214,8 @@ elf_file *read_elf(const char * filename)
 								switch ( elf->scp[s]->shr.sh_type )
 								{
 									case SHT_PROGBITS:
-										if ( is_in_range(p_offset, p_filesz, elf->scp[s]->shr.sh_offset)
+										if (
+											is_in_range(p_offset, p_filesz, elf->scp[s]->shr.sh_offset)
 											|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
 										{
 											elf->php[i_8].scp[d] = elf->scp[s];
@@ -220,8 +223,9 @@ elf_file *read_elf(const char * filename)
 										}
 										break;
 									case SHT_NOBITS:
-										if ( is_in_range(elf->php[i_8].phdr.p_vaddr, elf->php[i_8].phdr.p_memsz, elf->scp[s]->shr.sh_addr)
-												|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
+										if (
+											is_in_range(elf->php[i_8].phdr.p_vaddr, elf->php[i_8].phdr.p_memsz, elf->scp[s]->shr.sh_addr)
+											|| (!elf->scp[s]->shr.sh_size && elf->scp[s]->shr.sh_offset == p_filesz + p_offset) )
 										{
 											elf->php[i_8].scp[d] = elf->scp[s];
 											d += 1;
@@ -314,7 +318,9 @@ elf_file *read_elf(const char * filename)
 static int is_in_range(unsigned int top, unsigned int size, unsigned int pos)
 {
 	if ( pos >= top && pos < size + top )
+	{
 		return 1;
+	}
 	return 0;
 }
 
@@ -342,11 +348,17 @@ static void read_symtab(elf_file *elf, int sctindex, FILE *fp)
 		result[i]->type = result[i]->sym.st_info & 0xF;
 		result[i]->name = 0;
 		if ( result[i]->sym.st_name )
+		{
 			result[i]->name = strdup((char *)&sp_x->link->data[result[i]->sym.st_name]);
+		}
 		if ( result[i]->sym.st_shndx && result[i]->sym.st_shndx <= 0xFEFF )
+		{
 			result[i]->shptr = elf->scp[result[i]->sym.st_shndx];
+		}
 		else
+		{
 			result[i]->shptr = 0;
+		}
 	}
 }
 
@@ -556,7 +568,7 @@ int layout_elf_file(elf_file *elf)
 	return 0;
 }
 
-int write_elf(elf_file *elf, const char * filename)
+int write_elf(elf_file *elf, const char *filename)
 {
 	FILE *fp;
 
@@ -573,7 +585,9 @@ int write_elf(elf_file *elf, const char * filename)
 		int i_2;
 
 		for ( i_1 = 0; i_1 < elf->ehp->e_shnum; i_1 += 1 )
+		{
 			elf->scp[i_1]->number = i_1;
+		}
 		for ( i_2 = 0; i_2 < elf->ehp->e_shnum; i_2 += 1 )
 		{
 			switch ( elf->scp[i_2]->shr.sh_type )
@@ -594,7 +608,9 @@ int write_elf(elf_file *elf, const char * filename)
 					break;
 			}
 			if ( elf->scp[i_2] == elf->shstrptr )
+			{
 				elf->ehp->e_shstrndx = elf->scp[i_2]->number;
+			}
 		}
 	}
 	swapmemory(elf->ehp, "ccccccccccccccccsslllllssssss", 1);
@@ -691,7 +707,9 @@ static void renumber_a_symtab(elf_section *scp)
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	syp = (elf_syment **)scp->data;
 	for ( i = 0; entrise > i; i += 1 )
+	{
 		syp[i]->number = i;
+	}
 }
 
 static void renumber_symtab(elf_file *elf)
@@ -728,7 +746,9 @@ static void write_symtab(elf_file *elf, int sctindex, FILE *fp)
 	{
 		memcpy(&sym, syp[i], sizeof(sym));
 		if ( syp[i]->shptr )
+		{
 			sym.st_shndx = syp[i]->shptr->number;
+		}
 		swapmemory(&sym, "lllccs", 1);
 		fwrite(&sym, sizeof(Elf32_Sym), 1, fp);
 	}
@@ -932,7 +952,7 @@ elf_section *remove_section(elf_file *elf, Elf32_Word shtype)
 	return rmsec;
 }
 
-elf_section *remove_section_by_name(elf_file *elf, const char * secname)
+elf_section *remove_section_by_name(elf_file *elf, const char *secname)
 {
 	elf_section *rmsec;
 	int s;
@@ -961,19 +981,23 @@ elf_section *search_section(elf_file *elf, Elf32_Word stype)
 	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
 		if ( stype == elf->scp[i]->shr.sh_type )
+		{
 			return elf->scp[i];
+		}
 	}
 	return 0;
 }
 
-elf_section *search_section_by_name(elf_file *elf, const char * secname)
+elf_section *search_section_by_name(elf_file *elf, const char *secname)
 {
 	int i;
 
 	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
 		if ( !strcmp(elf->scp[i]->name, secname) )
+		{
 			return elf->scp[i];
+		}
 	}
 	return 0;
 }
@@ -984,8 +1008,8 @@ unsigned int *get_section_data(elf_file *elf, unsigned int addr)
 
 	for ( i = 1; i < elf->ehp->e_shnum; i += 1 )
 	{
-		if ( elf->scp[i]->shr.sh_type == SHT_PROGBITS
-			&& addr >= elf->scp[i]->shr.sh_addr
+		if (
+			elf->scp[i]->shr.sh_type == SHT_PROGBITS && addr >= elf->scp[i]->shr.sh_addr
 			&& addr < elf->scp[i]->shr.sh_size + elf->scp[i]->shr.sh_addr )
 		{
 			return (unsigned int *)&elf->scp[i]->data[addr - elf->scp[i]->shr.sh_addr];
@@ -994,7 +1018,7 @@ unsigned int *get_section_data(elf_file *elf, unsigned int addr)
 	return 0;
 }
 
-elf_syment *search_global_symbol(const char * name, elf_file *elf)
+elf_syment *search_global_symbol(const char *name, elf_file *elf)
 {
 	unsigned int entrise;
 	unsigned int i;
@@ -1003,13 +1027,17 @@ elf_syment *search_global_symbol(const char * name, elf_file *elf)
 
 	scp = search_section(elf, SHT_SYMTAB);
 	if ( !scp )
+	{
 		return 0;
+	}
 	entrise = scp->shr.sh_size / scp->shr.sh_entsize;
 	syp = (elf_syment **)scp->data;
 	for ( i = 1; entrise > i; i += 1 )
 	{
 		if ( syp[i]->name && syp[i]->bind == STB_GLOBAL && !strcmp(syp[i]->name, name) )
+		{
 			return syp[i];
+		}
 	}
 	return 0;
 }
@@ -1017,15 +1045,21 @@ elf_syment *search_global_symbol(const char * name, elf_file *elf)
 int is_defined_symbol(const elf_syment *sym)
 {
 	if ( !sym )
+	{
 		return 0;
+	}
 	if ( !sym->sym.st_shndx )
+	{
 		return 0;
+	}
 	if ( sym->sym.st_shndx <= 0xFEFF )
+	{
 		return 1;
+	}
 	return sym->sym.st_shndx == SHN_ABS;
 }
 
-elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int value, elf_section *scp, int st_shndx)
+elf_syment *add_symbol(elf_file *elf, const char *name, int bind, int type, int value, elf_section *scp, int st_shndx)
 {
 	unsigned int entrise;
 	elf_syment *sym;
@@ -1034,7 +1068,9 @@ elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int
 
 	symtbl = search_section(elf, SHT_SYMTAB);
 	if ( !symtbl )
+	{
 		return 0;
+	}
 	entrise = symtbl->shr.sh_size / symtbl->shr.sh_entsize;
 	newtab = (elf_syment **)realloc(symtbl->data, (entrise + 1) * sizeof(elf_syment *));
 	sym = (elf_syment *)calloc(1, sizeof(elf_syment));
@@ -1042,25 +1078,35 @@ elf_syment *add_symbol(elf_file *elf, const char * name, int bind, int type, int
 	symtbl->shr.sh_size += symtbl->shr.sh_entsize;
 	symtbl->data = (uint8_t *)newtab;
 	if ( name )
+	{
 		sym->name = strdup(name);
+	}
 	sym->bind = bind;
 	sym->type = type;
 	sym->sym.st_info = (type & 0xF) + 16 * bind;
 	sym->sym.st_value = value;
 	sym->shptr = scp;
 	if ( scp )
+	{
 		sym->sym.st_shndx = 1;
+	}
 	else
+	{
 		sym->sym.st_shndx = st_shndx;
+	}
 	return sym;
 }
 
 unsigned int get_symbol_value(const elf_syment *sym, const elf_file *elf)
 {
 	if ( !is_defined_symbol(sym) )
+	{
 		return 0;
+	}
 	if ( sym->sym.st_shndx != SHN_ABS && elf->ehp->e_type == ET_REL )
+	{
 		return sym->shptr->shr.sh_addr + sym->sym.st_value;
+	}
 	return sym->sym.st_value;
 }
 
@@ -1089,10 +1135,8 @@ static void reorder_an_symtab(elf_file *elf, elf_section *scp)
 	{
 		for ( i = 1; entrise > i; i += 1 )
 		{
-			if ( oldtab[i]
-				&& oldtab[i]->type == STT_SECTION
-				&& !oldtab[i]->name
-				&& oldtab[i]->shptr
+			if (
+				oldtab[i] && oldtab[i]->type == STT_SECTION && !oldtab[i]->name && oldtab[i]->shptr
 				&& !strcmp(oldtab[i]->shptr->name, elf->scp[sc]->name) )
 			{
 				newtab[d] = oldtab[i];
@@ -1105,7 +1149,9 @@ static void reorder_an_symtab(elf_file *elf, elf_section *scp)
 	for ( j = 1; entrise > j; j += 1 )
 	{
 		if ( oldtab[j] && oldtab[j]->type == STT_SECTION && !oldtab[j]->name )
+		{
 			oldtab[j] = 0;
+		}
 	}
 	for ( k = 1; entrise > k; k += 1 )
 	{
@@ -1166,9 +1212,13 @@ void rebuild_section_name_strings(elf_file *elf)
 		return;
 	}
 	for ( i_1 = 1; i_1 < elf->ehp->e_shnum; i_1 += 1 )
+	{
 		namesize += strlen(elf->scp[i_1]->name) + 1;
+	}
 	if ( elf->shstrptr->data )
+	{
 		free(elf->shstrptr->data);
+	}
 	elf->shstrptr->data = (uint8_t *)calloc(1, namesize);
 	elf->shstrptr->shr.sh_size = namesize;
 	offset = 1;
@@ -1180,14 +1230,16 @@ void rebuild_section_name_strings(elf_file *elf)
 	}
 }
 
-static size_t search_string_table(const char * tbltop, size_t endindex, const char * str)
+static size_t search_string_table(const char *tbltop, size_t endindex, const char *str)
 {
 	size_t idx;
 
 	for ( idx = 1; idx < endindex; idx += strlen(&tbltop[idx]) + 1 )
 	{
 		if ( !strcmp(str, &tbltop[idx]) )
+		{
 			return idx;
+		}
 	}
 	return 0;
 }
@@ -1211,7 +1263,9 @@ static void rebuild_a_symbol_name_strings(elf_section *scp)
 		namesize = (syp[i_1] != NULL && syp[i_1]->name != NULL) ? (strlen(syp[i_1]->name) + namesize + 1) : namesize;
 	}
 	if ( strtab->data )
+	{
 		free(strtab->data);
+	}
 	strtab->data = (uint8_t *)calloc(1, namesize);
 	offset = 1;
 	for ( i_2 = 1; i_2 < entrise; i_2 += 1 )
@@ -1261,37 +1315,69 @@ static int comp_Elf_file_slot(const void *a1, const void *a2)
 	p2 = a2;
 
 	if ( p1->type == EFS_TYPE_ELF_HEADER && p2->type == EFS_TYPE_ELF_HEADER )
+	{
 		return 0;
+	}
 	if ( p1->type == EFS_TYPE_ELF_HEADER )
+	{
 		return -1;
+	}
 	if ( p2->type == EFS_TYPE_ELF_HEADER )
+	{
 		return 1;
+	}
 	if ( p1->type == EFS_TYPE_PROGRAM_HEADER_TABLE && p2->type == EFS_TYPE_PROGRAM_HEADER_TABLE )
+	{
 		return 0;
+	}
 	if ( p1->type == EFS_TYPE_PROGRAM_HEADER_TABLE )
+	{
 		return -1;
+	}
 	if ( p2->type == EFS_TYPE_PROGRAM_HEADER_TABLE )
+	{
 		return 1;
+	}
 	if ( !p1->type && !p2->type )
+	{
 		return 0;
+	}
 	if ( !p1->type )
+	{
 		return 1;
+	}
 	if ( !p2->type )
+	{
 		return -1;
+	}
 	if ( p1->type == EFS_TYPE_END && p2->type == EFS_TYPE_END )
+	{
 		return 0;
+	}
 	if ( p1->type == EFS_TYPE_END )
+	{
 		return 1;
+	}
 	if ( p2->type == EFS_TYPE_END )
+	{
 		return -1;
+	}
 	if ( p1->type == EFS_TYPE_PROGRAM_HEADER_ENTRY && p2->type == EFS_TYPE_SECTION_HEADER_TABLE )
+	{
 		return -1;
+	}
 	if ( p1->type == EFS_TYPE_SECTION_HEADER_TABLE && p2->type == EFS_TYPE_PROGRAM_HEADER_ENTRY )
+	{
 		return 1;
+	}
 	if ( p2->offset == p1->offset )
+	{
 		return 0;
+	}
 	if ( p2->offset >= p1->offset )
+	{
 		return -1;
+	}
 	return 1;
 }
 
@@ -1310,7 +1396,9 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 	memcpy(scp, elf->scp, sections * sizeof(elf_section *));
 	maxent = elf->ehp->e_shnum + 2;
 	if ( elf->ehp->e_phnum )
+	{
 		maxent = elf->ehp->e_phnum + elf->ehp->e_shnum + 3;
+	}
 	resolt = (Elf_file_slot *)calloc(maxent, sizeof(Elf_file_slot));
 	resolt->type = EFS_TYPE_ELF_HEADER;
 	resolt->offset = 0;
@@ -1373,7 +1461,7 @@ Elf_file_slot *build_file_order_list(const elf_file *elf)
 	return resolt;
 }
 
-void  shrink_file_order_list(Elf_file_slot *efs)
+void shrink_file_order_list(Elf_file_slot *efs)
 {
 	unsigned int slot;
 
@@ -1388,7 +1476,7 @@ void  shrink_file_order_list(Elf_file_slot *efs)
 	}
 }
 
-void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
+void writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 {
 	elf_section **scp;
 	unsigned int segoffset;
@@ -1409,10 +1497,14 @@ void  writeback_file_order_list(elf_file *elf, Elf_file_slot *efs)
 				for ( i = 1; scp[i]; i += 1 )
 				{
 					if ( scp[i]->shr.sh_type != SHT_NOBITS )
+					{
 						segoffset = scp[i]->shr.sh_addr + efs->offset - (*scp)->shr.sh_addr;
+					}
 					scp[i]->shr.sh_offset = segoffset;
 					if ( scp[i]->shr.sh_type != SHT_NOBITS )
+					{
 						segoffset += scp[i]->shr.sh_size;
+					}
 				}
 				break;
 			case EFS_TYPE_SECTION_HEADER_TABLE:
@@ -1449,9 +1541,13 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 		oldend_1 = slot->size;
 		startpos_1 = slot->offset;
 		if ( oldend_1 == 0 )
+		{
 			offset = slot->offset;
+		}
 		else
+		{
 			offset = oldend_1 + startpos_1 - 1;
+		}
 		size_1 = offset;
 		switch ( slot->type )
 		{
@@ -1477,7 +1573,9 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 				break;
 		}
 		if ( startpos_1 > offset_tmp + 1 )
+		{
 			printf("%36s = %08x-%08x (%06x)\n", "**Blank**", offset_tmp + 1, startpos_1 - 1, startpos_1 - offset_tmp - 1);
+		}
 		offset_tmp = size_1;
 		printf("%36s = %08x-%08x (%06x)\n", name, startpos_1, size_1, oldend_1);
 		if ( slot->type == EFS_TYPE_PROGRAM_HEADER_ENTRY )
@@ -1492,25 +1590,24 @@ void dump_file_order_list(const elf_file *elf, const Elf_file_slot *efs)
 				unsigned int startpos_2;
 
 				if ( scp[i]->shr.sh_type == SHT_NOBITS )
+				{
 					oldend_2 = 0;
+				}
 				else
+				{
 					oldend_2 = scp[i]->shr.sh_size;
+				}
 				startpos_2 = scp[i]->shr.sh_offset;
 				size_2 = (oldend_2 == 0) ? (scp[i]->shr.sh_offset) : (Elf32_Off)(oldend_2 + startpos_2 - 1);
 				sprintf(tmp, "(%s)", scp[i]->name);
 				name = tmp;
 				if ( startpos_2 > size_tmp + 1 )
+				{
 					printf("%36s | %08x-%08x (%06x)\n", "**Blank**", size_tmp + 1, startpos_2 - 1, startpos_2 - size_tmp - 1);
+				}
 				size_tmp = size_2;
 				printf("%36s | %08x-%08x (%06x)\n", name, startpos_2, size_2, scp[i]->shr.sh_size);
 			}
 		}
 	}
 }
-
-
-
-
-
-
-
