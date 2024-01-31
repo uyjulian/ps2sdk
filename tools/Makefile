@@ -10,6 +10,7 @@ SUBDIRS = \
 	adpenc \
 	bin2c \
 	ps2adpcm \
+	srxfixup \
 #	  gensymtab
 
 include $(PS2SDKSRC)/Defs.make
