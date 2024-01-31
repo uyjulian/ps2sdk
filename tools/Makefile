@@ -9,7 +9,6 @@
 SUBDIRS = \
 	adpenc \
 	bin2c \
-	ps2-irxgen \
 	ps2adpcm \
 #	  gensymtab
 
