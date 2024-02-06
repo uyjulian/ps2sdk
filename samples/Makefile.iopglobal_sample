@@ -125,7 +125,7 @@ $(IOP_BIN_ELF): $(IOP_OBJS)
 
 $(IOP_BIN_STRIPPED_ELF): $(IOP_BIN_ELF)
 	$(DIR_GUARD)
-	$(IOP_STRIP) --strip-debug -o $@ $<
+	$(IOP_STRIP) --strip-debug  --remove-section=.pdr -o $@ $<
 
 $(IOP_BIN): $(IOP_BIN_STRIPPED_ELF)
 	$(DIR_GUARD)
