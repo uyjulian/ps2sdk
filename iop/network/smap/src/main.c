@@ -268,7 +268,7 @@ void PS2IPLinkStateDown(void)
 }
 #endif
 
-#ifdef BUILDING_SMAP_NETMAN
+#if defined(BUILDING_SMAP_NETMAN) || defined(BUILDING_SMAP_NETDEV)
 // While the header of the export table is small, the large size of the export table (as a whole) places it in data instead of sdata.
 extern struct irx_export_table _exp_smap __attribute__((section("data")));
 #endif
@@ -286,11 +286,24 @@ int _start(int argc, char *argv[])
     int numArgs;
     char **pArgv;
 #endif
-#ifdef BUILDING_SMAP_NETMAN
+#if defined(BUILDING_SMAP_NETMAN) || defined(BUILDING_SMAP_NETDEV)
     int result;
 #endif
 
-#ifdef BUILDING_SMAP_NETMAN
+#ifdef BUILDING_SMAP_NETDEV
+    if (argc < 0) {
+        result = smap_deinit();
+        if (result == MODULE_NO_RESIDENT_END) {
+#ifdef BUILDING_SMAP_MODULAR
+            ReleaseLibraryEntries(&_exp_smapmodu);
+#endif
+            ReleaseLibraryEntries(&_exp_smap);
+        }
+        return result;
+    }
+#endif
+
+#if defined(BUILDING_SMAP_NETMAN) || defined(BUILDING_SMAP_NETDEV)
     if (RegisterLibraryEntries(&_exp_smap) != 0) {
         DEBUG_PRINTF("module already loaded\n");
         return MODULE_NO_RESIDENT_END;
@@ -323,6 +336,8 @@ int _start(int argc, char *argv[])
         return MODULE_NO_RESIDENT_END;
     } */
 
+    (void)argc;
+    (void)argv;
 #ifdef BUILDING_SMAP_PS2IP
     // Parse IP args.
     DEBUG_PRINTF("argc %d\n", argc);
@@ -347,7 +362,7 @@ int _start(int argc, char *argv[])
     }
 #endif
 
-#ifdef BUILDING_SMAP_NETMAN
+#if defined(BUILDING_SMAP_NETMAN) || defined(BUILDING_SMAP_NETDEV)
     if ((result = smap_init(argc, argv)) < 0) {
         DEBUG_PRINTF("smap_init -> %d\n", result);
         ReleaseLibraryEntries(&_exp_smap);
