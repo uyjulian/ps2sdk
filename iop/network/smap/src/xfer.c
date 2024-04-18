@@ -98,8 +98,12 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData)
 
             if (ctrl_stat & (SMAP_BD_RX_INRANGE | SMAP_BD_RX_OUTRANGE | SMAP_BD_RX_FRMTOOLONG | SMAP_BD_RX_BADFCS | SMAP_BD_RX_ALIGNERR | SMAP_BD_RX_SHORTEVNT | SMAP_BD_RX_RUNTFRM | SMAP_BD_RX_OVERRUN)) {
                 for (i = 0; i < 16; i++)
-                    if ((ctrl_stat >> i) & 1)
+                    if ((ctrl_stat >> i) & 1) {
                         SmapDrivPrivData->RuntimeStats.RxErrorCount++;
+#ifdef BUILDING_SMAP_NETDEV
+                        SmapDrivPrivData->RuntimeStats_NetDev.m_RxErrorVarious[i] += 1;
+#endif
+                    }
 
                 SmapDrivPrivData->RuntimeStats.RxDroppedFrameCount++;
 #ifdef BUILDING_SMAP_NETDEV

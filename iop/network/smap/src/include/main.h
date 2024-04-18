@@ -26,10 +26,8 @@
 #ifdef BUILDING_SMAP_NETDEV
 struct RuntimeStats_NetDev
 {
-#if 0
-    u32 pad1[16];
-    u32 pad2[16];
-#endif
+    u32 m_RxErrorVarious[16];
+    u32 m_TxErrorVarious[16];
     u32 m_Rx_Packets;
     u32 m_Tx_Packets;
     u32 m_Rx_Bytes;
