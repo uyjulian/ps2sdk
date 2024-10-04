@@ -632,26 +632,26 @@ static void Cofun(Disasm_result *result)
 
 static void Bcft(Disasm_result *result)
 {
-	result->mnemonic[0] = 98;
-	result->mnemonic[1] = 99;
+	result->mnemonic[0] = 'b';
+	result->mnemonic[1] = 'c';
 	result->mnemonic[2] = result->mnemonic[3];
 	if ( (result->data & 0x10000) != 0 )
 	{
-		result->mnemonic[3] = 116;
+		result->mnemonic[3] = 't';
 	}
 	else
 	{
-		result->mnemonic[3] = 102;
+		result->mnemonic[3] = 'f';
 	}
 	if ( (result->data & 0x20000) != 0 )
 	{
-		result->mnemonic[4] = 108;
+		result->mnemonic[4] = 'l';
 	}
 	else
 	{
-		result->mnemonic[4] = 0;
+		result->mnemonic[4] = '\x00';
 	}
-	result->mnemonic[5] = 0;
+	result->mnemonic[5] = '\x00';
 	getbroff(result->addr, result->data, result->operands);
 }
 
