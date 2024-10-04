@@ -40,7 +40,7 @@ ifeq ($(DEBUG),1)
 IOP_CFLAGS += -DDEBUG
 endif
 # Linker flags
-IOP_LDFLAGS := -nostdlib -r $(IOP_LDFLAGS)
+IOP_LDFLAGS := -nostdlib -dc -r $(IOP_LDFLAGS)
 
 # Additional C compiler flags for GCC >=v5.3.0
 # -msoft-float is to "remind" GCC/Binutils that the soft-float ABI is to be used. This is due to a bug, which
