@@ -88,6 +88,8 @@ IOP_C_COMPILE = $(IOP_CC) $(IOP_CFLAGS)
 # Command for ensuring the output directory for the rule exists.
 DIR_GUARD = @$(MKDIR) -p $(@D)
 
+MAKE_CURPID := $(shell printf '%s' $$PPID)
+
 $(IOP_OBJS_DIR)%.o: $(IOP_SRC_DIR)%.c
 	$(DIR_GUARD)
 	$(IOP_C_COMPILE) -c $< -o $@
@@ -100,14 +102,14 @@ $(IOP_OBJS_DIR)%.o: $(IOP_SRC_DIR)%.s
 	$(DIR_GUARD)
 	$(IOP_AS) $(IOP_ASFLAGS) $< -o $@
 
-.INTERMEDIATE: $(IOP_OBJS_DIR)build-imports.c $(IOP_OBJS_DIR)build-exports.c
+.INTERMEDIATE:: $(IOP_LIB)_tmp$(MAKE_CURPID) $(IOP_OBJS_DIR)build-imports.c $(IOP_OBJS_DIR)build-exports.c
 
 $(PS2SDKSRC)/tools/srxfixup/bin/srxfixup: $(PS2SDKSRC)/tools/srxfixup
 	$(MAKEREC) $<
 
 $(IOP_OBJS_DIR)template-imports.h:
 	$(DIR_GUARD)
-	$(ECHO) "#include \"irx_imports.h\"" > $@
+	$(PRINTF) '%s\n' "#include \"irx_imports.h\"" > $@
 
 # Rules to build imports.lst.
 $(IOP_OBJS_DIR)build-imports.c: $(IOP_OBJS_DIR)template-imports.h $(IOP_SRC_DIR)imports.lst
@@ -120,7 +122,7 @@ $(IOP_OBJS_DIR)imports.o: $(IOP_OBJS_DIR)build-imports.c
 
 $(IOP_OBJS_DIR)template-exports.h:
 	$(DIR_GUARD)
-	$(ECHO) "#include \"irx.h\"" > $@
+	$(PRINTF) '%s\n' "#include \"irx.h\"" > $@
 
 # Rules to build exports.tab.
 $(IOP_OBJS_DIR)build-exports.c: $(IOP_OBJS_DIR)template-exports.h $(IOP_SRC_DIR)exports.tab
@@ -142,6 +144,10 @@ $(IOP_BIN_STRIPPED_ELF): $(IOP_BIN_ELF)
 $(IOP_BIN): $(IOP_BIN_STRIPPED_ELF) $(PS2SDKSRC)/tools/srxfixup/bin/srxfixup
 	$(PS2SDKSRC)/tools/srxfixup/bin/srxfixup --irx1 -o $@ $<
 
-$(IOP_LIB): $(IOP_OBJS)
+$(IOP_LIB)_tmp$(MAKE_CURPID): $(IOP_OBJS)
 	$(DIR_GUARD)
 	$(IOP_AR) cru $@ $(IOP_OBJS)
+
+$(IOP_LIB): $(IOP_LIB)_tmp$(MAKE_CURPID)
+	$(DIR_GUARD)
+	mv $< $@

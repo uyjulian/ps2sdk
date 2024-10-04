@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/param.h>
 #include <dirent.h>
 #include <errno.h>
@@ -22,23 +23,79 @@ char __cwd[MAXNAMLEN + 1] = { 0 };
 extern char __cwd[MAXNAMLEN + 1];
 #endif
 
+#ifdef F___cwd_len
+/* the length of the present working directory variable. */
+size_t __cwd_len = 0;
+#else
+extern size_t __cwd_len;
+#endif
+
+#define defaultCWD "host:"
+
+enum SeparatorType {
+	SeparatorTypeNone,
+	SeparatorTypePOSIX,
+	SeparatorTypeWindows
+};
+
+#define isnum(c) ((c) >= '0' && (c) <= '9')
+
 #ifdef F___get_drive
 /* Return the number of bytes taken up by the "drive:" prefix,
    or -1 if it's not found */
-int __get_drive(const char *d)
+int __get_drive(const char *dev, enum SeparatorType *usePOSIXSeparator)
 {
-	int i;
-	for(i=0; d[i]; i++) {
-		if(! ((d[i] >= 'a' && d[i] <= 'z') ||
-			  (d[i] >= 'A' && d[i] <= 'Z') ||
-		      (d[i] >= '0' && d[i] <= '9') ))
-			break;
+	const char *tail;
+	const char *d;
+	int devname_len;
+
+	/* Skip leading spaces */
+	d = dev;
+	while (*d == ' ')
+	{
+		d += 1;
 	}
-	if(d[i] == ':') return i+1;
-	return -1;
+
+	/* Get colon position */
+	tail = strchr(d, ':');
+	if (tail == NULL)
+	{
+		return -1;
+	}
+
+	devname_len = (int)(tail - d);
+
+	/* Reduce length to not include index */
+	while (isnum(d[devname_len - 1]))
+	{
+		devname_len -= 1;
+	}
+
+	/* We need to check if driver is cdrom because those one use \ as separator */
+	if (devname_len == 5 && (memcmp(d, "cdrom", 5) == 0))
+	{
+		*usePOSIXSeparator = SeparatorTypeWindows;
+	}
+	/* We need to check if drive is rom or hdd because those one don't have separator */
+	else if (devname_len == 3 && ((memcmp(d, "rom", 3) == 0) || (memcmp(d, "hdd", 3) == 0)))
+	{
+		*usePOSIXSeparator = SeparatorTypeNone;
+	}
+	else
+	{
+		*usePOSIXSeparator = SeparatorTypePOSIX;
+	}
+
+	/* Return the length of the whole device name portion, including:
+	 * - leading spaces
+	 * - device name
+	 * - device index
+	 * - colon
+	 */
+	return (tail - dev) + 1;
 }
 #else 
-int __get_drive(const char *d);
+int __get_drive(const char *dev, enum SeparatorType *usePOSIXSeparator);
 #endif
 
 #ifdef F_getcwd
@@ -49,48 +106,44 @@ char *getcwd(char *buf, size_t size)
 		return NULL;
 	}		
 
-	if(strlen(__cwd) >= size) {
+	if(__cwd_len >= size) {
 		errno = ERANGE;
 		return NULL;
 	}
 
-	strcpy(buf, __cwd);
+	memcpy(buf, __cwd, __cwd_len);
+	buf[__cwd_len] = '\x00';
 	return buf;
 }
 #endif
 
 #ifdef F___path_absolute
-/* Like strcpy, but returns 0 if the string doesn't fit */
-static int __safe_strcpy(char *out, const char *in, int maxlen)
-{
-	for( ; maxlen > 0 && *in ; maxlen-- )
-		*(out++) = *(in++);
-	if(maxlen < 1) return 0;
-	*out = 0;
-	return 1;
-}
-
-/* Like strcat, but returns 0 if the string doesn't fit */
-static int __safe_strcat(char *out, const char *in, int maxlen)
-{
-	for( ; *out ; out++,maxlen-- )
-		continue;
-	return __safe_strcpy(out, in, maxlen);
-}
-
 /* Normalize a pathname (without leading "drive:") by removing
    . and .. components, duplicated /, etc. */
-static int __path_normalize(char *out, int len)
+static int __path_normalize(char *out, int len, int posixSeparator)
 {
 	int i, j;
 	int first, next;
+	char separator = posixSeparator ? '/' : '\\';
+	size_t out_len = strnlen(out, len);
+
+	out_len += 2;
+	if (out_len >= len) return -10;
 
 	/* First append "/" to make the rest easier */
-	if(!__safe_strcat(out,"/",len)) return -10;
+	out[out_len - 1] = separator;
+	out[out_len] = 0;
+
+	// Convert separators to the specified one
+    for (size_t i = 0; i < out_len; i++) {
+        if (out[i] == '/' || out[i] == '\\') {
+            out[i] = separator;
+        }
+    }
 
 	/* Convert "//" to "/" */
-	for(i=0; out[i+1]; i++) {
-		if(out[i]=='/' && out[i+1]=='/') {
+	for(i = 0; (i < out_len) && out[i+1]; i++) {
+		if(out[i] == separator && out[i+1] == separator) {
 			for(j=i+1; out[j]; j++)
 				out[j] = out[j+1];
 			i--;
@@ -98,9 +151,9 @@ static int __path_normalize(char *out, int len)
 	}
 
 	/* Convert "/./" to "/" */
-	for(i=0; out[i] && out[i+1] && out[i+2]; i++) {
-		if(out[i]=='/' && out[i+1]=='.' && out[i+2]=='/') {
-			for(j=i+1; out[j]; j++)
+	for(i = 0; (i < out_len) && out[i] && out[i+1] && out[i+2]; i++) {
+		if(out[i] == separator && out[i+1] == '.' && out[i+2] == separator) {
+			for(j = i+1; out[j]; j++)
 				out[j] = out[j+2];
 			i--;
 		}
@@ -109,11 +162,11 @@ static int __path_normalize(char *out, int len)
 	/* Convert "/asdf/../" to "/" until we can't anymore.  Also
 	 * convert leading "/../" to "/" */
 	first = next = 0;
-	while(1) {
+	while((first < out_len) && (next < out_len)) {
 		/* If a "../" follows, remove it and the parent */
-		if(out[next+1] && out[next+1]=='.' && 
-		   out[next+2] && out[next+2]=='.' &&
-		   out[next+3] && out[next+3]=='/') {
+		if(out[next+1] && out[next+1] == '.' && 
+		   out[next+2] && out[next+2] == '.' &&
+		   out[next+3] && out[next+3] == separator) {
 			for(j=0; out[first+j+1]; j++)
 				out[first+j+1] = out[next+j+4];
 			first = next = 0;
@@ -122,15 +175,15 @@ static int __path_normalize(char *out, int len)
 
 		/* Find next slash */
 		first = next;
-		for(next=first+1; out[next] && out[next] != '/'; next++)
+		for(next= first+1; out[next] && out[next] != separator; next++)
 			continue;
 		if(!out[next]) break;
 	}
 
 	/* Remove trailing "/" just if it's not the root */
-	for(i=1; out[i]; i++)
+	for(i = 1; (i < out_len) && out[i]; i++)
 		continue;
-	if(i > 1 && out[i-1] == '/') 
+	if(i > 1 && out[i-1] == separator) 
 		out[i-1] = 0;
 
 	return 0;
@@ -140,48 +193,46 @@ static int __path_normalize(char *out, int len)
 int __path_absolute(const char *in, char *out, int len)
 {
 	int dr;
+	enum SeparatorType separatorType;
+	size_t in_len;
 
+	in_len = strlen(in);
 	/* See what the relative URL starts with */
-	dr = __get_drive(in);
-	if(dr > 0 && in[dr] == '/') {
-		/* It starts with "drive:/", so it's already absolute */
-		if(!__safe_strcpy(out, in, len))
-			return -1;
+	dr = __get_drive(in, &separatorType);
+	char separator = separatorType == SeparatorTypePOSIX ? '/' : '\\';
+
+	if(dr > 0 && (separatorType == SeparatorTypeNone || in[dr] == separator)) {
+		/* It starts with "drive:" and has no separator or "drive:/", so it's already absolute */
+		if (in_len >= len) return -1;
+		strncpy(out, in, len);
 	} else if(dr > 0 && in[dr - 1] == ':') {
 		/* It starts with "drive:", so it's already absoulte, however it misses the "/" after unit */
-		/* Just do it if drive: is different than rom0:, rom1:, rom2: .. rom9: */
-		if (strncmp(in, "rom", 3) == 0 && in[3] >= '0' && in[3] <= '9' && in[4] == ':') {
-			if(!__safe_strcpy(out, in, len))
-				return -1;
-		} else {
-			strncpy(out, in, dr);
-			out[dr] = '/';
-			strncpy(out + dr + 1, in + dr, len - dr - 1);
-		}
-	} else if(in[0] == '/') {
+		if (in_len + 1 >= len) return -2;
+		strncpy(out, in, dr);
+		out[dr] = separator;
+		strncpy(out + dr + 1, in + dr, len - dr - 1);
+	} else if(in[0] == '\\' || in[0] == '/') {
 		/* It's absolute, but missing the drive, so use cwd's drive */
-		if(strlen(__cwd) >= len)
-			return -2;
-		strcpy(out, __cwd);
-		dr = __get_drive(out);
+		if(__cwd_len + in_len >= len) return -3;
+		memcpy(out, __cwd, __cwd_len);
+		out[__cwd_len] = '\x00';
+		dr = __get_drive(out, &separatorType);
+		if(dr < 0) dr = 0;
 		out[dr] = 0;
-		if(!__safe_strcat(out, in, len))
-			return -3;
+		strncat(out, in, len);
 	} else {
 		/* It's not absolute, so append it to the current cwd */
-		if(strlen(__cwd) >= len)
-			return -4;
-		strcpy(out, __cwd);
-		if(!__safe_strcat(out, "/", len)) 
-			return -6;
-		if(!__safe_strcat(out, in, len)) 
-			return -7;
+		if(__cwd_len + 1 + in_len >= len) return -5;
+		memcpy(out, __cwd, __cwd_len);
+		out[__cwd_len] = separator;
+		out[__cwd_len + 1] = '\x00';
+		strncat(out, in, len);
 	}
 
 	/* Now normalize the pathname portion */
-	dr = __get_drive(out);
+	dr = __get_drive(out, &separatorType);
 	if(dr < 0) dr = 0;
-	return __path_normalize(out + dr, len - dr);
+	return __path_normalize(out + dr, len - dr, separatorType == SeparatorTypePOSIX);
 }
 #endif
 
@@ -189,26 +240,26 @@ int __path_absolute(const char *in, char *out, int len)
 /* Set the current working directory (CWD) to the path where the module was launched. */
 void __init_cwd(int argc, char ** argv)
 {
-	if (argc == 0) // naplink!
-    {
-	chdir("host:");
-    } else {
-	char * p, * s = 0;
+	if (argc == 0) {
+		chdir("host:");
+		return;
+	}
+    
+	char * p, * s = NULL;
 	// let's find the last slash, or at worst, the :
 	for (p = argv[0]; *p; p++) {
 	    if ((*p == '/') || (*p == '\\') || (*p == ':')) {
-		s = p;
+			s = p;
 	    }
 	}
-	// Nothing?! strange, let's use host.
-	if (!s) {
-	    chdir("host:");
-	} else {
-	    char backup = *(++s);
-	    *s = 0;
-	    chdir(argv[0]);
-	    *s = backup;
+	if (s == NULL)
+	{
+		chdir("host:");
+		return;
 	}
-    }
+    char backup = *(++s);
+	*s = 0;
+	chdir(argv[0]);
+	*s = backup;
 }
 #endif

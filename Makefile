@@ -7,17 +7,21 @@
 # Review ps2sdk README & LICENSE files for further details.
 
 DEBUG ?= 0
+ONLY_HOST_TOOLS ?= 0
 
 ifeq (x$(PS2SDKSRC), x)
   export PS2SDKSRC=$(shell pwd)
 endif
 
-SUBDIRS = tools iop ee common samples
+# If ONLY_HOST_TOOLS is set, only build the host tools.
+ifeq ($(ONLY_HOST_TOOLS), 1)
+  SUBDIRS = tools
+else
+  SUBDIRS = tools common iop ee samples
+endif
 
 all: build
-	@$(ECHO) .;
-	@$(ECHO) .PS2SDK Built.;
-	@$(ECHO) .;
+	@$(PRINTF) '.\n.PS2SDK Built.\n.\n'
 
 # Common rules shared by all build targets.
 
@@ -36,6 +40,10 @@ $(subdir_clean): dummy
 $(subdir_release): dummy
 	$(MAKEREC) $(patsubst release-%,%,$@) release
 
+# Directory-level parallelism has been disabled due to issues with
+# multiple Make instances running inside a directory at once
+# and causing output file corruption
+.NOTPARALLEL: $(subdir_list) $(subdir_clean) $(subdir_release)
 
 build: $(subdir_list) | env_build_check download_dependencies
 
@@ -61,6 +69,12 @@ $(PS2SDK)/common/include:
 $(PS2SDK)/ports:
 	$(MKDIR) -p $(PS2SDK)/ports
 
+$(PS2SDK)/ports_iop:
+	$(MKDIR) -p $(PS2SDK)/ports_iop
+
+$(PS2SDK)/ports_irx:
+	$(MKDIR) -p $(PS2SDK)/ports_iop/irx
+
 install: | release
 
 release: | build
@@ -68,6 +82,8 @@ release: | build
 	$(MAKE) release-clean
 	$(MAKE) $(PS2SDK)/common/include
 	$(MAKE) $(PS2SDK)/ports
+	$(MAKE) $(PS2SDK)/ports_iop
+	$(MAKE) $(PS2SDK)/ports_irx	
 	$(MAKE) $(subdir_release)
 
 release_base: | env_release_check
@@ -84,21 +100,29 @@ release_base: | env_release_check
 env_build_check:
 	@if test -z $(PS2SDKSRC) ; \
 	then \
-	  $(ECHO) PS2SDKSRC environment variable should be defined. ; \
+	  $(PRINTF) 'PS2SDKSRC environment variable should be defined.\n' ; \
 	fi
 
 env_release_check:
 	@if test -z $(PS2SDK) ; \
 	then \
-	  $(ECHO) PS2SDK environment variable must be defined. ; \
+	  $(PRINTF) 'PS2SDK environment variable must be defined.\n' ; \
 	  exit 1; \
 	fi
 
+# Don't do anything if ONLY_HOST_TOOLS is set.
 download_dependencies:
-	$(MAKEREC) $(PS2SDKSRC)/common/external_deps all
-
+	@if test $(ONLY_HOST_TOOLS) -eq 0 ; \
+	then \
+	  $(MAKEREC) $(PS2SDKSRC)/common/external_deps all ; \
+	fi
+	
+# Don't do anything if ONLY_HOST_TOOLS is set.
 clean_dependencies:
-	$(MAKEREC) $(PS2SDKSRC)/common/external_deps clean
+	@if test $(ONLY_HOST_TOOLS) -eq 0 ; \
+	then \
+	  $(MAKEREC) $(PS2SDKSRC)/common/external_deps clean ; \
+	fi
 
 docs:
 	doxygen

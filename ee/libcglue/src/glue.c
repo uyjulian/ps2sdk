@@ -45,6 +45,7 @@
 
 /* Functions from cwd.c */
 extern char __cwd[MAXNAMLEN + 1];
+extern size_t __cwd_len;
 int __path_absolute(const char *in, char *out, int len);
 
 extern void * _end;
@@ -81,17 +82,6 @@ int64_t __transform64_errno(int64_t res) {
 #else
 int64_t __transform64_errno(int64_t res);
 #endif
-
-#define IOP_O_RDONLY       0x0001
-#define IOP_O_WRONLY       0x0002
-#define IOP_O_RDWR         0x0003
-#define IOP_O_DIROPEN      0x0008  // Internal use for dopen
-#define IOP_O_NBLOCK       0x0010
-#define IOP_O_APPEND       0x0100
-#define IOP_O_CREAT        0x0200
-#define IOP_O_TRUNC        0x0400
-#define IOP_O_EXCL         0x0800
-#define IOP_O_NOWAIT       0x8000
 
 #if INT_MAX != 0x7fffffffL
 	#error "INT_MAX != 0x7fffffffL"
@@ -132,50 +122,43 @@ void compile_time_check() {
 
 #ifdef F__open
 int _open(const char *buf, int flags, ...) {
-	int iop_flags = 0;
-	int is_dir = 0;
 	int iop_fd, fd;
+	int mode;
+	_libcglue_fdman_fd_info_t *info;
+	va_list alist;
 	char t_fname[MAXNAMLEN + 1];
+
+	va_start(alist, flags);
+	mode = va_arg(alist, int);	// Retrieve the mode argument, regardless of whether it is expected or not.
+	va_end(alist);
 
 	if(__path_absolute(buf, t_fname, MAXNAMLEN) < 0) {
 		errno = ENAMETOOLONG;
 		return -1;
 	}
 
-	// newlib frags differ from iop flags
-	if ((flags & 3) == O_RDONLY) iop_flags |= IOP_O_RDONLY;
-	if ((flags & 3) == O_WRONLY) iop_flags |= IOP_O_WRONLY;
-	if ((flags & 3) == O_RDWR  ) iop_flags |= IOP_O_RDWR;
-	if (flags & O_NONBLOCK)      iop_flags |= IOP_O_NBLOCK;
-	if (flags & O_APPEND)        iop_flags |= IOP_O_APPEND;
-	if (flags & O_CREAT)         iop_flags |= IOP_O_CREAT;
-	if (flags & O_TRUNC)         iop_flags |= IOP_O_TRUNC;
-	if (flags & O_EXCL)          iop_flags |= IOP_O_EXCL;
-	//if (flags & O_???)           iop_flags |= IOP_O_NOWAIT;
-	if (flags & O_DIRECTORY) {
-		iop_flags |= IOP_O_DIROPEN;
-		is_dir = 1;
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->open == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
 	}
 
-	iop_fd = is_dir ? _ps2sdk_dopen(t_fname) : _ps2sdk_open(t_fname, iop_flags);
-	if (iop_fd >= 0) {
-		fd = __fdman_get_new_descriptor();
-		if (fd != -1) {
-			__descriptormap[fd]->descriptor = iop_fd;
-			__descriptormap[fd]->type = is_dir ? __DESCRIPTOR_TYPE_FOLDER : __DESCRIPTOR_TYPE_FILE;
-			__descriptormap[fd]->flags = flags;
-			__descriptormap[fd]->filename = strdup(t_fname);
-			return fd;
-		}
-		else {
-			is_dir ? _ps2sdk_dclose(iop_fd) : _ps2sdk_close(iop_fd);
-			errno = ENOMEM;
-			return -1;
-		}
-	} 
-	else {
+	fd = __fdman_get_new_descriptor();
+	if (fd == -1)
+	{
+		errno = ENOMEM;
+		return -1;
+	}
+
+	info = &(__descriptormap[fd]->info);
+	iop_fd = _libcglue_fdman_path_ops->open(info, t_fname, flags, mode);
+	if (iop_fd < 0)
+	{
+		__fdman_release_descriptor(fd);
 		return __transform_errno(iop_fd);
 	}
+	__descriptormap[fd]->flags = flags;
+	return fd;
 }
 #endif
 
@@ -188,35 +171,18 @@ int _close(int fd) {
 		return -1;
 	}
 
-	switch(__descriptormap[fd]->type)
+	if (__descriptormap[fd]->ref_count == 1)
 	{
-		case __DESCRIPTOR_TYPE_FILE:
-		case __DESCRIPTOR_TYPE_TTY:
-			if (__descriptormap[fd]->ref_count == 1) {
-				ret = __transform_errno(_ps2sdk_close(__descriptormap[fd]->descriptor));
-			}
-			__fdman_release_descriptor(fd);
-			return ret;
-			break;
-		case __DESCRIPTOR_TYPE_FOLDER:
-			if (__descriptormap[fd]->ref_count == 1) {
-				ret = __transform_errno(_ps2sdk_dclose(__descriptormap[fd]->descriptor));
-			}
-			__fdman_release_descriptor(fd);
-			return ret;
-			break;
-		case __DESCRIPTOR_TYPE_PIPE:
-			// Not supported yet
-			break;
-		case __DESCRIPTOR_TYPE_SOCKET:
-			// Not supported yet
-			break;
-		default:
-			break;
-	}
+		_libcglue_fdman_fd_info_t *fdinfo;
 
-	errno = EBADF;
-	return -1;
+		fdinfo = &(__descriptormap[fd]->info);
+		if (fdinfo->ops != NULL && fdinfo->ops->close != NULL)
+		{
+			ret = __transform_errno(fdinfo->ops->close(fdinfo->userdata));
+		}
+	}
+	__fdman_release_descriptor(fd);
+	return ret;
 }
 #endif
 
@@ -227,22 +193,15 @@ int _read(int fd, void *buf, size_t nbytes) {
 		return -1;
 	}
 
-	switch(__descriptormap[fd]->type)
-	{
-		case __DESCRIPTOR_TYPE_FILE:
-		case __DESCRIPTOR_TYPE_TTY:
-			return __transform_errno(_ps2sdk_read(__descriptormap[fd]->descriptor, buf, nbytes));
-			break;
-		case __DESCRIPTOR_TYPE_PIPE:
-			break;
-		case __DESCRIPTOR_TYPE_SOCKET:
-			break;
-		default:
-			break;
-	}
+	_libcglue_fdman_fd_info_t *fdinfo;
 
-	errno = EBADF;
-	return -1;
+	fdinfo = &(__descriptormap[fd]->info);
+	if (fdinfo->ops == NULL || fdinfo->ops->read == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+	return __transform_errno(fdinfo->ops->read(fdinfo->userdata, buf, nbytes));
 }
 #endif
 
@@ -253,22 +212,15 @@ int _write(int fd, const void *buf, size_t nbytes) {
 		return -1;
 	}
 
-	switch(__descriptormap[fd]->type)
-	{
-		case __DESCRIPTOR_TYPE_FILE:
-		case __DESCRIPTOR_TYPE_TTY:
-			return __transform_errno(_ps2sdk_write(__descriptormap[fd]->descriptor, buf, nbytes));
-			break;
-		case __DESCRIPTOR_TYPE_PIPE:
-			break;
-		case __DESCRIPTOR_TYPE_SOCKET:
-			break;
-		default:
-			break;
-	}
+	_libcglue_fdman_fd_info_t *fdinfo;
 
-	errno = EBADF;
-	return -1;
+	fdinfo = &(__descriptormap[fd]->info);
+	if (fdinfo->ops == NULL || fdinfo->ops->write == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+	return __transform_errno(fdinfo->ops->write(fdinfo->userdata, buf, nbytes));
 }
 #endif
 
@@ -281,52 +233,52 @@ int _stat(const char *path, struct stat *buf) {
 		return -1;
 	}
 
-	return __transform_errno(_ps2sdk_stat(dest, buf));
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->stat == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->stat(dest, buf));
 }
 #endif
 
 #ifdef F_lstat
 int lstat(const char *path, struct stat *buf) {
-	char dest[MAXNAMLEN + 1];
-
-	if(__path_absolute(path, dest, MAXNAMLEN) < 0) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	
-	return __transform_errno(stat(dest, buf));
+	return stat(path, buf);
 }
 #endif
 
 #ifdef F__fstat
 int _fstat(int fd, struct stat *buf) {
-	int ret;
 	if (!__IS_FD_VALID(fd)) {
 		errno = EBADF;
 		return -1;
 	}
 
-	switch(__descriptormap[fd]->type)
+	_libcglue_fdman_fd_info_t *fdinfo;
+	char *filename;
+
+	fdinfo = &(__descriptormap[fd]->info);
+	if (fdinfo->ops == NULL || fdinfo->ops->getfilename == NULL)
 	{
-		case __DESCRIPTOR_TYPE_TTY:
-			memset(buf, '\0', sizeof(struct stat));
-			buf->st_mode = S_IFCHR;
-			return 0;
-			break;		
-		case __DESCRIPTOR_TYPE_FILE:
-			if (__descriptormap[fd]->filename != NULL) {
-				ret = stat(__descriptormap[fd]->filename, buf);
-				return ret;
-			}
-			break;
-		case __DESCRIPTOR_TYPE_PIPE:
-		case __DESCRIPTOR_TYPE_SOCKET:
-		default:
-			break;
+		errno = ENOSYS;
+		return -1;
+	}
+	filename = fdinfo->ops->getfilename(fdinfo->userdata);
+	if (filename == NULL)
+	{
+		errno = ENOENT;
+		return -1;
 	}
 
-	errno = EBADF;
-	return -1;
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->stat == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->stat(filename, buf));
 }
 #endif
 
@@ -369,6 +321,31 @@ int _fcntl(int fd, int cmd, ...)
 		}
 		case F_SETFL:
 		{
+			int newfl, rv;
+			va_list args;
+	
+			rv = 0;
+
+			va_start (args, cmd);         /* Initialize the argument list. */
+			newfl =  va_arg(args, int);
+			va_end (args);                /* Clean up. */
+
+			__descriptormap[fd]->flags = newfl;
+
+			{
+				_libcglue_fdman_fd_info_t *fdinfo;
+
+				fdinfo = &(__descriptormap[fd]->info);
+				
+				if (fdinfo->ops != NULL && fdinfo->ops->fcntl_f_setfl != NULL)
+				{
+					rv = __transform_errno(fdinfo->ops->fcntl_f_setfl(fdinfo->userdata, newfl));
+				}
+			}
+			return rv;
+		}
+		case F_SETFD:
+		{
 			int newfl;
 			va_list args;
 	
@@ -377,18 +354,6 @@ int _fcntl(int fd, int cmd, ...)
 			va_end (args);                /* Clean up. */
 
 			__descriptormap[fd]->flags = newfl;
-
-			switch(__descriptormap[fd]->type)
-			{
-				case __DESCRIPTOR_TYPE_FILE:
-					break;
-				case __DESCRIPTOR_TYPE_PIPE:
-					break;
-				case __DESCRIPTOR_TYPE_SOCKET:
-					break;
-				default:
-					break;
-			}
 			return 0;
 			break;
 		}
@@ -408,7 +373,16 @@ int getdents(int fd, void *dd_buf, int count)
 	read = 0;
 	dirp = (struct dirent *)dd_buf;
 
-	rv = _ps2sdk_dread(__descriptormap[fd]->descriptor, dirp);
+	{
+		_libcglue_fdman_fd_info_t *fdinfo;
+
+		fdinfo = &(__descriptormap[fd]->info);
+		rv = -ENOSYS;
+		if (fdinfo->ops != NULL && fdinfo->ops->dread != NULL)
+		{
+			rv = __transform_errno(fdinfo->ops->dread(fdinfo->userdata, dirp));
+		}
+	}
 	if (rv < 0) {
 		return __transform_errno(rv);
 	} else if (rv == 0) {
@@ -425,27 +399,6 @@ int getdents(int fd, void *dd_buf, int count)
 
 
 #ifdef F__lseek
-static off_t _lseekDir(int fd, off_t offset, int whence)
-{
-	int i;
-	int uid;
-	struct dirent dir;
-
-	if (whence != SEEK_SET || __descriptormap[fd]->filename == NULL) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	_ps2sdk_dclose(__descriptormap[fd]->descriptor);
-	uid = _ps2sdk_dopen(__descriptormap[fd]->filename);
-	__descriptormap[fd]->descriptor = uid;
-	for (i = 0; i < offset; i++) {
-		_ps2sdk_dread(uid, &dir);
-	}
-
-	return offset;
-}
-
 off_t _lseek(int fd, off_t offset, int whence)
 {
 	if (!__IS_FD_VALID(fd)) {
@@ -453,24 +406,15 @@ off_t _lseek(int fd, off_t offset, int whence)
 		return -1;
 	}
 
-	switch(__descriptormap[fd]->type)
-	{
-		case __DESCRIPTOR_TYPE_FILE:
-			return __transform_errno(_ps2sdk_lseek(__descriptormap[fd]->descriptor, offset, whence));
-			break;
-		case __DESCRIPTOR_TYPE_FOLDER:
-			return _lseekDir(fd, offset, whence);
-			break;
-		case __DESCRIPTOR_TYPE_PIPE:
-			break;
-		case __DESCRIPTOR_TYPE_SOCKET:
-			break;
-		default:
-			break;
-	}
+	_libcglue_fdman_fd_info_t *fdinfo;
 
-	errno = EBADF;
-	return -1;
+	fdinfo = &(__descriptormap[fd]->info);
+	if (fdinfo->ops == NULL || fdinfo->ops->lseek == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+	return __transform_errno(fdinfo->ops->lseek(fdinfo->userdata, offset, whence));
 }
 #endif
 
@@ -482,23 +426,15 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 		return -1;
 	}
 
-	switch(__descriptormap[fd]->type)
-	{
-		case __DESCRIPTOR_TYPE_FILE:
-			return __transform64_errno(_ps2sdk_lseek64(__descriptormap[fd]->descriptor, offset, whence));
-			break;
-		case __DESCRIPTOR_TYPE_FOLDER:
-			break;
-		case __DESCRIPTOR_TYPE_PIPE:
-			break;
-		case __DESCRIPTOR_TYPE_SOCKET:
-			break;
-		default:
-			break;
-	}
+	_libcglue_fdman_fd_info_t *fdinfo;
 
-	errno = EBADF;
-	return -1;
+	fdinfo = &(__descriptormap[fd]->info);
+	if (fdinfo->ops == NULL || fdinfo->ops->lseek64 == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+	return __transform64_errno(fdinfo->ops->lseek64(fdinfo->userdata, offset, whence));
 }
 #endif
 
@@ -511,7 +447,8 @@ int chdir(const char *path) {
 		return -1;
 	}
 
-	strcpy(__cwd, dest);
+	strncpy(__cwd, dest, sizeof(__cwd));
+	__cwd_len = strnlen(__cwd, sizeof(__cwd));
 	return 0;
 }
 #endif
@@ -525,7 +462,13 @@ int mkdir(const char *path, mode_t mode) {
 		return -1;
 	}
 
-	return __transform_errno(_ps2sdk_mkdir(dest, mode));
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->mkdir == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->mkdir(dest, mode));
 }
 #endif
 
@@ -538,7 +481,13 @@ int rmdir(const char *path) {
 		return -1;
 	}
 
-	return __transform_errno(_ps2sdk_rmdir(dest));
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->rmdir == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->rmdir(dest));
 }
 #endif
 
@@ -557,7 +506,13 @@ int _unlink(const char *path) {
 		return -1;
 	}
 
-	return __transform_errno(_ps2sdk_remove(dest));
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->remove == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->remove(dest));
 }
 #endif
 
@@ -576,7 +531,13 @@ int _rename(const char *old, const char *new) {
 		return -1;
 	}
 
-	return __transform_errno(_ps2sdk_rename(oldname, newname));
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->rename == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->rename(oldname, newname));
 }
 #endif
 
@@ -615,6 +576,13 @@ pid_t _fork(void) {
 
 #ifdef F__wait
 pid_t _wait(int *unused) {
+	errno = ENOSYS;
+	return (pid_t) -1; /* not supported */
+}
+#endif
+
+#ifdef F__execve
+int _execve(const char *name, char *const argv[], char *const env[]) {
 	errno = ENOSYS;
 	return (pid_t) -1; /* not supported */
 }
@@ -669,7 +637,7 @@ int _gettimeofday(struct timeval *tv, struct timezone *tz)
 
 #ifdef F__times
 clock_t _times(struct tms *buffer) {
-	clock_t clk = GetTimerSystemTime() / (kBUSCLK / CLOCKS_PER_SEC);
+	clock_t clk = GetTimerSystemTime() / (kBUSCLK / (1000 * 1000));
 
 	if (buffer != NULL) {
 		buffer->tms_utime  = clk;
@@ -784,7 +752,13 @@ int symlink(const char *target, const char *linkpath)
 		return -1;
 	}
 
-	return __transform_errno(_ps2sdk_symlink(dest_target, dest_linkpath));
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->symlink == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->symlink(dest_target, dest_linkpath));
 }
 #endif
 
@@ -798,7 +772,13 @@ ssize_t readlink(const char *path, char *buf, size_t bufsiz)
 		return -1;
 	}
 
-	return 	__transform_errno(_ps2sdk_readlink(dest, buf, bufsiz));
+	if (_libcglue_fdman_path_ops == NULL || _libcglue_fdman_path_ops->readlink == NULL)
+	{
+		errno = ENOSYS;
+		return -1;
+	}
+
+	return __transform_errno(_libcglue_fdman_path_ops->readlink(dest, buf, bufsiz));
 }
 #endif
 
@@ -877,13 +857,6 @@ int fchmod(int fd, mode_t mode)
 }
 #endif
 
-#ifdef F_fchmodat
-int fchmodat(int fd, const char *path, mode_t mode, int flag)
-{
-	return chmod(path, mode);
-}
-#endif
-
 #ifdef F_pathconf
 long int pathconf(const char *path, int name)
 {
@@ -925,13 +898,330 @@ struct passwd *getpwnam(const char *name) {
 }
 #endif
 
-#ifdef F_ps2sdk_get_iop_fd
-int ps2sdk_get_iop_fd(int fd) {
+#ifdef F_libcglue_get_fd_info
+_libcglue_fdman_fd_info_t *libcglue_get_fd_info(int fd) {
 	if (!__IS_FD_VALID(fd)) {
+		errno = EBADF;
+		return NULL;
+	}
+
+	return &(__descriptormap[fd]->info);
+}
+#endif
+
+#ifdef F_ps2sdk_get_iop_fd
+int ps2sdk_get_iop_fd(int fd)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->getfd == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->getfd(fdinfo->userdata);
+}
+#endif
+
+#ifdef F_ps2sdk_get_iop_filename
+char *ps2sdk_get_iop_filename(int fd)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return NULL;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->getfilename == NULL)
+	{
+		return NULL;
+	}
+	return fdinfo->ops->getfilename(fdinfo->userdata);
+}
+#endif
+
+#ifdef F__ps2sdk_close
+int _ps2sdk_close(int fd)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->close == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->close(fdinfo->userdata);
+}
+#endif
+
+#ifdef F__ps2sdk_dclose
+int _ps2sdk_dclose(int fd)
+{
+	return _ps2sdk_close(fd);
+}
+#endif
+
+#ifdef F__ps2sdk_read
+int _ps2sdk_read(int fd, void *buf, int nbytes)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->read == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->read(fdinfo->userdata, buf, nbytes);
+}
+#endif
+
+#ifdef F__ps2sdk_lseek
+int _ps2sdk_lseek(int fd, int offset, int whence)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->lseek == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->lseek(fdinfo->userdata, offset, whence);
+}
+#endif
+
+#ifdef F__ps2sdk_lseek64
+int64_t _ps2sdk_lseek64(int fd, int64_t offset, int whence)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->lseek64 == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->lseek64(fdinfo->userdata, offset, whence);
+}
+#endif
+
+#ifdef F__ps2sdk_write
+int _ps2sdk_write(int fd, const void *buf, int nbytes)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->write == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->write(fdinfo->userdata, buf, nbytes);
+}
+#endif
+
+#ifdef F__ps2sdk_ioctl
+int _ps2sdk_ioctl(int fd, int request, void *data)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->ioctl == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->ioctl(fdinfo->userdata, request, data);
+}
+#endif
+
+#ifdef F__ps2sdk_ioctl2
+int _ps2sdk_ioctl2(int fd, int request, void *arg, unsigned int arglen, void *buf, unsigned int buflen)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->ioctl == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->ioctl2(fdinfo->userdata, request, arg, arglen, buf, buflen);
+}
+#endif
+
+#ifdef F__ps2sdk_dread
+int _ps2sdk_dread(int fd, struct dirent *dir)
+{
+	_libcglue_fdman_fd_info_t *fdinfo;
+	fdinfo = libcglue_get_fd_info(fd);
+	if (fdinfo == NULL)
+	{
+		return -EBADF;
+	}
+	if (fdinfo->ops == NULL || fdinfo->ops->dread == NULL)
+	{
+		return -ENOSYS;
+	}
+	return fdinfo->ops->dread(fdinfo->userdata, dir);
+}
+#endif
+
+/* ATFILE functions */
+
+#ifdef F_openat
+int openat(int dirfd, const char *pathname, int flags, ...)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/openat
+	// for now use the same as open
+	
+	// Extract mode from variable arguments
+    va_list args;
+    va_start(args, flags);
+
+    // Get the mode argument
+    int mode = va_arg(args, int);
+
+    // Clean up the va_list
+    va_end(args);
+	return open(pathname, flags, mode);
+}
+#endif /* F_openat  */
+
+#ifdef F_renameat
+int renameat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/renameat
+	// for now use the same as rename
+	return rename(oldpath, newpath);
+}
+#endif /* F_renameat  */
+
+#ifdef F_fchmodat
+int fchmodat(int dirfd, const char *pathname, mode_t mode, int flags)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/fchmodat
+	// for now use the same as chmod
+	return chmod(pathname, mode);
+}
+#endif /* F_fchmodat  */
+
+#ifdef F_fstatat
+int fstatat(int dirfd, const char *pathname, struct stat *buf, int flags)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/fstatat
+	// for now use the same as stat
+	return stat(pathname, buf);
+}
+#endif /* F_fstatat  */
+
+#ifdef F_mkdirat
+int mkdirat(int dirfd, const char *pathname, mode_t mode)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/mkdirat
+	// for now use the same as mkdir
+	return mkdir(pathname, mode);
+}
+#endif /* F_mkdirat  */
+
+#ifdef F_faccessat
+int faccessat(int dirfd, const char *pathname, int mode, int flags)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/faccessat
+	// for now use the same as access
+	return access(pathname, mode);
+}
+#endif /* F_faccessat  */
+
+#ifdef F_fchownat
+int fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/fchownat
+	// for now use the same as chown
+	return chown(pathname, owner, group);
+}
+#endif /* F_fchownat  */
+
+#ifdef F_linkat
+int linkat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, int flags) {
+	// TODO: Do better implementation following https://linux.die.net/man/2/linkat
+	// for now use the same as link
+	return link(oldpath, newpath);
+}
+#endif /* F_linkat  */
+
+#ifdef F_readlinkat
+int readlinkat(int dirfd, const char *pathname, char *buf, size_t bufsiz)
+{
+	// TODO: Do better implementation following https://linux.die.net/man/2/linkat
+	// for now use the same as readlink
+	return readlink(pathname, buf, bufsiz);
+}
+#endif /* F_readlinkat  */
+
+#ifdef F_unlinkat
+int unlinkat(int dirfd, const char *pathname, int flags)
+{
+	// If flags contains AT_REMOVEDIR, then the path refers to a directory.
+	// Otherwise, the path refers to a file.
+	if (flags & AT_REMOVEDIR) {
+		return rmdir(pathname);
+	}
+	else {
+		return unlink(pathname);
+	}
+}
+#endif /* F_unlinkat  */
+
+#ifdef F_dup
+int dup(int oldfd)
+{
+	if (!__IS_FD_VALID(oldfd)) {
 		errno = EBADF;
 		return -1;
 	}
 
-	return __descriptormap[fd]->descriptor;
+	return __fdman_get_dup_descriptor(oldfd);
 }
-#endif
+#endif /* F_dup  */
+
+#ifdef F_dup2
+int dup2(int oldfd, int newfd)
+{
+	if (!__IS_FD_VALID(oldfd)) {
+		errno = EBADF;
+		return -1;
+	}
+
+	if (oldfd == newfd) {
+		return oldfd;
+	}
+	if (newfd < 0) {
+		errno = EBADF;
+		return -1;
+	}
+	if (__descriptormap[newfd]) {
+		close(newfd);
+	}
+	return __fdman_get_dup2_descriptor(oldfd, newfd);
+}
+#endif /* F_dup2  */

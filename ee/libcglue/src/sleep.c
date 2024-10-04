@@ -21,20 +21,53 @@
 #include <timer_alarm.h>
 
 #ifdef F_nanosleep
+static u64 nanosleep_wakeup_callback(s32 alarm_id, u64 scheduled_time, u64 actual_time, void *arg, void *pc_value)
+{
+	(void)alarm_id;
+	(void)scheduled_time;
+	(void)actual_time;
+	(void)pc_value;
+
+	iSignalSema((s32)arg);
+	ExitHandler();
+	return 0;
+}
 
 int nanosleep(const struct timespec *req, struct timespec *rem)
 {
-    uint64_t cycles;
+	u32 eie;
+	s32 sema_id;
+	s32 timer_alarm_id;
+	ee_sema_t sema;
 
-    cycles = TimerUSec2BusClock(req->tv_sec, req->tv_nsec / 1000);
-    ThreadWaitClock(cycles);
+	__asm__ __volatile__ ("mfc0\t%0, $12" : "=r" (eie));
+	if ((eie & 0x10000) == 0)
+	{
+		return 0;
+	}
+	sema.max_count = 1;
+	sema.option = (u32)"nanosleep";
+	sema.init_count = 0;
+	sema_id = CreateSema(&sema);
+	if (sema_id < 0)
+	{
+		return 0;
+	}
+	timer_alarm_id = SetTimerAlarm(Sec2TimerBusClock(req->tv_sec) + NSec2TimerBusClock(req->tv_nsec), nanosleep_wakeup_callback, (void *)sema_id);
+	if (timer_alarm_id < 0)
+	{
+		DeleteSema(sema_id);
+		return 0;
+	}
+	WaitSema(sema_id);
+	DeleteSema(sema_id);
 
-    if (rem != NULL) {
+    if (rem != NULL)
+    {
         rem->tv_sec = 0;
         rem->tv_nsec = 0;
     }
 
 	return 0;
 }
-
 #endif

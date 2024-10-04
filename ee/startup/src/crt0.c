@@ -43,38 +43,40 @@ static struct sargs_start *args_start;
 void __start(struct sargs_start *pargs)
 {
     asm volatile(
-   		"# Clear bss area"
-   		"la   $2, _fbss"
-   		"la   $3, _end"
-		"1:"
-   		"sltu   $1, $2, $3"
-   		"beq   $1, $0, 2f"
-   		"nop"
-   		"sq   $0, ($2)"
-   		"addiu   $2, $2, 16"
-   		"j   1b"
-   		"nop"
-		"2:"
-		"                       \n"
+        "# Clear bss area       \n"
+        ".set noat              \n"
+        "la   $2, _fbss         \n"
+        "la   $3, _end          \n"
+        "1:                     \n"
+        "sltu   $1, $2, $3      \n"
+        "beq   $1, $0, 2f       \n"
+        "nop                    \n"
+        "sq   $0, ($2)          \n"
+        "addiu   $2, $2, 16     \n"
+        "j   1b                 \n"
+        "nop                    \n"
+        "2:                     \n"
+        "                       \n"
         "# Save first argument  \n"
-        "la     $2, %0 \n"
-        "sw     $4, ($2)        \n"
+        "sw     %1, %0          \n"
         "                       \n"
         "# SetupThread          \n"
         "la     $4, _gp         \n"
         "la     $5, _stack      \n"
         "la     $6, _stack_size \n"
-        "la     $7, %1	        \n"
+        "la     $7, args	    \n"
         "la     $8, ExitThread  \n"
         "move   $gp, $4         \n"
         "addiu  $3, $0, 60      \n"
         "syscall                \n"
         "move   $sp, $2         \n"
         "                       \n"
-        "# Jump to _main      	\n"
-        "j      %2           \n"
-		: /* No outputs. */
-		: "R"(args_start), "R"(args), "Csy"(_main));
+        "# Jump to _main        \n"
+        "j      %2              \n"
+        ".set at              \n"
+        : /* No outputs. */
+        : "m"(args_start), "r"(pargs), "Csy"(_main)
+        : "1", "2", "3", "4", "5", "6", "7", "8");
 }
 
 /*
@@ -96,26 +98,26 @@ static void _main()
     if (_ps2sdk_memory_init)
         _ps2sdk_memory_init();
     
+    // Initialize the kernel (Apply necessary patches).
+    _InitSys();
+
     // Use arguments sent through start if sent (by ps2link for instance)
     pa = &args;
     if (args.argc == 0 && args_start != NULL && args_start->args.argc != 0)
         pa = &args_start->args;
 
     // call libcglue argument parsing
-	_libcglue_args_parse(pa->argc, pa->argv);
+    _libcglue_args_parse(pa->argc, pa->argv);
 
     // initialize libcglue
     _libcglue_init();
 
+    // Enable interruts
+    EI();
+
     // call global constructors (weak)
     if (_init)
         _init();
-
-    // Initialize the kernel (Apply necessary patches).
-    _InitSys();
-
-    // Enable interruts
-    EI();
 
     // call main
     retval = main(pa->argc, pa->argv);
@@ -133,7 +135,7 @@ static void _main()
 
 noreturn void _exit(int status)
 {
-	// call global destructors (weak)
+    // call global destructors (weak)
     if (_fini)
         _fini();
 

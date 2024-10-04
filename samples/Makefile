@@ -10,13 +10,13 @@ SAMPLES_TARGET = $(PS2SDK)/samples
 SHARE_TARGET = $(PS2DEV)/share
 
 all:
-	@$(ECHO) Nothing to do in samples
+	@$(PRINTF) 'Nothing to do in samples\n'
 
 clean:
-	@$(ECHO) Nothing to clean in samples
+	@$(PRINTF) 'Nothing to clean in samples\n'
 
 release: release-samples
-	@$(ECHO) Released samples dir.
+	@$(PRINTF) 'Released samples dir.\n'
 
 release-samples:
 	$(MKDIR) -p $(SAMPLES_TARGET)
@@ -27,6 +27,7 @@ release-samples:
 	cp -f Makefile.eeglobal_cpp_sample $(SAMPLES_TARGET)/Makefile.eeglobal_cpp
 	cp -f Makefile.iopglobal_sample $(SAMPLES_TARGET)/Makefile.iopglobal
 	cp -f ps2dev.cmake $(SHARE_TARGET)/ps2dev.cmake
+	cp -f ps2dev_iop.cmake $(SHARE_TARGET)/ps2dev_iop.cmake
 
 release-clean:
 	rm -f -r $(SAMPLES_TARGET)

@@ -74,8 +74,8 @@ int CreateThread(iop_thread_t *thparam)
     thread->option        = thparam->option;
     thread->status        = THS_DORMANT;
 
-    asm __volatile__("sw $gp, 0(%0)\n"
-                     : "=r"(thread->gp)::);
+    asm __volatile__("sw $gp, %0\n"
+                     : "=m"(thread->gp)::);
 
     list_insert(&thctx.thread_list, &thread->thread_list);
 
@@ -229,7 +229,7 @@ int ExitThread()
     thread_leave(0, 0, state, 1);
 
     Kprintf("panic ! Thread DORMANT !\n");
-    asm __volatile__("break 1");
+    __builtin_trap();
 
     return KE_OK;
 }
@@ -249,7 +249,7 @@ int ExitDeleteThread()
     thread_leave(0, 0, state, 1);
 
     Kprintf("panic ! Thread ExitDeleted !\n");
-    asm __volatile__("break 1");
+   __builtin_trap();
 
     return KE_OK;
 }
@@ -763,7 +763,7 @@ int WakeupThread(int thid)
         return thread_start(thread, state);
     }
 
-    thread->wakeup_count--;
+    thread->wakeup_count++;
 
     CpuResumeIntr(state);
 

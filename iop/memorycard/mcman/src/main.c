@@ -143,8 +143,13 @@ int mcman_chrpos(const char *str, int chr)
 	return p - str;
 }
 //--------------------------------------------------------------
+#ifdef _IOP
+int MCMAN_ENTRYPOINT(int argc, char *argv[], void *startaddr, ModuleInfo_t *mi)
+#else
 int MCMAN_ENTRYPOINT(int argc, char *argv[])
+#endif
 {
+	struct irx_export_table *export_tbl;
 	(void)argc;
 	(void)argv;
 
@@ -153,14 +158,47 @@ int MCMAN_ENTRYPOINT(int argc, char *argv[])
 #endif
 	DPRINTF("_start...\n");
 
-	DPRINTF("registering exports...\n");
 #if !defined(BUILDING_XFROMMAN) && !defined(BUILDING_VMCMAN)
-	if (RegisterLibraryEntries(&_exp_mcman) != 0)
-		return MODULE_NO_RESIDENT_END;
+	export_tbl = &_exp_mcman;
 #elif defined(BUILDING_XFROMMAN)
-	if (RegisterLibraryEntries(&_exp_xfromman) != 0)
-		return MODULE_NO_RESIDENT_END;
+	export_tbl = &_exp_xfromman;
+#else
+	export_tbl = NULL;
 #endif
+
+#ifdef _IOP
+	if (argc < 0)
+	{
+		int release_res;
+		int state;
+
+		release_res = 0;
+		// cppcheck-suppress knownConditionTrueFalse
+		if (export_tbl != NULL)
+		{
+			CpuSuspendIntr(&state);
+			release_res = ReleaseLibraryEntries(export_tbl);
+			CpuResumeIntr(state);
+		}
+		if (release_res == 0 || release_res == -213)
+		{
+			mcman_deinitdev();
+			McCloseAll();
+			mcman_deinitPS2com();
+			mcman_deinitPS1PDAcom();
+			return MODULE_NO_RESIDENT_END;
+		}
+		return MODULE_REMOVABLE_END;
+	}
+#endif
+
+	DPRINTF("registering exports...\n");
+	// cppcheck-suppress knownConditionTrueFalse
+	if (export_tbl != NULL)
+	{
+		if (RegisterLibraryEntries(export_tbl) != 0)
+			return MODULE_NO_RESIDENT_END;
+	}
 
 #ifdef _IOP
 	CpuEnableIntr();
@@ -192,6 +230,10 @@ int MCMAN_ENTRYPOINT(int argc, char *argv[])
 
 	DPRINTF("_start returns MODULE_RESIDENT_END...\n");
 
+#ifdef _IOP
+	if (mi && ((mi->newflags & 2) != 0))
+		mi->newflags |= 0x10;
+#endif
 	return MODULE_RESIDENT_END;
 }
 
@@ -2154,10 +2196,10 @@ int McSetDirEntryState(int port, int slot, int cluster, int fsindex, int flags)
 		if ((mcman_fdhandles[i].port != port) || (mcman_fdhandles[i].slot != slot))
 			continue;
 
-		if (mcman_fdhandles[i].field_20 != (u32)cluster)
+		if (mcman_fdhandles[i].cluster != (u32)cluster)
 			continue;
 
-		if (mcman_fdhandles[i].field_24 == (u32)fsindex)
+		if (mcman_fdhandles[i].fsindex == (u32)fsindex)
 			return sceMcResDeniedPermit;
 
 	} while (++i < MAX_FDHANDLES);
@@ -2603,7 +2645,8 @@ lbl0:
 		fse->mode = temp;
 		fse->edc = mcman_calcEDC((void *)fse, 127);
 
-		if (fse->linked_block < 0) {
+		// Unofficial: upper bounds check linked_block
+		if (fse->linked_block < 0 || fse->linked_block >= 15) {
 			//cluster = 0;
 			goto lbl1;
 		}
@@ -2771,7 +2814,8 @@ int mcman_FNC8ca4(int port, int slot, MC_FHANDLE *fh)
 	j = -1;
 
 	{
-		while (i >= 0) {
+		// Unofficial: upper bounds check i
+		while (i >= 0 && i < 15) {
 			if (mcfree < i) {
 				u8 *pfsentry, *pfsee, *pfseend;
 
@@ -3005,29 +3049,23 @@ int mcman_cachePS1dirs(int port, int slot)
 		cluster_t[i] = i;
 
 		linked_block = fs_t[i]->linked_block;
-		if (linked_block >= 0) {
-			do {
-				if ((fs_t[linked_block]->mode & 0xf0) != temp1)
-					temp1 = 0;
+		// Unofficial: upper bounds check linked_block
+		while (linked_block >= 0 && linked_block < 15) {
+			if ((fs_t[linked_block]->mode & 0xf0) != temp1)
+				temp1 = 0;
 
-				if (fs_t[linked_block]->mode == 0xa0)
-					break;
+			if (fs_t[linked_block]->mode == 0xa0)
+				break;
 
-				if (cluster_t[linked_block] != -1)
-					break;
+			if (cluster_t[linked_block] != -1)
+				break;
 
-				cluster_t[linked_block] = i;
-				linked_block = fs_t[linked_block]->linked_block;
-
-			} while (linked_block >= 0);
-
-			if ((linked_block < 0) && (temp1 != 0))
-				continue;
+			cluster_t[linked_block] = i;
+			linked_block = fs_t[linked_block]->linked_block;
 		}
-		else {
-			if (temp1 != 0)
-				continue;
-		}
+
+		if ((linked_block < 0 || linked_block >= 15) && (temp1 != 0))
+			continue;
 
 		j = 0;
 		do {
@@ -3773,7 +3811,8 @@ int mcman_readdirentryPS1(int port, int slot, int cluster, McFsEntryPS1 **pfse)
 	McCacheEntry *mce;
 	register MCDevInfo *mcdi = &mcman_devinfos[port][slot];
 
-	if (cluster >= 15)
+	// Unofficial: lower bounds check cluster
+	if (cluster < 0 || cluster >= 15)
 		return -73;
 
 	pages_per_fatclust = MCMAN_CLUSTERSIZE / mcdi->pagesize;

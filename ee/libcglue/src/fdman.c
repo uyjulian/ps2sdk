@@ -62,17 +62,14 @@ void __fdman_init()
 	memset(__descriptormap, 0, sizeof(__descriptormap_type*)*__FILENO_MAX);
 
 	// We assume STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO are initialized
-	__descriptormap[0] = &__descriptor_data_pool[0];
-	__descriptormap[0]->descriptor = STDIN_FILENO;
-	__descriptormap[0]->type = __DESCRIPTOR_TYPE_TTY;
+	__descriptormap[STDIN_FILENO] = &__descriptor_data_pool[STDIN_FILENO];
+	__libcglue_init_stdio(&(__descriptormap[STDIN_FILENO]->info), 0);
 
-	__descriptormap[1] = &__descriptor_data_pool[1];
-	__descriptormap[1]->descriptor = STDOUT_FILENO;
-	__descriptormap[1]->type = __DESCRIPTOR_TYPE_TTY;
+	__descriptormap[STDOUT_FILENO] = &__descriptor_data_pool[STDOUT_FILENO];
+	__libcglue_init_stdio(&(__descriptormap[STDOUT_FILENO]->info), 1);
 
-	__descriptormap[2] = &__descriptor_data_pool[2];
-	__descriptormap[2]->descriptor = STDERR_FILENO;
-	__descriptormap[2]->type = __DESCRIPTOR_TYPE_TTY;
+	__descriptormap[STDERR_FILENO] = &__descriptor_data_pool[STDERR_FILENO];
+	__libcglue_init_stdio(&(__descriptormap[STDERR_FILENO]->info), 1 /* ioman doesn't have 2 (stderr) by default, so just use 1 (stdout) */);
 }
 #endif
 
@@ -134,6 +131,22 @@ int __fdman_get_dup_descriptor(int fd)
 }
 #endif
 
+#ifdef F___fdman_get_dup_descriptor
+int __fdman_get_dup2_descriptor(int fd, int newfd)
+{	
+	if (!__IS_FD_VALID(fd)) {
+		errno = EBADF;
+		return -1;
+	}
+
+	WaitSema(__fdman_sema); /* lock here to make thread safe */
+	__descriptormap[newfd] = &__descriptor_data_pool[fd];
+	__descriptormap[newfd]->ref_count++;
+	SignalSema(__fdman_sema); /* release lock */
+	
+	return newfd;
+}
+#endif
 
 #ifdef F___fdman_release_descriptor
 void __fdman_release_descriptor(int fd)
@@ -146,15 +159,7 @@ void __fdman_release_descriptor(int fd)
 	__descriptormap[fd]->ref_count--;
 	
 	if (__descriptormap[fd]->ref_count == 0) {
-		
-		if (__descriptormap[fd]->filename != NULL) {
-			free(__descriptormap[fd]->filename);
-		}
-		__descriptormap[fd]->filename = NULL;
-		__descriptormap[fd]->descriptor = 0;
-		__descriptormap[fd]->type = 0;
-		__descriptormap[fd]->flags = 0;
-		
+		memset(__descriptormap[fd], 0, sizeof(__descriptormap_type));
 	}
 	__descriptormap[fd] = NULL;
 }

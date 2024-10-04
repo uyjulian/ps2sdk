@@ -9,10 +9,9 @@
 SUBDIRS = \
 	adpenc \
 	bin2c \
-	bin2o \
-	bin2s \
 	ps2-irxgen \
 	ps2adpcm \
+	romimg \
 	srxfixup \
 #	  gensymtab
 
