@@ -1347,6 +1347,7 @@ static int check_undef_symboles(elf_file *elf)
 	return err;
 }
 
+#if 0
 // clang-format off
 static const char * const SymbolType[] =
 {
@@ -1355,6 +1356,7 @@ static const char * const SymbolType[] =
 #undef X
 };
 // clang-format on
+#endif
 static int create_reserved_symbols(elf_file *elf)
 {
 	int csyms_;
@@ -1407,12 +1409,15 @@ static int create_reserved_symbols(elf_file *elf)
 			}
 			if ( csyms->segment || scp )
 			{
+				// FIXME: disable this check because it trips on _gp, _end symbols
+#if 0
 				if ( sym->sym.st_shndx )
 				{
 					fprintf(stderr, "Unexcepted Symbol \"%s\":%s \n", sym->name, SymbolType[sym->type]);
 					csyms_ += 1;
 				}
 				else
+#endif
 				{
 					sym->bind = csyms->bind;
 					if ( !sym->type )
