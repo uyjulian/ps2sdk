@@ -375,6 +375,16 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 	result = (elf_rel *)calloc(entrise, sizeof(elf_rel));
 	sp_x->data = (uint8_t *)result;
 	symp = (elf_syment **)sp_x->link->data;
+	// Some modules have link as NULL because symtab section is missing
+	if ( !symp )
+	{
+		symp = (elf_syment **)calloc(entrise, sizeof(elf_syment *));
+		for ( i = 0; entrise > i; i += 1 )
+		{
+			symp[i] = (elf_syment *)calloc(1, sizeof(elf_syment));
+		}
+		sp_x->link->data = (uint8_t *)symp;
+	}
 	for ( i = 0; entrise > i; i += 1 )
 	{
 		if ( fread(&result[i], sp_x->shr.sh_entsize, 1, fp) != 1 )
