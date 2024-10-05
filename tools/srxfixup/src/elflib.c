@@ -252,6 +252,46 @@ elf_file *read_elf(const char *filename)
 							break;
 					}
 				}
+				// Workaround for malformed file: make distance between sh_addr agree with sh_offset
+				switch ( elf->ehp->e_type )
+				{
+					case ET_SCE_IOPRELEXEC:
+					case ET_SCE_IOPRELEXEC2:
+					case ET_SCE_EERELEXEC:
+					case ET_SCE_EERELEXEC2:
+						for ( i_8 = 0; i_8 < elf->ehp->e_phnum; i_8 += 1 )
+						{
+							int s;
+							elf_section **scp;
+
+							switch ( elf->php[i_8].phdr.p_type )
+							{
+								case PT_LOAD:
+									scp = elf->php[i_8].scp;
+									for ( s = 1; scp[s]; s += 1 )
+									{
+										if ( scp[s]->shr.sh_type != SHT_NOBITS )
+										{
+											unsigned int addrdiff;
+											unsigned int offsetdiff;
+
+											addrdiff = scp[s]->shr.sh_addr - scp[s - 1]->shr.sh_addr;
+											offsetdiff = scp[s]->shr.sh_offset - scp[s - 1]->shr.sh_offset;
+											if ( addrdiff != offsetdiff )
+											{
+												scp[s]->shr.sh_addr = scp[s - 1]->shr.sh_addr + offsetdiff;
+											}
+										}
+									}
+									break;
+								default:
+									break;
+							}
+						}
+						break;
+					default:
+						break;
+				}
 				return elf;
 			}
 			pos_3 = elf->scp[i_4]->shr.sh_offset;
