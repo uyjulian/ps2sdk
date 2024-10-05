@@ -564,7 +564,7 @@ static void dumpb(const char *head, unsigned int address, unsigned int size, con
 	unsigned int off2;
 	unsigned int off1;
 
-	addr = address & 0xFFFFFFF0;
+	addr = address & ~0xF;
 	off1 = 0;
 	off2 = size;
 	strcpy((char *)cbuf, "........ ........");
@@ -635,8 +635,7 @@ static void dumph(const char *head, unsigned int address, unsigned int size, con
 	unsigned int off2;
 	unsigned int off1;
 
-	addr = address;
-	addr &= 0xF0;
+	addr = address & ~0xF;
 	off2 = addr;
 	off1 = 0;
 	for ( ; off1 < size; off2 += 2 )
@@ -682,13 +681,10 @@ static void dumph(const char *head, unsigned int address, unsigned int size, con
 
 static void dumpw(const char *head, unsigned int address, unsigned int size, const uint32_t *data)
 {
-	unsigned int v4;
 	unsigned int off1;
 	unsigned int addr;
 
-	v4 = address;
-	v4 &= 0xF0;
-	addr = v4;
+	addr = address & ~0xF;
 	off1 = 0;
 	for ( ; off1 < size; addr += 4 )
 	{
