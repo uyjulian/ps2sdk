@@ -373,13 +373,13 @@ void print_elf_reloc(const elf_section *scp, unsigned int flag)
 	for ( i = 0; i < entrise; i += 1 )
 	{
 		printf("   %3u: 0x%06x  0x%02x %-16s ", i, rp[i].rel.r_offset, rp[i].type, num2name(R_MIPS_Type, rp[i].type));
-		if ( rp[i].symptr->type == STT_SECTION )
+		if ( rp[i].symptr && rp[i].symptr->type == STT_SECTION )
 		{
 			printf("0x%03x[%s]\n", rp[i].rel.r_info >> 8, rp[i].symptr->shptr->name);
 		}
 		else
 		{
-			printf("0x%03x %s\n", rp[i].rel.r_info >> 8, rp[i].symptr->name ?: "");
+			printf("0x%03x %s\n", rp[i].rel.r_info >> 8, (rp[i].symptr && rp[i].symptr->name) ? rp[i].symptr->name : "");
 		}
 	}
 	printf("\n");
@@ -454,7 +454,7 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 				rp = rel[i].mhrp;
 				strcat(pb, ">");
 			}
-			if ( rp->symptr->type == STT_SECTION )
+			if ( rp->symptr && rp->symptr->type == STT_SECTION )
 			{
 				sprintf(
 					&pb[strlen(pb)],
@@ -465,20 +465,23 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 			}
 			else
 			{
-				switch ( rp->symptr->bind )
+				v7 = ' ';
+				if ( rp->symptr )
 				{
-					case STB_GLOBAL:
-						v7 = 'E';
-						break;
-					case STB_LOCAL:
-						v7 = 'l';
-						break;
-					case STB_WEAK:
-						v7 = 'w';
-						break;
-					default:
-						v7 = ' ';
-						break;
+					switch ( rp->symptr->bind )
+					{
+						case STB_GLOBAL:
+							v7 = 'E';
+							break;
+						case STB_LOCAL:
+							v7 = 'l';
+							break;
+						case STB_WEAK:
+							v7 = 'w';
+							break;
+						default:
+							break;
+					}
 				}
 				sprintf(
 					&pb[strlen(pb)],
@@ -486,7 +489,7 @@ void print_elf_disasm(const elf_file *elf, const elf_section *scp, unsigned int 
 					v7,
 					num2name(R_MIPS_Type, rp->type),
 					(int)(rp->rel.r_info >> 8),
-					rp->symptr->name ?: "");
+					(rp->symptr && rp->symptr->name) ? rp->symptr->name : "");
 			}
 		}
 		printf("    %s\n", pb);
@@ -779,7 +782,7 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 					{
 						printf("                  +%02x:", i);
 						printf(" [%3d]", rel.rid);
-						if ( rel.rp->symptr->type == STT_SECTION )
+						if ( rel.rp->symptr && rel.rp->symptr->type == STT_SECTION )
 						{
 							printf(
 								"  %s %d '%s'",
@@ -791,27 +794,30 @@ void print_elf_datadump(const elf_file *elf, const elf_section *scp, unsigned in
 						{
 							int v7;
 
-							switch ( rel.rp->symptr->bind )
+							v7 = ' ';
+							if ( rel.rp->symptr )
 							{
-								case STB_GLOBAL:
-									v7 = 'E';
-									break;
-								case STB_LOCAL:
-									v7 = 'l';
-									break;
-								case STB_WEAK:
-									v7 = 'w';
-									break;
-								default:
-									v7 = ' ';
-									break;
+								switch ( rel.rp->symptr->bind )
+								{
+									case STB_GLOBAL:
+										v7 = 'E';
+										break;
+									case STB_LOCAL:
+										v7 = 'l';
+										break;
+									case STB_WEAK:
+										v7 = 'w';
+										break;
+									default:
+										break;
+								}
 							}
 							printf(
 								"%c %s %d %s",
 								v7,
 								num2name(R_MIPS_Type, rel.rp->type),
 								(int)(rel.rp->rel.r_info >> 8),
-								rel.rp->symptr->name ?: "");
+								(rel.rp->symptr && rel.rp->symptr->name) ? rel.rp->symptr->name : "");
 						}
 						printf("\n");
 					}

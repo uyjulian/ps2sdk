@@ -376,7 +376,7 @@ static void fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 	{
 		uint8_t *datal;
 
-		if ( *symp != rp->symptr )
+		if ( rp->symptr && *symp != rp->symptr )
 		{
 			fprintf(stderr, "Internal error: Illegal relocation entry\n");
 			exit(1);
@@ -414,7 +414,7 @@ static void fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 				*(uint32_t *)datal += startaddr;
 				break;
 			case R_MIPS_26:
-				if ( rp->symptr->bind != STB_LOCAL )
+				if ( rp->symptr && rp->symptr->bind != STB_LOCAL )
 				{
 					fprintf(stderr, "R_MIPS_26 Unexcepted bind\n");
 					exit(1);
@@ -424,7 +424,7 @@ static void fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 				*(uint32_t *)datal |= (16 * data_2) >> 6;
 				break;
 			case R_MIPS_HI16:
-				if ( i == entrise + 1 || rp[1].type != R_MIPS_LO16 || rp[1].symptr != rp->symptr )
+				if ( i == entrise + 1 || rp[1].type != R_MIPS_LO16 || (rp->symptr && rp[1].symptr != rp->symptr) )
 				{
 					fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
 					exit(1);
@@ -1296,7 +1296,7 @@ static int check_undef_symboles_an_reloc(elf_section *relsect)
 	undefcount = 0;
 	for ( i = 0; i < entrise; i += 1 )
 	{
-		if ( *symp != rp->symptr )
+		if ( rp->symptr && *symp != rp->symptr )
 		{
 			if ( rp->symptr->sym.st_shndx )
 			{
@@ -1682,12 +1682,17 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 		next = 1;
 		daddr_1 = (void *)&relsect->info->data[rp->rel.r_offset];
 		symvalue = 0;
-		if ( rp->symptr->sym.st_shndx )
+		if ( rp->symptr )
 		{
-			symvalue = rp->symptr->sym.st_value;
+			if ( rp->symptr->sym.st_shndx )
+			{
+				symvalue = rp->symptr->sym.st_value;
+			}
 		}
 		v4 = 0;
-		if ( (rp->symptr->sym.st_shndx && rp->symptr->sym.st_shndx <= 0xFEFF) || rp->symptr->sym.st_shndx == SHN_RADDR )
+		if (
+			!rp->symptr || (rp->symptr->sym.st_shndx && rp->symptr->sym.st_shndx <= 0xFEFF)
+			|| rp->symptr->sym.st_shndx == SHN_RADDR )
 		{
 			v4 = 1;
 		}
@@ -1721,7 +1726,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 				break;
 			case R_MIPS_26:
 				data_2 = *(uint32_t *)daddr_1;
-				if ( rp->symptr->bind != STB_LOCAL )
+				if ( rp->symptr && rp->symptr->bind != STB_LOCAL )
 				{
 					data_33 = data_2 << 6 >> 4;
 				}
@@ -1741,7 +1746,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 				datah = *(uint32_t *)daddr_1 << 16;
 				for ( j_1 = i_1 + 1; j_1 < entrise && rp[next].type == R_MIPS_HI16; j_1 += 1 )
 				{
-					if ( rp[next].symptr != rp->symptr )
+					if ( rp->symptr && rp[next].symptr != rp->symptr )
 					{
 						fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
 						exit(1);
@@ -1764,7 +1769,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 					}
 					next += 1;
 				}
-				if ( j_1 == entrise + 1 || rp[next].type != R_MIPS_LO16 || rp[next].symptr != rp->symptr )
+				if ( j_1 == entrise + 1 || rp[next].type != R_MIPS_LO16 || (rp->symptr && rp[next].symptr != rp->symptr) )
 				{
 					fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
 					exit(1);
@@ -1797,8 +1802,11 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 							*(uint32_t *)daddr_2 |= (uint16_t)(step >> 2);
 						}
 						rp[j_2].type = R_MIPS_NONE;
-						rp[j_2].symptr->refcount -= 1;
-						rp[j_2].symptr = *symp;
+						if ( rp[j_2].symptr )
+						{
+							rp[j_2].symptr->refcount -= 1;
+							rp[j_2].symptr = *symp;
+						}
 					}
 					rp->type = R_MIPSSCE_MHI16;
 					rp->rel.r_offset += relsect->info->shr.sh_addr;
@@ -1834,18 +1842,26 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 				break;
 			case R_MIPS_GPREL16:
 				data_5 = (int16_t)*(uint32_t *)daddr_1;
-				if ( rp->symptr->type == STT_SECTION )
+				if ( rp->symptr )
 				{
-					data_5 += ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_gp_value + symvalue
-									- ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_addr - gpvalue;
+					if ( rp->symptr->type == STT_SECTION )
+					{
+						data_5 += ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_gp_value + symvalue
+										- ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_addr - gpvalue;
+					}
+					else if ( rp->symptr->bind == STB_GLOBAL || (rp->symptr->bind == STB_WEAK && rp->symptr->sym.st_shndx) )
+					{
+						data_5 += symvalue - gpvalue;
+					}
+					else if ( rp->symptr->bind != STB_WEAK || rp->symptr->sym.st_shndx )
+					{
+						fprintf(stderr, "R_MIPS_GPREL16 unknown case abort\n");
+						exit(1);
+					}
 				}
-				else if ( rp->symptr->bind == STB_GLOBAL || (rp->symptr->bind == STB_WEAK && rp->symptr->sym.st_shndx) )
+				else
 				{
-					data_5 += symvalue - gpvalue;
-				}
-				else if ( rp->symptr->bind != STB_WEAK || rp->symptr->sym.st_shndx )
-				{
-					fprintf(stderr, "R_MIPS_GPREL16 unknown case abort\n");
+					fprintf(stderr, "R_MIPS_GPREL16 no symtab\n");
 					exit(1);
 				}
 				if ( (uint16_t)(data_5 >> 16) && (uint16_t)(data_5 >> 16) != 0xFFFF )
@@ -1859,7 +1875,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 				rmflag = 1;
 				break;
 			case R_MIPS_LITERAL:
-				if ( rp->symptr->type != STT_SECTION )
+				if ( !rp->symptr || rp->symptr->type != STT_SECTION )
 				{
 					fprintf(stderr, "R_MIPS_LITERAL unknown case abort\n");
 					exit(1);
@@ -1911,8 +1927,11 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 		for ( ; next > 0; next -= 1 )
 		{
 			rp->rel.r_offset += relsect->info->shr.sh_addr;
-			rp->symptr->refcount -= 1;
-			rp->symptr = *symp;
+			if ( rp->symptr )
+			{
+				rp->symptr->refcount -= 1;
+				rp->symptr = *symp;
+			}
 			i_1 += 1;
 			rp += 1;
 		}
@@ -1971,7 +1990,7 @@ int relocation_is_version2(elf_section *relsect)
 			case R_MIPSSCE_ADDEND:
 				return 1;
 			case R_MIPS_HI16:
-				if ( i == entrise + 1 || rp[1].type != R_MIPS_LO16 || rp[1].symptr != rp->symptr )
+				if ( i == entrise + 1 || rp[1].type != R_MIPS_LO16 || (rp->symptr && rp[1].symptr != rp->symptr) )
 				{
 					return 1;
 				}

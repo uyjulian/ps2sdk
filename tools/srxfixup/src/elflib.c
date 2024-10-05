@@ -375,16 +375,6 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 	result = (elf_rel *)calloc(entrise, sizeof(elf_rel));
 	sp_x->data = (uint8_t *)result;
 	symp = (elf_syment **)sp_x->link->data;
-	// Some modules have link as NULL because symtab section is missing
-	if ( !symp )
-	{
-		symp = (elf_syment **)calloc(entrise, sizeof(elf_syment *));
-		for ( i = 0; entrise > i; i += 1 )
-		{
-			symp[i] = (elf_syment *)calloc(1, sizeof(elf_syment));
-		}
-		sp_x->link->data = (uint8_t *)symp;
-	}
 	for ( i = 0; entrise > i; i += 1 )
 	{
 		if ( fread(&result[i], sp_x->shr.sh_entsize, 1, fp) != 1 )
@@ -394,8 +384,11 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 		}
 		swapmemory(&result[i], "ll", 1);
 		result[i].type = result[i].rel.r_info & 0xFF;
-		result[i].symptr = symp[result[i].rel.r_info >> 8];
-		result[i].symptr->refcount += 1;
+		if ( symp )
+		{
+			result[i].symptr = symp[result[i].rel.r_info >> 8];
+			result[i].symptr->refcount += 1;
+		}
 	}
 }
 
@@ -779,13 +772,13 @@ static void write_rel(elf_file *elf, int sctindex, FILE *fp)
 	for ( i = 0; entrise > i; i += 1 )
 	{
 		memcpy(&rel, &rp[i], sizeof(rel));
-		if ( rp[i].symptr->number == (unsigned int)(-1) )
+		if ( rp[i].symptr && rp[i].symptr->number == (unsigned int)(-1) )
 		{
 			fprintf(stderr, "Internal error !!\n");
 			fprintf(stderr, " relocation entry have no symbol\nabort\n");
 			exit(1);
 		}
-		rel.r_info = (rp[i].symptr->number << 8) + (rp[i].type & 0xFF);
+		rel.r_info = ((rp[i].symptr ? rp[i].symptr->number : sp_x->info->number) << 8) + (rp[i].type & 0xFF);
 		swapmemory(&rel, "ll", 1);
 		fwrite(&rel, sizeof(Elf32_Rel), 1, fp);
 	}

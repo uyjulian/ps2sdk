@@ -375,7 +375,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 		unsigned int type;
 		uint8_t *daddr;
 
-		if ( *symp != rp->symptr )
+		if ( rp->symptr && *symp != rp->symptr )
 		{
 			fprintf(stderr, "Internal error: Illegal relocation entry\n");
 			exit(1);
@@ -403,7 +403,7 @@ static void convert_relative_branch_an_section(elf_section *relsect)
 				unsigned int data;
 
 				data = *(uint32_t *)daddr;
-				if ( rp->symptr->bind != STB_LOCAL )
+				if ( rp->symptr && rp->symptr->bind != STB_LOCAL )
 				{
 					fprintf(stderr, "R_MIPS_26 Unexcepted bind\n");
 					exit(1);
