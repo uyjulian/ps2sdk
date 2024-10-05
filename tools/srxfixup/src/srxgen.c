@@ -398,7 +398,7 @@ static void fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 		switch ( rp->type )
 		{
 			case R_MIPS_16:
-				data_1 = startaddr + (int16_t) * (uint32_t *)datal;
+				data_1 = startaddr + (int16_t)*(uint32_t *)datal;
 				if ( (uint16_t)(data_1 >> 16) )
 				{
 					if ( (uint16_t)(data_1 >> 16) != 0xFFFF )
@@ -429,8 +429,7 @@ static void fixlocation_an_rel(elf_section *relsect, unsigned int startaddr)
 					fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
 					exit(1);
 				}
-				data_4 = startaddr
-							 + (int16_t) * (uint32_t *)&relsect->info->data[rp[1].rel.r_offset - relsect->info->shr.sh_addr]
+				data_4 = startaddr + (int16_t)*(uint32_t *)&relsect->info->data[rp[1].rel.r_offset - relsect->info->shr.sh_addr]
 							 + (*(uint32_t *)datal << 16);
 				*(uint32_t *)datal &= 0xFFFF0000;
 				*(uint32_t *)datal |= (uint16_t)(((data_4 >> 15) + 1) >> 1);
@@ -1698,7 +1697,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 				rmflag = 1;
 				break;
 			case R_MIPS_16:
-				data_1 = symvalue + (int16_t) * (uint32_t *)daddr_1;
+				data_1 = symvalue + (int16_t)*(uint32_t *)daddr_1;
 				if ( (uint16_t)(data_1 >> 16) && (uint16_t)(data_1 >> 16) != 0xFFFF )
 				{
 					fprintf(stderr, "REFHALF data overflow\n");
@@ -1770,7 +1769,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 					fprintf(stderr, "R_MIPS_HI16 without R_MIPS_LO16\n");
 					exit(1);
 				}
-				data32_1 = symvalue + (int16_t) * (uint32_t *)&relsect->info->data[rp[next].rel.r_offset] + datah;
+				data32_1 = symvalue + (int16_t)*(uint32_t *)&relsect->info->data[rp[next].rel.r_offset] + datah;
 				if ( next == 1 )
 				{
 					*(uint32_t *)daddr_1 &= 0xFFFF0000;
@@ -1834,7 +1833,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 				}
 				break;
 			case R_MIPS_GPREL16:
-				data_5 = (int16_t) * (uint32_t *)daddr_1;
+				data_5 = (int16_t)*(uint32_t *)daddr_1;
 				if ( rp->symptr->type == STT_SECTION )
 				{
 					data_5 += ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_gp_value + symvalue
@@ -1866,7 +1865,7 @@ static void rebuild_an_relocation(elf_section *relsect, unsigned int gpvalue, in
 					exit(1);
 				}
 				data_6 = ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_gp_value + symvalue
-							 - ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_addr - gpvalue + (int16_t) * (uint32_t *)daddr_1;
+							 - ((Sect_org_data *)(rp->symptr->shptr->optdata))->org_addr - gpvalue + (int16_t)*(uint32_t *)daddr_1;
 				if ( (uint16_t)(data_6 >> 16) && (uint16_t)(data_6 >> 16) != 0xFFFF )
 				{
 					fprintf(stderr, "R_MIPS_LITERAL data overflow\n");
