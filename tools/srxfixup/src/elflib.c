@@ -384,6 +384,7 @@ static void read_rel(elf_file *elf, int sctindex, FILE *fp)
 		}
 		swapmemory(&result[i], "ll", 1);
 		result[i].type = result[i].rel.r_info & 0xFF;
+		// Workaround for malformed file: Handle case of missing .symtab/.strtab section
 		if ( symp )
 		{
 			result[i].symptr = symp[result[i].rel.r_info >> 8];
