@@ -139,7 +139,7 @@ $(IOP_BIN_ELF): $(IOP_OBJS) $(IOP_LIB_ARCHIVES) $(IOP_ADDITIONAL_DEPS)
 
 $(IOP_BIN_STRIPPED_ELF): $(IOP_BIN_ELF)
 	$(DIR_GUARD)
-	$(IOP_STRIP) --strip-debug -o $@ $<
+	$(IOP_STRIP) --strip-debug --remove-section=.pdr -o $@ $<
 
 $(IOP_BIN): $(IOP_BIN_STRIPPED_ELF) $(PS2SDKSRC)/tools/srxfixup/bin/srxfixup
 	$(PS2SDKSRC)/tools/srxfixup/bin/srxfixup --irx1 -o $@ $<
