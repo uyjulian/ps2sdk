@@ -29,7 +29,7 @@ SET(CMAKE_SYSTEM_PROCESSOR mips)
 SET(CMAKE_C_COMPILER mips64r5900el-ps2-elf-gcc)
 SET(CMAKE_CXX_COMPILER mips64r5900el-ps2-elf-g++)
 
-SET(EE_CFLAGS "-I$ENV{PS2SDK}/ee/include -I$ENV{PS2SDK}/common/include -I$ENV{PS2SDK}/ports/include -D_EE -DPS2 -D__PS2__ -O2 -G0" CACHE STRING "EE C compiler flags" FORCE)
+SET(EE_CFLAGS "-I$ENV{PS2SDK}/ee/include -I$ENV{PS2SDK}/common/include -I$ENV{PS2DEV}/gsKit/include -I$ENV{PS2SDK}/ports/include -D_EE -DPS2 -D__PS2__ -O2 -G0" CACHE STRING "EE C compiler flags" FORCE)
 SET(EE_LDFLAGS "-L$ENV{PS2SDK}/ee/lib -L$ENV{PS2DEV}/gsKit/lib -L$ENV{PS2SDK}/ports/lib -Wl,-zmax-page-size=128 -T$ENV{PS2SDK}/ee/startup/linkfile" CACHE STRING "EE linker flags" FORCE)
 
 SET(CMAKE_TARGET_INSTALL_PREFIX $ENV{PS2DEV}/ports)
@@ -47,6 +47,11 @@ SET(CMAKE_EXE_LINKER_FLAGS_INIT ${EE_LDFLAGS})
 
 
 SET(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "-nostartfiles -Wl,-r -Wl,-d")
+
+find_program(PKG_CONFIG_EXECUTABLE NAMES mips64r5900el-ps2-elf-pkg-config HINTS "$ENV{PS2SDK}/bin")
+if (NOT PKG_CONFIG_EXECUTABLE)
+    message(FATAL_ERROR "Could not find mips64r5900el-ps2-elf-pkg-config")
+endif()
 
 SET(PS2 TRUE)
 SET(PLATFORM_PS2 TRUE)

@@ -34,40 +34,40 @@ extern int dvripl_df_exit(iomanX_iop_device_t *dev);
 extern int dvripl_df_ioctl(iomanX_iop_file_t *f, int cmd, void *param);
 extern int dvripl_df_devctl(iomanX_iop_file_t *a1, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen);
 extern int dvripl_df_ioctl2(iomanX_iop_file_t *f, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen);
-extern int dvripl_df_null();
-extern s64 dvripl_df_null_long();
 extern int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg);
 extern void dvr_ready(int a1, void *a2);
 
+IOMANX_RETURN_VALUE_IMPL(EUNSUP);
+
 static iomanX_iop_device_ops_t DvrFuncTbl =
     {
-        &dvripl_df_init,
-        &dvripl_df_exit,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_ioctl,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_null_long,
-        &dvripl_df_devctl,
-        &dvripl_df_null,
-        &dvripl_df_null,
-        &dvripl_df_ioctl2,
+        &dvripl_df_init, // init
+        &dvripl_df_exit, // deinit
+        IOMANX_RETURN_VALUE(EUNSUP), // format
+        IOMANX_RETURN_VALUE(EUNSUP), // open
+        IOMANX_RETURN_VALUE(EUNSUP), // close
+        IOMANX_RETURN_VALUE(EUNSUP), // read
+        IOMANX_RETURN_VALUE(EUNSUP), // write
+        IOMANX_RETURN_VALUE(EUNSUP), // lseek
+        &dvripl_df_ioctl, // ioctl
+        IOMANX_RETURN_VALUE(EUNSUP), // remove
+        IOMANX_RETURN_VALUE(EUNSUP), // mkdir
+        IOMANX_RETURN_VALUE(EUNSUP), // rmdir
+        IOMANX_RETURN_VALUE(EUNSUP), // dopen
+        IOMANX_RETURN_VALUE(EUNSUP), // dclose
+        IOMANX_RETURN_VALUE(EUNSUP), // dread
+        IOMANX_RETURN_VALUE(EUNSUP), // getstat
+        IOMANX_RETURN_VALUE(EUNSUP), // chstat
+        IOMANX_RETURN_VALUE(EUNSUP), // rename
+        IOMANX_RETURN_VALUE(EUNSUP), // chdir
+        IOMANX_RETURN_VALUE(EUNSUP), // sync
+        IOMANX_RETURN_VALUE(EUNSUP), // mount
+        IOMANX_RETURN_VALUE(EUNSUP), // umount
+        IOMANX_RETURN_VALUE_S64(EUNSUP), // lseek64
+        &dvripl_df_devctl, // devctl
+        IOMANX_RETURN_VALUE(EUNSUP), // symlink
+        IOMANX_RETURN_VALUE(EUNSUP), // readlink
+        &dvripl_df_ioctl2, // ioctl2
     };
 s32 dvr_ready_flag;
 static iomanX_iop_device_t DVRMAN = {
@@ -157,7 +157,7 @@ int dvripl_df_ioctl(iomanX_iop_file_t *f, int cmd, void *param)
     DPRINTF("dvripl_df_ioctl\n");
     WaitSema(sema_id);
     SignalSema(sema_id);
-    return -22;
+    return -EINVAL;
 }
 
 int dvripl_df_devctl(
@@ -178,7 +178,7 @@ int dvripl_df_devctl(
 
     DPRINTF("dvripl_df_devctl\n");
     WaitSema(sema_id);
-    v11 = -22;
+    v11 = -EINVAL;
     if (cmd == 0x5602)
         v11 = iplioctl2_update(a1, 0x5602, arg);
     SignalSema(sema_id);
@@ -197,17 +197,7 @@ int dvripl_df_ioctl2(iomanX_iop_file_t *f, int cmd, void *arg, unsigned int argl
     DPRINTF("dvripl_df_ioctl2\n");
     WaitSema(sema_id);
     SignalSema(sema_id);
-    return -22;
-}
-
-int dvripl_df_null()
-{
-    return -48;
-}
-
-s64 dvripl_df_null_long()
-{
-    return -48LL;
+    return -EINVAL;
 }
 
 int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg)
@@ -242,7 +232,7 @@ int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg)
         goto LABEL_2;
     if (cmdack.ack_status_ack) {
         DPRINTF("NOP -> Status error!\n");
-        return -5;
+        return -EIO;
     }
     DPRINTF("VERSION\n");
     cmdack.command = 0x102;
@@ -252,11 +242,11 @@ int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg)
     if (cmdackerr2) {
     LABEL_2:
         DPRINTF("NOP -> Handshake error!\n");
-        return -5;
+        return -EIO;
     }
     if (cmdack.ack_status_ack) {
         DPRINTF("NOP -> Status error!\n");
-        return -5;
+        return -EIO;
     }
     DPRINTF("major : %04x\n", cmdack.output_word[0]);
     DPRINTF("minor : %04x\n", cmdack.output_word[1]);
@@ -275,11 +265,11 @@ int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg)
     DPRINTF("dvrcmd.ack_p[0]:%x\n", cmdack.ack_status_ack);
     if (cmdackerr3) {
         DPRINTF("CONFIG -> Handshake error!(%d)\n", cmdackerr3);
-        return -5;
+        return -EIO;
     }
     if (cmdack.ack_status_ack) {
         DPRINTF("CONFIG -> Status error!\n");
-        return -5;
+        return -EIO;
     }
     update_fd = iomanX_open((const char *)arg, 1, 0x124);
     if (update_fd >= 0) {
@@ -301,7 +291,7 @@ int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg)
             read_size = iomanX_read(update_fd, SBUF, 0x8000);
             chunk_size = read_size;
             if (read_size < 0) {
-                retval = -5;
+                retval = -EIO;
                 DPRINTF("Cannot read \"%s\"\n", (const char *)arg);
                 goto LABEL_30;
             }
@@ -321,7 +311,7 @@ int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg)
             cmdack.input_buffer = SBUF;
             cmdack.input_buffer_length = chunk_size;
             if (DvrdrvExecCmdAckDmaSendComp(&cmdack)) {
-                retval = -5;
+                retval = -EIO;
                 DPRINTF("Handshake error! (phase:%d)\n", cmdack.phase);
                 goto LABEL_30;
             }
@@ -353,14 +343,14 @@ int iplioctl2_update(iomanX_iop_file_t *a1, int cmd, void *arg)
         DPRINTF("dvrcmd.ack_p[1]:%x\n", cmdack.output_word[0]);
         DPRINTF("dvrcmd.ack_p[2]:%x\n", cmdack.output_word[1]);
         if (cmdackerr4) {
-            retval = -5;
+            retval = -EIO;
             goto LABEL_30;
         }
         if (cmdack.ack_status_ack)
         LABEL_29:
-            retval = -5;
+            retval = -EIO;
     } else {
-        retval = -89;
+        retval = -ENMFILE;
     }
 LABEL_30:
     iomanX_close(update_fd);

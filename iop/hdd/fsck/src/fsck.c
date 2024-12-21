@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <sysclib.h>
 
-#include "pfs-opt.h"
 #include "libpfs.h"
 #include "bitmap_fsck.h"
 #include "misc_fsck.h"
@@ -895,12 +894,6 @@ fsck_thread_end:
     SetEventFlag(fsckEventFlagID, 1);
 }
 
-// 0x0000264c
-static int FsckUnsupported(void)
-{
-    return 0;
-}
-
 // 0x00000340
 static int fsckCheckBitmap(pfs_mount_t *mount, void *buffer)
 {
@@ -1217,34 +1210,37 @@ static int FsckIoctl2(iomanX_iop_file_t *fd, int cmd, void *arg, unsigned int ar
     return result;
 }
 
+IOMANX_RETURN_VALUE_IMPL(0);
+
 static iomanX_iop_device_ops_t FsckDeviceOps = {
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    NULL,
-    &FsckOpen,
-    &FsckClose,
-    NULL,
-    NULL,
-    NULL,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    (void *)&FsckUnsupported,
-    &FsckIoctl2};
+    IOMANX_RETURN_VALUE(0), // init
+    IOMANX_RETURN_VALUE(0), // deinit
+    IOMANX_RETURN_VALUE(0), // format
+    &FsckOpen, // open
+    &FsckClose, // close
+    IOMANX_RETURN_VALUE(0), // read
+    IOMANX_RETURN_VALUE(0), // write
+    IOMANX_RETURN_VALUE(0), // lseek
+    IOMANX_RETURN_VALUE(0), // ioctl
+    IOMANX_RETURN_VALUE(0), // remove
+    IOMANX_RETURN_VALUE(0), // mkdir
+    IOMANX_RETURN_VALUE(0), // rmdir
+    IOMANX_RETURN_VALUE(0), // dopen
+    IOMANX_RETURN_VALUE(0), // dclose
+    IOMANX_RETURN_VALUE(0), // dread
+    IOMANX_RETURN_VALUE(0), // getstat
+    IOMANX_RETURN_VALUE(0), // chstat
+    IOMANX_RETURN_VALUE(0), // rename
+    IOMANX_RETURN_VALUE(0), // chdir
+    IOMANX_RETURN_VALUE(0), // sync
+    IOMANX_RETURN_VALUE(0), // mount
+    IOMANX_RETURN_VALUE(0), // umount
+    IOMANX_RETURN_VALUE_S64(0), // lseek64
+    IOMANX_RETURN_VALUE(0), // devctl
+    IOMANX_RETURN_VALUE(0), // symlink
+    IOMANX_RETURN_VALUE(0), // readlink
+    &FsckIoctl2, // ioctl2
+};
 
 static iomanX_iop_device_t FsckDevice = {
     "fsck",

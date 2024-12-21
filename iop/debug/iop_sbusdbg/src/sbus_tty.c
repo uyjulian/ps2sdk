@@ -14,6 +14,7 @@ Of course this requires that the EE-side code accept this command and output the
 #include <tamtypes.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
 #include <sysclib.h>
 #include <sysmem.h>
 #include <excepman.h>
@@ -25,8 +26,6 @@ Of course this requires that the EE-side code accept this command and output the
 #include "iopdebug.h"
 
 extern void sbus_tty_puts(const char *str);
-
-static int ttyfs_error() { return -1; }
 
 static int ttyfs_init()
 {
@@ -93,25 +92,27 @@ static int ttyfs_write(iop_file_t *file, void *ptr, int size) {
     return(bCount);
 }
 
+IOMAN_RETURN_VALUE_IMPL(EPERM);
+
 static iop_device_ops_t fsd_ops =
 {
-    &ttyfs_init,
-    &ttyfs_deinit,
-    (void *)&ttyfs_error,
-    &ttyfs_open,
-    &ttyfs_close,
-	(void *)&ttyfs_error,
-    &ttyfs_write,
-    (void *)&ttyfs_error,
-    (void *)&ttyfs_error,
-    (void *)&ttyfs_error,
-    (void *)&ttyfs_error,
-    (void *)&ttyfs_error,
-	&ttyfs_dopen,
-    &ttyfs_close,
-    (void *)&ttyfs_error,
-    (void *)&ttyfs_error,
-    (void *)&ttyfs_error,
+    &ttyfs_init, // init
+    &ttyfs_deinit, // deinit
+    IOMAN_RETURN_VALUE(EPERM), // format
+    &ttyfs_open, // open
+    &ttyfs_close, // close
+    IOMAN_RETURN_VALUE(EPERM), // read
+    &ttyfs_write, // write
+    IOMAN_RETURN_VALUE(EPERM), // lseek
+    IOMAN_RETURN_VALUE(EPERM), // ioctl
+    IOMAN_RETURN_VALUE(EPERM), // remove
+    IOMAN_RETURN_VALUE(EPERM), // mkdir
+    IOMAN_RETURN_VALUE(EPERM), // rmdir
+    &ttyfs_dopen, // dopen
+    &ttyfs_close, // dclose
+    IOMAN_RETURN_VALUE(EPERM), // dread
+    IOMAN_RETURN_VALUE(EPERM), // getstat
+    IOMAN_RETURN_VALUE(EPERM), // chstat
 };
 
 static iop_device_t tty_fsd =

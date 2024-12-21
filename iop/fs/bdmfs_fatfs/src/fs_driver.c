@@ -261,24 +261,6 @@ static DIR *fs_find_free_dir_structure(void)
 }
 
 //---------------------------------------------------------------------------
-static int fs_dummy(void)
-{
-    M_DEBUG("%s\n", __func__);
-
-    return -5;
-}
-
-//---------------------------------------------------------------------------
-static int fs_init(iop_device_t *driver)
-{
-    M_DEBUG("%s\n", __func__);
-
-    (void)driver;
-
-    return 1;
-}
-
-//---------------------------------------------------------------------------
 static int fs_open(iop_file_t *fd, const char *name, int flags, int mode)
 {
     M_DEBUG("%s: %s flags=%X mode=%X\n", __func__, name, flags, mode);
@@ -799,34 +781,37 @@ static int fs_devctl(iop_file_t *fd, const char *name, int cmd, void *arg, unsig
     return ret;
 }
 
+IOMANX_RETURN_VALUE_IMPL(0);
+IOMANX_RETURN_VALUE_IMPL(EIO);
+
 static iop_device_ops_t fs_functarray = {
-    &fs_init,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    &fs_open,
-    &fs_close,
-    &fs_read,
-    &fs_write,
-    &fs_lseek,
-    &fs_ioctl,
-    &fs_remove,
-    &fs_mkdir,
-    &fs_remove,
-    &fs_dopen,
-    &fs_dclose,
-    &fs_dread,
-    &fs_getstat,
-    (void *)&fs_dummy,
-    &fs_rename,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    &fs_lseek64,
-    &fs_devctl,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    &fs_ioctl2,
+    IOMANX_RETURN_VALUE(0), // init
+    IOMANX_RETURN_VALUE(0), // deinit
+    IOMANX_RETURN_VALUE(EIO), // format
+    &fs_open, // open
+    &fs_close, // close
+    &fs_read, // read
+    &fs_write, // write
+    &fs_lseek, // lseek
+    &fs_ioctl, // ioctl
+    &fs_remove, // remove
+    &fs_mkdir, // mkdir
+    &fs_remove, // rmdir
+    &fs_dopen, // dopen
+    &fs_dclose, // dclose
+    &fs_dread, // dread
+    &fs_getstat, // getstat
+    IOMANX_RETURN_VALUE(EIO), // chstat
+    &fs_rename, // rename
+    IOMANX_RETURN_VALUE(EIO), // chdir
+    IOMANX_RETURN_VALUE(EIO), // sync
+    IOMANX_RETURN_VALUE(EIO), // mount
+    IOMANX_RETURN_VALUE(EIO), // umount
+    &fs_lseek64, // lseek64
+    &fs_devctl, // devctl
+    IOMANX_RETURN_VALUE(EIO), // symlink
+    IOMANX_RETURN_VALUE(EIO), // readlink
+    &fs_ioctl2, // ioctl2
 };
 static iop_device_t fs_driver = {
     "mass",

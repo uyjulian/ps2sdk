@@ -22,7 +22,6 @@
 IRX_ID(MODNAME, 1, 1);
 
 // Function prototypes
-static int imgdrv_dummy(void);
 static int imgdrv_read(iop_file_t *f, void *buf, int size);
 static int imgdrv_lseek(iop_file_t *f, int offset, int whence);
 
@@ -40,15 +39,17 @@ typedef struct _iop_device_ops_short
     int (*lseek)(iop_file_t *, int, int);
 } iop_device_ops_short_t;
 
+IOMAN_RETURN_VALUE_IMPL(0);
+
 static iop_device_ops_short_t imgdrv_ops = {
-    (void *)&imgdrv_dummy, // init
-    (void *)&imgdrv_dummy, // deinit
-    NULL,                  // format
-    (void *)&imgdrv_dummy, // open
-    (void *)&imgdrv_dummy, // close
-    &imgdrv_read,          // read
-    NULL,                  // write
-    &imgdrv_lseek,         // lseek
+    IOMAN_RETURN_VALUE(0), // init
+    IOMAN_RETURN_VALUE(0), // deinit
+    IOMAN_RETURN_VALUE(0), // format
+    IOMAN_RETURN_VALUE(0), // open
+    IOMAN_RETURN_VALUE(0), // close
+    &imgdrv_read, // read
+    IOMAN_RETURN_VALUE(0), // write
+    &imgdrv_lseek, // lseek
 };
 
 #define MAX_IMAGES 2
@@ -67,11 +68,6 @@ static iop_device_t img_device = {
 int _start(int argc, char *argv[])
 {
     return (AddDrv(&img_device) < 0) ? MODULE_NO_RESIDENT_END : MODULE_RESIDENT_END;
-}
-
-static int imgdrv_dummy(void)
-{
-    return 0;
 }
 
 static int imgdrv_read(iop_file_t *f, void *buf, int size)

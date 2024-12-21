@@ -122,11 +122,6 @@ static int expbay_init(int sema_attr);
 
 extern struct irx_export_table _exp_dev9;
 
-static int dev9x_dummy(void)
-{
-    return 0;
-}
-
 static int dev9x_devctl(iop_file_t *f, const char *name, int cmd, void *args, unsigned int arglen, void *buf, unsigned int buflen)
 {
     (void)f;
@@ -151,35 +146,37 @@ static int dev9x_devctl(iop_file_t *f, const char *name, int cmd, void *args, un
     }
 }
 
+IOMANX_RETURN_VALUE_IMPL(0);
+
 static iop_device_ops_t dev9x_ops =
     {
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        &dev9x_devctl,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
-        (void *)&dev9x_dummy,
+        IOMANX_RETURN_VALUE(0), // init
+        IOMANX_RETURN_VALUE(0), // deinit
+        IOMANX_RETURN_VALUE(0), // format
+        IOMANX_RETURN_VALUE(0), // open
+        IOMANX_RETURN_VALUE(0), // close
+        IOMANX_RETURN_VALUE(0), // read
+        IOMANX_RETURN_VALUE(0), // write
+        IOMANX_RETURN_VALUE(0), // lseek
+        IOMANX_RETURN_VALUE(0), // ioctl
+        IOMANX_RETURN_VALUE(0), // remove
+        IOMANX_RETURN_VALUE(0), // mkdir
+        IOMANX_RETURN_VALUE(0), // rmdir
+        IOMANX_RETURN_VALUE(0), // dopen
+        IOMANX_RETURN_VALUE(0), // dclose
+        IOMANX_RETURN_VALUE(0), // dread
+        IOMANX_RETURN_VALUE(0), // getstat
+        IOMANX_RETURN_VALUE(0), // chstat
+        IOMANX_RETURN_VALUE(0), // rename
+        IOMANX_RETURN_VALUE(0), // chdir
+        IOMANX_RETURN_VALUE(0), // sync
+        IOMANX_RETURN_VALUE(0), // mount
+        IOMANX_RETURN_VALUE(0), // umount
+        IOMANX_RETURN_VALUE_S64(0), // lseek64
+        &dev9x_devctl, // devctl
+        IOMANX_RETURN_VALUE(0), // symlink
+        IOMANX_RETURN_VALUE(0), // readlink
+        IOMANX_RETURN_VALUE(0), // ioctl2
 };
 
 static iop_device_t dev9x_device =

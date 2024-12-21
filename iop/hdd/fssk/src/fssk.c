@@ -19,7 +19,6 @@
 #include <irx.h>
 #include <hdd-ioctl.h>
 
-#include "pfs-opt.h"
 #include "libpfs.h"
 #include "fssk-ioctl.h"
 #include "fssk.h"
@@ -563,11 +562,6 @@ end2:
     SetEventFlag(fsskEventFlagID, 1);
 }
 
-static int FsskUnsupported(void)
-{
-    return 0;
-}
-
 static int FsskOpen(iomanX_iop_file_t *fd, const char *name, int flags, int mode)
 {
     int blockfd, result;
@@ -720,34 +714,37 @@ static int FsskIoctl2(iomanX_iop_file_t *fd, int cmd, void *arg, unsigned int ar
     return result;
 }
 
+IOMANX_RETURN_VALUE_IMPL(0);
+
 static iomanX_iop_device_ops_t FsskDeviceOps = {
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    NULL,
-    &FsskOpen,
-    &FsskClose,
-    NULL,
-    NULL,
-    NULL,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    (void *)&FsskUnsupported,
-    &FsskIoctl2};
+    IOMANX_RETURN_VALUE(0), // init
+    IOMANX_RETURN_VALUE(0), // deinit
+    IOMANX_RETURN_VALUE(0), // format
+    &FsskOpen, // open
+    &FsskClose, // close
+    IOMANX_RETURN_VALUE(0), // read
+    IOMANX_RETURN_VALUE(0), // write
+    IOMANX_RETURN_VALUE(0), // lseek
+    IOMANX_RETURN_VALUE(0), // ioctl
+    IOMANX_RETURN_VALUE(0), // remove
+    IOMANX_RETURN_VALUE(0), // mkdir
+    IOMANX_RETURN_VALUE(0), // rmdir
+    IOMANX_RETURN_VALUE(0), // dopen
+    IOMANX_RETURN_VALUE(0), // dclose
+    IOMANX_RETURN_VALUE(0), // dread
+    IOMANX_RETURN_VALUE(0), // getstat
+    IOMANX_RETURN_VALUE(0), // chstat
+    IOMANX_RETURN_VALUE(0), // rename
+    IOMANX_RETURN_VALUE(0), // chdir
+    IOMANX_RETURN_VALUE(0), // sync
+    IOMANX_RETURN_VALUE(0), // mount
+    IOMANX_RETURN_VALUE(0), // umount
+    IOMANX_RETURN_VALUE_S64(0), // lseek64
+    IOMANX_RETURN_VALUE(0), // devctl
+    IOMANX_RETURN_VALUE(0), // symlink
+    IOMANX_RETURN_VALUE(0), // readlink
+    &FsskIoctl2, // ioctl2
+};
 
 static iomanX_iop_device_t FsskDevice = {
     "fssk",

@@ -32,8 +32,6 @@ extern int dvrdv_df_exit(iomanX_iop_device_t *dev);
 extern int dvrdv_df_ioctl(iomanX_iop_file_t *f, int cmd, void *param);
 extern int dvrdv_df_devctl(iomanX_iop_file_t *a1, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen);
 extern int dvrdv_df_ioctl2(iomanX_iop_file_t *f, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen);
-extern int dvrdv_df_null();
-extern s64 dvrdv_df_null_long();
 extern int dvrioctl2_dv_dubb_start(iomanX_iop_file_t *a1, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen);
 extern int dvrioctl2_dv_dubb_stop(iomanX_iop_file_t *a1, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen);
 extern int dvrioctl2_dv_dubb_rec_start(iomanX_iop_file_t *a1, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen);
@@ -54,35 +52,38 @@ struct DevctlCmdTbl_t
         {0x5607, &dvrioctl2_get_dvcam_info},
         {0x5608, &dvrioctl2_get_dvcam_name},
 };
+
+IOMANX_RETURN_VALUE_IMPL(EUNSUP);
+
 static iomanX_iop_device_ops_t DvrFuncTbl =
     {
-        &dvrdv_df_init,
-        &dvrdv_df_exit,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        &dvrdv_df_ioctl,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null_long,
-        &dvrdv_df_devctl,
-        (void *)&dvrdv_df_null,
-        (void *)&dvrdv_df_null,
-        &dvrdv_df_ioctl2,
+        &dvrdv_df_init, // init
+        &dvrdv_df_exit, // deinit
+        IOMANX_RETURN_VALUE(EUNSUP), // format
+        IOMANX_RETURN_VALUE(EUNSUP), // open
+        IOMANX_RETURN_VALUE(EUNSUP), // close
+        IOMANX_RETURN_VALUE(EUNSUP), // read
+        IOMANX_RETURN_VALUE(EUNSUP), // write
+        IOMANX_RETURN_VALUE(EUNSUP), // lseek
+        &dvrdv_df_ioctl, // ioctl
+        IOMANX_RETURN_VALUE(EUNSUP), // remove
+        IOMANX_RETURN_VALUE(EUNSUP), // mkdir
+        IOMANX_RETURN_VALUE(EUNSUP), // rmdir
+        IOMANX_RETURN_VALUE(EUNSUP), // dopen
+        IOMANX_RETURN_VALUE(EUNSUP), // dclose
+        IOMANX_RETURN_VALUE(EUNSUP), // dread
+        IOMANX_RETURN_VALUE(EUNSUP), // getstat
+        IOMANX_RETURN_VALUE(EUNSUP), // chstat
+        IOMANX_RETURN_VALUE(EUNSUP), // rename
+        IOMANX_RETURN_VALUE(EUNSUP), // chdir
+        IOMANX_RETURN_VALUE(EUNSUP), // sync
+        IOMANX_RETURN_VALUE(EUNSUP), // mount
+        IOMANX_RETURN_VALUE(EUNSUP), // umount
+        IOMANX_RETURN_VALUE_S64(EUNSUP), // lseek64
+        &dvrdv_df_devctl, // devctl
+        IOMANX_RETURN_VALUE(EUNSUP), // symlink
+        IOMANX_RETURN_VALUE(EUNSUP), // readlink
+        &dvrdv_df_ioctl2, // ioctl2
     };
 static iomanX_iop_device_t DVR = {
     .name = "dvr_dv",
@@ -179,7 +180,7 @@ int dvrdv_df_ioctl(iomanX_iop_file_t *f, int cmd, void *param)
 
     WaitSema(sema_id);
     SignalSema(sema_id);
-    return -22;
+    return -EINVAL;
 }
 
 int dvrdv_df_devctl(
@@ -207,7 +208,7 @@ int dvrdv_df_devctl(
     v10 = DevctlCmdTbl[v12].fn(a1, name, cmd, arg, arglen, buf, buflen);
 LABEL_5:
     if (v11 == sizeof(DevctlCmdTbl) / sizeof(DevctlCmdTbl[0]))
-        v10 = -22;
+        v10 = -EINVAL;
     SignalSema(sema_id);
     return v10;
 }
@@ -230,17 +231,7 @@ int dvrdv_df_ioctl2(
 
     WaitSema(sema_id);
     SignalSema(sema_id);
-    return -22;
-}
-
-int dvrdv_df_null()
-{
-    return -48;
-}
-
-s64 dvrdv_df_null_long()
-{
-    return -48LL;
+    return -EINVAL;
 }
 
 int dvrioctl2_dv_dubb_start(
@@ -269,11 +260,11 @@ int dvrioctl2_dv_dubb_start(
     cmdack_err = DvrdrvExecCmdAck(&cmdack);
     if (cmdack_err) {
         DPRINTF("dvrioctl2_dv_dubb_start -> Handshake error!,%d\n", cmdack_err);
-        return -5;
+        return -EIO;
     } else {
         if (cmdack.ack_status_ack) {
             DPRINTF("dvrioctl2_dv_dubb_start -> Status error!,%04X\n", cmdack.ack_status_ack);
-            return -68;
+            return -EADV;
         }
     }
     return 0;
@@ -305,11 +296,11 @@ int dvrioctl2_dv_dubb_stop(
     cmdack_err = DvrdrvExecCmdAck(&cmdack);
     if (cmdack_err) {
         DPRINTF("dvrioctl2_dv_dubb_stop -> Handshake error!,%d\n", cmdack_err);
-        return -5;
+        return -EIO;
     } else {
         if (cmdack.ack_status_ack) {
             DPRINTF("dvrioctl2_dv_dubb_stop -> Status error!,%04X\n", cmdack.ack_status_ack);
-            return -68;
+            return -EADV;
         }
     }
     return 0;
@@ -356,11 +347,11 @@ int dvrioctl2_dv_dubb_rec_start(
     cmdack_err = DvrdrvExecCmdAck(&cmdack);
     if (cmdack_err) {
         DPRINTF("dvrioctl2_dv_dubb_rec_start -> Handshake error!,%d\n", cmdack_err);
-        return -5;
+        return -EIO;
     } else {
         if (cmdack.ack_status_ack) {
             DPRINTF("dvrioctl2_dv_dubb_rec_start -> Status error!,%04X\n", cmdack.ack_status_ack);
-            return -68;
+            return -EADV;
         }
     }
     return 0;
@@ -394,12 +385,12 @@ int dvrioctl2_dv_dubb_rec_stop(
     if (cmdack_err) {
         DPRINTF("phase %d\n", cmdack.phase);
         DPRINTF("dvrioctl2_dv_dubb_rec_stop -> Handshake error!,%d\n", cmdack_err);
-        return -5;
+        return -EIO;
     } else {
         if (cmdack.ack_status_ack) {
             DPRINTF("phase %d\n", cmdack.phase);
             DPRINTF("dvrioctl2_dv_dubb_rec_stop -> Status error!,%04X\n", cmdack.ack_status_ack);
-            return -68;
+            return -EADV;
         }
     }
     return 0;
@@ -430,11 +421,11 @@ int dvrioctl2_get_dvcam_info(
     if (cmdack_err) {
         DPRINTF("phase %d\n", cmdack.phase);
         DPRINTF("dvrioctl2_get_dvcam_info -> Handshake error!,%d\n", cmdack_err);
-        return -5;
+        return -EIO;
     } else {
         if (cmdack.ack_status_ack) {
             DPRINTF("dvrioctl2_get_dvcam_info -> Status error!,%04X\n", cmdack.ack_status_ack);
-            return -68;
+            return -EADV;
         } else {
             u16 *v11;
             int cpy_cnt;
@@ -477,11 +468,11 @@ int dvrioctl2_get_dvcam_name(
     cmdack.timeout = 5000000;
     if (DvrdrvExecCmdAckDmaRecvComp(&cmdack)) {
         DPRINTF("dvrioctl2_get_dvcam_name : IO error (phase %d)\n", cmdack.phase);
-        return -5;
+        return -EIO;
     } else {
         if (cmdack.comp_status) {
             DPRINTF("dvrioctl2_get_dvcam_name : Complete parameter error (phase %d), %04X\n", cmdack.phase, cmdack.comp_status);
-            return -5;
+            return -EIO;
         }
     }
     return 0;

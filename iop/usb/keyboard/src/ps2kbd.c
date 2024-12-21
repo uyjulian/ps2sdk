@@ -20,6 +20,7 @@
 #include "sifcmd.h"
 #include "sifrpc.h"
 #include "sysclib.h"
+#include <errno.h>
 #include "sysmem.h"
 #include "usbd.h"
 #include "usbd_macro.h"
@@ -978,12 +979,6 @@ void ps2kbd_ioctl_setrepeatrate(u32 rate)
   kbd_repeatrate = rate;
 }
 
-int fio_dummy()
-{
-  //printf("fio_dummy()\n");
-  return -5;
-}
-
 int fio_init(iop_device_t *driver)
 {
   (void)driver;
@@ -1008,7 +1003,7 @@ int fio_open(iop_file_t *f, const char *name, int mode)
   //printf("fio_open() %s %d\n", name, mode);
   if(strcmp(name, PS2KBD_KBDFILE)) /* If not the keyboard file */
     {
-      return -1;
+      return -EPERM;
     }
 
   return 0;
@@ -1100,7 +1095,7 @@ int fio_ioctl(iop_file_t *f, int cmd, void *param)
       break;
     case PS2KBD_IOCTL_SETREPEATRATE: ps2kbd_ioctl_setrepeatrate(*(u32 *) param);
       break;
-    default : return -1;
+    default : return -EPERM;
     }
 
   return 0;
@@ -1115,26 +1110,29 @@ int fio_close(iop_file_t *f)
   return 0;
 }
 
+IOMAN_RETURN_VALUE_IMPL(0);
+IOMAN_RETURN_VALUE_IMPL(EIO);
+
 static iop_device_ops_t fio_ops =
 
   {
-    &fio_init,
-    (void *)&fio_dummy,
-    &fio_format,
-    &fio_open,
-    &fio_close,
-    &fio_read,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
-    &fio_ioctl,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
-    (void *)&fio_dummy,
+  &fio_init, // init
+  IOMAN_RETURN_VALUE(0), // deinit
+  &fio_format, // format
+  &fio_open, // open
+  &fio_close, // close
+  &fio_read, // read
+  IOMAN_RETURN_VALUE(EIO), // write
+  IOMAN_RETURN_VALUE(EIO), // lseek
+  &fio_ioctl, // ioctl
+  IOMAN_RETURN_VALUE(EIO), // remove
+  IOMAN_RETURN_VALUE(EIO), // mkdir
+  IOMAN_RETURN_VALUE(EIO), // rmdir
+  IOMAN_RETURN_VALUE(EIO), // dopen
+  IOMAN_RETURN_VALUE(EIO), // dclose
+  IOMAN_RETURN_VALUE(EIO), // dread
+  IOMAN_RETURN_VALUE(EIO), // getstat
+  IOMAN_RETURN_VALUE(EIO), // chstat
   };
 
 static iop_device_t kbd_filedrv = {

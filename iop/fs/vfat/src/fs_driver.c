@@ -228,14 +228,6 @@ static void fs_reset(void)
 static int fs_inited = 0;
 
 //---------------------------------------------------------------------------
-static int fs_dummy(void)
-{
-    M_DEBUG("%s\n", __func__);
-
-    return -5;
-}
-
-//---------------------------------------------------------------------------
 static int fs_init(iop_device_t *driver)
 {
     (void)driver;
@@ -441,7 +433,7 @@ static int fs_lseek(iop_file_t *fd, int offset, int whence)
             break;
         default:
             _fs_unlock();
-            return -1;
+            return -EPERM;
     }
     if ((int)(rec->filePos) < 0) {
         rec->filePos = 0;
@@ -839,7 +831,7 @@ int fs_ioctl(iop_file_t *fd, int cmd, void *data)
             break;
 #endif
         default:
-            ret = fs_dummy();
+            ret = -EIO;
     }
 
     _fs_unlock();
@@ -993,7 +985,7 @@ static int fs_ioctl2(iop_file_t *fd, int cmd, void *data, unsigned int datalen, 
             break;
         }
         default:
-            ret = fs_dummy();
+            ret = -EIO;;
     }
 
     _fs_unlock();
@@ -1002,41 +994,45 @@ static int fs_ioctl2(iop_file_t *fd, int cmd, void *data, unsigned int datalen, 
 #endif
 
 #ifndef WIN32
+
+IOMANX_RETURN_VALUE_IMPL(0);
+IOMANX_RETURN_VALUE_IMPL(EIO);
+
 static iop_device_ops_t fs_functarray = {
-    &fs_init,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    &fs_open,
-    &fs_close,
-    &fs_read,
-    &fs_write,
-    &fs_lseek,
-    &fs_ioctl,
-    &fs_remove,
-    &fs_mkdir,
-    &fs_rmdir,
-    &fs_dopen,
-    &fs_dclose,
-    &fs_dread,
-    &fs_getstat,
-    (void *)&fs_dummy,
-    &fs_rename,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
+    &fs_init, // init
+    IOMANX_RETURN_VALUE(0), // deinit
+    IOMANX_RETURN_VALUE(EIO), // format
+    &fs_open, // open
+    &fs_close, // close
+    &fs_read, // read
+    &fs_write, // write
+    &fs_lseek, // lseek
+    &fs_ioctl, // ioctl
+    &fs_remove, // remove
+    &fs_mkdir, // mkdir
+    &fs_rmdir, // rmdir
+    &fs_dopen, // dopen
+    &fs_dclose, // dclose
+    &fs_dread, // dread
+    &fs_getstat, // getstat
+    IOMANX_RETURN_VALUE(EIO), // chstat
+    &fs_rename, // rename
+    IOMANX_RETURN_VALUE(EIO), // chdir
+    IOMANX_RETURN_VALUE(EIO), // sync
+    IOMANX_RETURN_VALUE(EIO), // mount
+    IOMANX_RETURN_VALUE(EIO), // umount
+    IOMANX_RETURN_VALUE_S64(EIO), // lseek64
 #ifndef BUILDING_IEEE1394_DISK
-    &fs_devctl,
+    &fs_devctl, // devctl
 #else
-    (void *)&fs_dummy,
+    IOMANX_RETURN_VALUE(EIO), // devctl
 #endif /* BUILDING_IEEE1394_DISK */
-    (void *)&fs_dummy,
-    (void *)&fs_dummy,
+    IOMANX_RETURN_VALUE(EIO), // symlink
+    IOMANX_RETURN_VALUE(EIO), // readlink
 #if !defined(BUILDING_IEEE1394_DISK) && !defined(BUILDING_USBHDFSD)
-    &fs_ioctl2,
+    &fs_ioctl2, // ioctl2
 #else
-    (void *)&fs_dummy,
+    IOMANX_RETURN_VALUE(EIO), // ioctl2
 #endif /* BUILDING_IEEE1394_DISK */
 };
 static iop_device_t fs_driver = {
