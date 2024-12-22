@@ -399,8 +399,12 @@ static int HandleTxIntr(struct SmapDriverData *SmapDrivPrivData)
         if (!(ctrl_stat & SMAP_BD_TX_READY)) {
             if (ctrl_stat & (SMAP_BD_TX_UNDERRUN | SMAP_BD_TX_LCOLL | SMAP_BD_TX_ECOLL | SMAP_BD_TX_EDEFER | SMAP_BD_TX_LOSSCR)) {
                 for (i = 0; i < 16; i++)
-                    if ((ctrl_stat >> i) & 1)
+                    if ((ctrl_stat >> i) & 1) {
                         SmapDrivPrivData->RuntimeStats.TxErrorCount++;
+#ifdef BUILDING_SMAP_NETDEV
+                        SmapDrivPrivData->RuntimeStats_NetDev.m_TxErrorVarious[i] += 1;
+#endif
+                    }
 
                 SmapDrivPrivData->RuntimeStats.TxDroppedFrameCount++;
 #ifdef BUILDING_SMAP_NETDEV
