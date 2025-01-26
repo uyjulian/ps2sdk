@@ -1606,6 +1606,8 @@ static void setup_module_info(elf_file *elf, elf_section *modsect, const char *m
 			iopmodp_1 = (Elf32_IopMod *)modsect->data;
 			iopmodp_1->moduleinfo = modiaddr;
 			iopmodp_1->moduleversion = *((uint16_t *)modidatap + 2);
+			// HACK FIXME: Don't place the name in the header
+			name = "";
 			iopmodp_2 = (Elf32_IopMod *)realloc(iopmodp_1, strlen(name) + sizeof(Elf32_IopMod));
 			strcpy(iopmodp_2->modulename, name);
 			modsect->data = (uint8_t *)iopmodp_2;
