@@ -19,6 +19,36 @@ extern "C" {
 
 #define ELF_LOADER_MAX_PROGRAM_HEADERS 32
 
+typedef struct elf_loader_elf32_ehdr_
+{
+    u8 e_ident[16];
+    u16 e_type;
+    u16 e_machine;
+    u32 e_version;
+    u32 e_entry;
+    u32 e_phoff;
+    u32 e_shoff;
+    u32 e_flags;
+    u16 e_ehsize;
+    u16 e_phentsize;
+    u16 e_phnum;
+    u16 e_shentsize;
+    u16 e_shnum;
+    u16 e_shstrndx;
+} elf_loader_elf32_ehdr_t;
+
+typedef struct elf_loader_elf32_phdr_
+{
+    u32 p_type;
+    u32 p_offset;
+    u32 p_vaddr;
+    u32 p_paddr;
+    u32 p_filesz;
+    u32 p_memsz;
+    u32 p_flags;
+    u32 p_align;
+} elf_loader_elf32_phdr_t;
+
 // dest_addr != 0, src_addr != 0, size != 0: move
 // dest_addr != 0, src_addr == 0, size != 0: zero
 // dest_addr != 0, src_addr == 0, size == 0xFFFFFFFF: zero to end of memory
@@ -49,6 +79,34 @@ typedef struct elf_loader_execinfo_
     elf_loader_arginfo_t arginfo;
     elf_loader_loaderinfo_t loaderinfo;
 } elf_loader_execinfo_t;
+
+
+typedef struct elf_loader_reader_segment_info_
+{
+    void *m_segment_addr;
+    int m_segment_offset;
+    size_t m_segment_size;
+} elf_loader_reader_segment_info_t;
+
+typedef enum elf_loader_reader_stage_
+{
+    ELF_LOADER_READER_STAGE_ELF_HEADER,
+    ELF_LOADER_READER_STAGE_PROGRAM_HEADERS,
+    ELF_LOADER_READER_STAGE_SEGMENTS,
+    ELF_LOADER_READER_STAGE_END,
+} elf_loader_reader_stage_t;
+
+typedef void *(*elf_loader_reader_allocation_callback_t)(void *userdata, void *pointer, ptrdiff_t old_size, ptrdiff_t new_size);
+typedef int (*elf_loader_reader_read_callback_t)(void *userdata, elf_loader_reader_stage_t stage, const elf_loader_reader_segment_info_t *segm_info, size_t segm_count);
+typedef void (*elf_loader_reader_result_callback_t)(void *userdata, void *pointer, ptrdiff_t pointer_size, int errval);
+typedef struct elf_loader_reader_info_
+{
+    void *m_userdata;
+    elf_loader_reader_allocation_callback_t m_alloc_callback;
+    elf_loader_reader_read_callback_t m_read_callback;
+    elf_loader_reader_result_callback_t m_result_callback;
+} elf_loader_reader_info_t;
+
 
 #ifdef __cplusplus
 }

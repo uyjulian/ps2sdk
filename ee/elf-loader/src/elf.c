@@ -463,13 +463,13 @@ int LoadELFFromFileWithPartition(const char *filename, const char *partition, in
     while (!SifIopReset(NULL, 0)) {};
     while (!SifIopSync()) {};
 
-    SifInitRpc(0);
+    sceSifInitRpc(0);
     SifLoadFileInit();
     SifLoadModule("rom0:SIO2MAN", 0, NULL);
     SifLoadModule("rom0:MCMAN", 0, NULL);
     SifLoadModule("rom0:MCSERV", 0, NULL);
     SifLoadFileExit();
-    SifExitRpc();
+    sceSifExitRpc();
 
     memset((void *)LDR_ENTRYPOINT_ADDR, 0, 0x7c000);
     memcpy((void *)LDR_ENTRYPOINT_ADDR, loader_elf, size_loader_elf);
