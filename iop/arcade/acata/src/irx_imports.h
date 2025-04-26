@@ -13,7 +13,6 @@
 
 #include <irx.h>
 
-#include <accore.h>
 #include <actimer.h>
 #include <intrman.h>
 #include <loadcore.h>

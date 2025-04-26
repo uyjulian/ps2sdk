@@ -1,14 +1,4 @@
 
-accore_IMPORTS_start
-I_acDmaSetup
-I_acDmaRequest
-I_acDmaCancel
-I_acIntrRegister
-I_acIntrRelease
-I_acIntrEnable
-I_acIntrDisable
-accore_IMPORTS_end
-
 actimer_IMPORTS_start
 I_acTimerAdd
 I_acTimerRemove
@@ -33,6 +23,8 @@ stdio_IMPORTS_end
 
 sysclib_IMPORTS_start
 I_strtol
+I_memset
+I_memcpy
 sysclib_IMPORTS_end
 
 thbase_IMPORTS_start

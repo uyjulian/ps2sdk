@@ -21,7 +21,7 @@ static void ata_timer_done(acTimerT timer, struct ata_softc *arg)
 	atah = arg->atah;
 	thid = arg->thid;
 	Kprintf("acata:timer_done\n");
-	atah->a_state = 511;
+	atah->a_state = 0x1ff;
 	if ( thid )
 		iReleaseWaitThread(thid);
 }
@@ -91,20 +91,6 @@ static void ata_thread(void *arg)
 		if ( thid != argt->thid )
 			ExitThread();
 	}
-}
-
-static int ata_intr(const struct ata_softc *arg)
-{
-	if ( arg )
-	{
-		int thid;
-
-		thid = arg->thid;
-		*((volatile acUint16 *)0xB3000000) = 0;
-		if ( thid )
-			iWakeupThread(thid);
-	}
-	return 1;
 }
 
 int ata_request(struct ac_ata_h *atah, int (*wakeup)(int thid))
@@ -183,35 +169,15 @@ static int ata_thread_init(struct ata_softc *atac, int priority)
 int ata_probe(acAtaReg atareg)
 {
 	int active;
-	int unit;
-	int count;
 
 	(void)atareg;
-	while ( (*((volatile acUint16 *)0xB6070000) & 0x80) != 0 )
-		;
-	*((volatile acUint16 *)0xB6020000) = 4660;
-	*((volatile acUint16 *)0xB6030000) = 18;
+
 	active = 0;
-	unit = 0;
-	*((volatile acUint16 *)0xB6160000) = 2;
-	*((volatile acUint16 *)0xB6010000) = 0;
-	count = 0;
-	while ( unit < 2 )
-	{
-		*((volatile acUint16 *)0xB6060000) = 16 * (unit != 0);
-		*((volatile acUint16 *)0xB6070000) = 0;
-		while ( count <= 1999999 )
-		{
-			// cppcheck-suppress knownConditionTrueFalse
-			if ( (*((volatile acUint16 *)0xB6070000) & 0x80) == 0 )
-				break;
-			++count;
-		}
-		if ( count )
-			active |= 1 << unit;
-		++unit;
-		count = 0;
-	}
+	// FIXME: do your init here and also check devices exist
+	// Primary active
+	active |= 1 << 0;
+	// Secondary active
+	// active |= 1 << 1;
 	return active;
 }
 
@@ -305,13 +271,6 @@ int acAtaModuleStart(int argc, char **argv)
 	}
 	else
 	{
-		index_v12 = acIntrRegister(AC_INTR_NUM_ATA, (acIntrHandler)ata_intr, &Atac);
-		if ( index_v12 < 0 && index_v12 != -11 )
-		{
-			msg = "register intr";
-			Atac.active = 0;
-		}
-		else
 		{
 			int v18;
 
@@ -319,40 +278,12 @@ int acAtaModuleStart(int argc, char **argv)
 			index_v12 = v18;
 			if ( v18 <= 0 )
 			{
-				acIntrRelease(AC_INTR_NUM_ATA);
 				msg = "init thread";
 				Atac.active = 0;
 			}
 			else
 			{
 				Atac.thid = v18;
-				if ( acIntrEnable(AC_INTR_NUM_ATA) < 0 )
-				{
-					int thid;
-
-					thid = Atac.thid;
-					if ( thid > 0 )
-					{
-						int i;
-
-						Atac.thid = 0;
-						WakeupThread(thid);
-						for ( i = 1000;; i = 1000000 )
-						{
-							int ret;
-
-							DelayThread(i);
-							ret = DeleteThread(thid);
-							if ( !ret )
-								break;
-							printf("acata:term_thread: DELETE ret=%d\n", ret);
-						}
-					}
-					acIntrRelease(AC_INTR_NUM_ATA);
-					msg = "enable intr";
-					Atac.active = 0;
-				}
-				else
 				{
 					return 0;
 				}
@@ -389,8 +320,6 @@ int acAtaModuleStop()
 			printf("acata:term_thread: DELETE ret=%d\n", ret);
 		}
 	}
-	acIntrDisable(AC_INTR_NUM_ATA);
-	acIntrRelease(AC_INTR_NUM_ATA);
 	Atac.active = 0;
 	return 0;
 }
@@ -405,6 +334,7 @@ int acAtaModuleRestart(int argc, char **argv)
 int acAtaModuleStatus()
 {
 	int ret;
+#if 0
 	int state;
 
 	CpuSuspendIntr(&state);
@@ -416,5 +346,7 @@ int acAtaModuleStatus()
 			ret = 1;
 	}
 	CpuResumeIntr(state);
+#endif
+	ret = 2;
 	return ret;
 }

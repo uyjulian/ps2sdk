@@ -10,577 +10,212 @@
 
 #include "acata_internal.h"
 
-static int atapi_dma_xfer(acDmaT dma, int intr, acDmaOp op);
-static void atapi_dma_done(acDmaT dma);
-static void atapi_dma_error(acDmaT dma, int intr, acDmaState state, int result);
 static int atapi_ops_command(struct ac_ata_h *atah, int cmdpri, int pri);
 static void atapi_ops_done(struct ac_ata_h *atah, int result);
-static int atapi_ops_error(struct ac_ata_h *atah, int ret);
 
-static acDmaOpsData ops_8_0 = {&atapi_dma_xfer, &atapi_dma_done, &atapi_dma_error};
-static struct ac_ata_ops ops_48 = {&atapi_ops_command, &atapi_ops_done, &atapi_ops_error};
+static struct ac_ata_ops ops_48 = {&atapi_ops_command, &atapi_ops_done, NULL};
 
-static int atapi_dma_xfer(acDmaT dma, int intr, acDmaOp op)
+typedef struct scsi_mode_data_
 {
-	struct atapi_dma *dmatmp;
-	int thid;
+	u8 m_retry_pg01[20];
+	u8 m_timer_pg0d[16];
+	u8 m_speed_pg2a[28];
+} scsi_mode_data_t;
 
-	dmatmp = (struct atapi_dma *)dma;
-	if ( dmatmp->ad_state == 31 )
-	{
-		dmatmp->ad_result = dmatmp->ad_atapi->ap_h.a_size;
-		return op(dma, (void *)0xB6000000, dmatmp->ad_atapi->ap_h.a_buf, dmatmp->ad_atapi->ap_h.a_size);
-	}
-	thid = dmatmp->ad_thid;
-	dmatmp->ad_state = 3;
-	if ( intr )
-		iWakeupThread(thid);
-	else
-		WakeupThread(thid);
-	return 0;
-}
-
-static void atapi_dma_done(acDmaT dma)
-{
-	struct atapi_dma *dmatmp;
-	int thid;
-
-	dmatmp = (struct atapi_dma *)dma;
-	thid = dmatmp->ad_thid;
-	dmatmp->ad_state = 127;
-	if ( thid )
-		iWakeupThread(thid);
-}
-
-static void atapi_dma_error(acDmaT dma, int intr, acDmaState state, int result)
-{
-	struct atapi_dma *dmatmp;
-	int thid;
-
-	dmatmp = (struct atapi_dma *)dma;
-	thid = dmatmp->ad_thid;
-	dmatmp->ad_state = 1023;
-	dmatmp->ad_result = result;
-	if ( thid )
-	{
-		if ( intr )
-			iWakeupThread(thid);
-		else
-			WakeupThread(thid);
-	}
-	Kprintf("acata:P:dma_error: state=%d ret=%d\n", state, result);
-}
-
-static int atapi_packet_send(acAtaReg atareg, acAtapiPacketData *pkt, int flag)
-{
-	int count;
-	int tmout;
-	int v6;
-
-	(void)atareg;
-	count = 6;
-	*((volatile acUint16 *)0xB6050000) = 0;
-	*((volatile acUint16 *)0xB6040000) = 64;
-	*((volatile acUint16 *)0xB6060000) = flag & 0x10;
-	*((volatile acUint16 *)0xB6160000) = (flag & 2) ^ 2;
-	*((volatile acUint16 *)0xB6010000) = flag & 1;
-	*((volatile acUint16 *)0xB6070000) = 160;
-	tmout = 999;
-	// cppcheck-suppress knownConditionTrueFalse
-	while ( (*((volatile acUint16 *)0xB6070000) & 0x80) != 0 )
-	{
-		if ( tmout < 0 )
-		{
-			printf("acata:P:wait: TIMEDOUT\n");
-			v6 = -116;
-			break;
-		}
-		--tmout;
-		v6 = tmout + 1;
-	}
-	if ( v6 < 0 )
-	{
-		printf("acata:P:packet_send: TIMEDOUT\n");
-		return -116;
-	}
-	// cppcheck-suppress knownConditionTrueFalse
-	while ( (*((volatile acUint16 *)0xB6070000) & 8) != 0 )
-	{
-		--count;
-		if ( count < 0 )
-			break;
-		*((volatile acUint16 *)0xB6000000) = pkt->u_h[0];
-		pkt = (acAtapiPacketData *)((char *)pkt + 2);
-	}
-	return 0;
-}
-
-static int atapi_pio_read(acAtaReg atareg, acUint16 *buf, int count, int flag)
-{
-	char v6;
-	int rest;
-	int sr;
-	int xlen;
-	int sr_v5;
-	int drop_v10;
-
-	(void)atareg;
-	v6 = flag;
-	rest = count;
-	sr = flag & 2;
-	while ( 1 )
-	{
-		int xlen_v6;
-		int drop;
-		int xlen_v8;
-		int sr_v9;
-
-		if ( !sr )
-		{
-			sr_v5 = *((volatile acUint16 *)0xB6070000);
-			while ( (*((volatile acUint16 *)0xB6070000) & 0x80) != 0 )
-			{
-				xlen = *((volatile acUint16 *)0xB6070000);
-				sr_v5 = xlen & 0xFF;
-			}
-		}
-		else
-		{
-			xlen = *((volatile acUint16 *)0xB6160000);
-			sr_v5 = xlen & 0xFF;
-			while ( (*((volatile acUint16 *)0xB6160000) & 0x80) != 0 )
-			{
-				sr_v5 = -116;
-				if ( SleepThread() != 0 )
-					break;
-				sr_v5 = *((volatile acUint16 *)0xB6160000);
-			}
-		}
-		if ( sr_v5 < 0 )
-			return sr_v5;
-		if ( (sr_v5 & 8) == 0 )
-			break;
-		xlen_v6 = (*((volatile acUint16 *)0xB6050000) << 8) + *((volatile acUint16 *)0xB6040000);
-		drop = xlen_v6 - rest;
-		if ( rest >= xlen_v6 )
-			drop = 0;
-		else
-			xlen_v6 = rest;
-		rest -= xlen_v6;
-		xlen_v8 = (xlen_v6 + 1) / 2 - 1;
-		while ( xlen_v8 >= 0 )
-		{
-			--xlen_v8;
-			*buf++ = *((volatile acUint16 *)0xB6000000);
-		}
-		sr_v9 = drop + 1;
-		for ( drop_v10 = sr_v9 / 2 - 1; drop_v10 >= 0; --drop_v10 )
-			;
-		sr = v6 & 2;
-		if ( (*((volatile acUint16 *)0xB6070000) & 0x80) == 0 )
-		{
-			break;
-		}
-	}
-	return count - rest;
-}
+// TODO: do we actually need to intialize this? for medium, retry, speed, and timer
+static scsi_mode_data_t g_scsi_mode_data;
 
 static int atapi_ops_command(struct ac_ata_h *atah, int cmdpri, int pri)
 {
-	int flag;
-	int ret_v5;
-	int v28;
-	struct atapi_dma dma_data;
 	acAtapiT atapi;
 
 	atapi = (acAtapiT)atah;
-	flag = atah->a_flag;
-	if ( (flag & 1) == 0 )
-	{
-		ret_v5 = 0;
-	}
-	else
-	{
-		acDmaT dma;
-		int v8;
-		int ret;
-
-		dma = acDmaSetup(&dma_data.ad_dma, &ops_8_0, 4, 64, flag & 4);
-		dma_data.ad_result = 0;
-		// cppcheck-suppress unreadVariable
-		dma_data.ad_thid = GetThreadId();
-		// cppcheck-suppress unreadVariable
-		dma_data.ad_atapi = atapi;
-		dma_data.ad_state = 0;
-		v8 = acDmaRequest(dma);
-		ret = v8;
-		if ( v8 < 0 )
-		{
-			printf("acata:P:dma_wait: error %d\n", v8);
-			ret_v5 = ret;
-		}
-		else
-		{
-			while ( 1 )
-			{
-				int flg;
-
-				flg = 0;
-				ret_v5 = dma_data.ad_state;
-				if ( ret_v5 )
-				{
-					if ( (int)ret_v5 > 0 )
-					{
-						ret_v5 = 0;
-						break;
-					}
-					flg = 1;
-				}
-				if ( flg == 0 && SleepThread() )
-					flg = 1;
-				if ( flg != 0 )
-				{
-					printf("acata:P:dma_wait: TIMEDOUT %d\n", ret_v5);
-					acDmaCancel(&dma_data.ad_dma, -116);
-					if ( ret_v5 >= 0 )
-					{
-						ret_v5 = -116;
-					}
-					break;
-				}
-			}
-		}
-	}
-	if ( ret_v5 < 0 )
-		return ret_v5;
+	// DMA flag: atah->a_flag & 1
+	// Wait for interrupt w/ SleepThread flag: atah->a_flag & 2
+	// Write flag: atah->a_flag & 4
+	// DMA ready stuff removed
 	ChangeThreadPriority(0, cmdpri);
-	ret_v5 = atapi_packet_send((acAtaReg)0xB6000000, &atapi->ap_packet, flag);
-	if ( ret_v5 >= 0 )
-	{
-		int v12;
-		if ( atah->a_state < 0x1FFu )
-		{
-			atah->a_state = 31;
-			v12 = 0;
-		}
-		else
-		{
-			v12 = -116;
-		}
-		ret_v5 = -116;
-		if ( v12 >= 0 )
-		{
-			acUint16 *a_buf;
-
-			a_buf = (acUint16 *)atah->a_buf;
-			if ( !a_buf )
-			{
-				ret_v5 = 0;
-			}
-			else if ( (flag & 1) != 0 )
-			{
-				dma_data.ad_state = 31;
-				ret_v5 = acDmaRequest(&dma_data.ad_dma);
-			}
-			else
-			{
-				int size;
-				acUint16 *v15;
-
-				size = atah->a_size;
-				v15 = (acUint16 *)atah->a_buf;
-				if ( (flag & 4) == 0 )
-				{
-					ret_v5 = atapi_pio_read((acAtaReg)0xB6000000, a_buf, atah->a_size, flag);
-				}
-				else
-				{
-					signed int a_size;
-					int sr;
-
-					a_size = atah->a_size;
-					sr = flag & 2;
-					while ( 1 )
-					{
-						int xlen;
-						int sr_v14;
-						int xlen_v15;
-						int drop;
-						int xlen_v17;
-						int sr_v18;
-						int drop_v20;
-
-						if ( sr )
-						{
-							xlen = *((volatile acUint16 *)0xB6160000);
-							sr_v14 = xlen & 0xFF;
-							while ( (*((volatile acUint16 *)0xB6160000) & 0x80) != 0 )
-							{
-								sr_v14 = -116;
-								if ( SleepThread() != 0 )
-									break;
-								sr_v14 = *((volatile acUint16 *)0xB6160000);
-							}
-						}
-						else
-						{
-							sr_v14 = *((volatile acUint16 *)0xB6070000);
-							while ( (*((volatile acUint16 *)0xB6070000) & 0x80) != 0 )
-							{
-								xlen = *((volatile acUint16 *)0xB6070000);
-								sr_v14 = xlen & 0xFF;
-							}
-						}
-						ret_v5 = sr_v14;
-						if ( sr_v14 < 0 )
-							break;
-						if ( (sr_v14 & 8) == 0 )
-						{
-							ret_v5 = size - a_size;
-							break;
-						}
-						xlen_v15 = (*((volatile acUint16 *)0xB6050000) << 8) + *((volatile acUint16 *)0xB6040000);
-						drop = xlen_v15 - a_size;
-						if ( a_size >= xlen_v15 )
-							drop = 0;
-						else
-							xlen_v15 = a_size;
-						a_size -= xlen_v15;
-						xlen_v17 = (xlen_v15 + 1) / 2 - 1;
-						for ( sr_v18 = drop + 1; xlen_v17 >= 0; sr_v18 = drop + 1 )
-						{
-							*((volatile acUint16 *)0xB6000000) = *v15;
-							v15++;
-							--xlen_v17;
-						}
-						for ( drop_v20 = sr_v18 / 2 - 1; drop_v20 >= 0; --drop_v20 )
-							*((volatile acUint16 *)0xB6000000) = 0;
-						sr = flag & 2;
-						if ( (*((volatile acUint16 *)0xB6070000) & 0x80) == 0 )
-						{
-							ret_v5 = size - a_size;
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	ChangeThreadPriority(0, pri);
-	if ( ret_v5 < 0 )
-		return ret_v5;
 	if ( atah->a_state < 0x1FFu )
 	{
-		atah->a_state = 63;
-		v28 = 0;
+		atah->a_state = 31;
 	}
-	else
+	// DMA handling omitted
+	ChangeThreadPriority(0, pri);
+	switch(atapi->ap_packet.u_b[0])
 	{
-		v28 = -116;
-	}
-	if ( v28 < 0 )
-		return -116;
-	if ( (flag & 1) == 0 )
-	{
-		int v32;
-
-		v32 = 0;
-		if ( (flag & 2) != 0 )
+	case 0x00: // TEST UNIT READY: ready
+		// Just do nothing here
+		break;
+	case 0x1b: // START/STOP UNIT: start stop
+		// TODO: do we actually need to handle this? for tray open/close
+		break;
+	case 0x25: // READ CAPACITY (10): read capacity
 		{
-			while ( (*((volatile acUint16 *)0xB6160000) & 0x81) == 128 )
-			{
-				if ( SleepThread() )
-				{
-					v32 = -116;
-					break;
-				}
-			}
+			u8 *datau8;
+			u32 maxlba;
+			u32 blocklen;
+
+			if ( !atah->a_buf || atah->a_size < 8 )
+				return -1;
+			// FIXME: set the max LBA value (in 2048 byte units) here correctly
+			maxlba = 0xFFFFFFFF;
+			blocklen = 2048;
+			datau8 = (u8 *)(atah->a_buf);
+			memset(datau8, 0, 8);
+			datau8[0] = (maxlba >> 24) & 0xFF;
+			datau8[1] = (maxlba >> 16) & 0xFF;
+			datau8[2] = (maxlba >> 8) & 0xFF;
+			datau8[3] = (maxlba) & 0xFF;
+			datau8[4] = (blocklen >> 24) & 0xFF;
+			datau8[5] = (blocklen >> 16) & 0xFF;
+			datau8[6] = (blocklen >> 8) & 0xFF;
+			datau8[7] = (blocklen) & 0xFF;
 		}
-		else
+		break;
+	case 0x28: // READ (10): read / seek / seek+start
 		{
-			int tmout;
+			u32 readlba;
+			u32 readlen;
 
-			tmout = 99999;
-			while ( (*((volatile acUint16 *)0xB6070000) & 0x81) == 128 )
-			{
-				if ( tmout < 0 )
-				{
-					v32 = -116;
-					break;
-				}
-				--tmout;
-			}
+			readlba = (atapi->ap_packet.u_b[2] << 24) | (atapi->ap_packet.u_b[3] << 16) | (atapi->ap_packet.u_b[4] << 8) | (atapi->ap_packet.u_b[5]);
+			readlen = (atapi->ap_packet.u_b[7] << 8) | (atapi->ap_packet.u_b[8]);
+			if ( !atah->a_size )
+				return 0;
+			if ( !atah->a_buf )
+				return -1;
+			if ( (atah->a_size >> 11) != readlen )
+				return -1;
+			// FIXME: READ to atah->a_buf
+			(void)readlba;
+			// lba (2048 byte sectors) = readlba
+			// count (2048 byte sectors) = readlen
 		}
-		if ( v32 < 0 )
+		break;
+	case 0x43: // READ TOC/PMA/ATIP: (mmc commands) read toc
 		{
-			printf("acata:C:io_done: TIMEDOUT\n");
-			ret_v5 = -116;
+			u16 *datau16;
+
+			if ( (atah->a_flag & 4) )
+				return -1;
+			if ( !atah->a_buf || atah->a_size < 1024 )
+				return -1;
+			// TODO: Do we need this? For now, just clear the data
+			datau16 = (u16 *)(atah->a_buf);
+			memset(datau16, 0, 1024);
 		}
-	}
-	else
-	{
-		signed int ret_v23;
-		acInt32 ad_result;
-
-		ret_v23 = 63;
-		while ( 1 )
+		break;
+	case 0x55: // MODE SELECT (10): mode select
 		{
-			int v30;
+			u16 datalen;
+			u16 outdatalen;
+			u8 *outdataptr;
 
-			v30 = *((volatile acUint16 *)0xB6160000) & 1;
-			if ( v30 || ret_v23 >= 511 )
+			if ( !(atah->a_flag & 4) )
+				return -1;
+			// check PF bit is set
+			if ( !(atapi->ap_packet.u_b[2] & 0x10) )
+				return -1;
+			datalen = (atapi->ap_packet.u_b[7] << 8) | (atapi->ap_packet.u_b[8]);
+			if ( !atah->a_buf || atah->a_size != datalen || datalen < 10 )
+				return -1;
+			outdatalen = 0;
+			outdataptr = NULL;
+			switch(((u8 *)(atah->a_buf))[8])
 			{
-				printf(
-					"acata:P:dma_iowait: TIMEDOUT %04x:%02x:%02x\n",
-					ret_v23,
-					*((volatile acUint16 *)0xB6160000),
-					*((volatile acUint16 *)0xB6010000));
-				if ( ret_v23 < 1023 )
-					acDmaCancel(&dma_data.ad_dma, -116);
-				ad_result = 0;
-				if ( !v30 )
-					ad_result = -116;
+			case 0x01:
+				outdatalen = sizeof(g_scsi_mode_data.m_retry_pg01);
+				outdataptr = g_scsi_mode_data.m_retry_pg01;
+				break;
+			case 0x0d:
+				outdatalen = sizeof(g_scsi_mode_data.m_timer_pg0d);
+				outdataptr = g_scsi_mode_data.m_timer_pg0d;
+				break;
+			case 0x2a:
+				outdatalen = sizeof(g_scsi_mode_data.m_speed_pg2a);
+				outdataptr = g_scsi_mode_data.m_speed_pg2a;
+				break;
+			default:
 				break;
 			}
-			ret_v23 = dma_data.ad_state;
-			if ( (*((volatile acUint16 *)0xB6160000) & 0x80) == 0 && (int)dma_data.ad_state >= 64 )
+			if ( datalen < outdatalen )
+				return -1;
+			if (outdataptr && outdatalen)
 			{
-				ad_result = dma_data.ad_result;
-				break;
-			}
-			if ( SleepThread() )
-			{
-				ret_v23 = 511;
-				if ( dma_data.ad_state == 31 )
-					ret_v23 = 1023;
+				memcpy(outdataptr, atah->a_buf, outdatalen);				
 			}
 		}
-		ret_v5 = ad_result;
+		break;
+	case 0x5a: // MODE SENSE (10): mode sense
+		{
+			u16 datalen;
+			u16 outdatalen;
+			u8 *outdataptr;
+
+			if ( (atah->a_flag & 4) )
+				return -1;
+			datalen = (atapi->ap_packet.u_b[7] << 8) | (atapi->ap_packet.u_b[8]);
+			outdatalen = 0;
+			outdataptr = NULL;
+			switch(atapi->ap_packet.u_b[2])
+			{
+			case 0x01:
+				outdatalen = sizeof(g_scsi_mode_data.m_retry_pg01);
+				outdataptr = g_scsi_mode_data.m_retry_pg01;
+				break;
+			case 0x0d:
+				outdatalen = sizeof(g_scsi_mode_data.m_timer_pg0d);
+				outdataptr = g_scsi_mode_data.m_timer_pg0d;
+				break;
+			case 0x2a:
+				outdatalen = sizeof(g_scsi_mode_data.m_speed_pg2a);
+				outdataptr = g_scsi_mode_data.m_speed_pg2a;
+				break;
+			default:
+				break;
+			}
+			if ( !atah->a_buf || atah->a_size != datalen || datalen < outdatalen )
+				return -1;
+			if (outdataptr && outdatalen)
+			{
+				outdataptr[0] = ((outdatalen - 2) >> 8) & 0xFF;
+				outdataptr[1] = (outdatalen - 2) & 0xFF;
+				outdataptr[8] = atapi->ap_packet.u_b[2];
+				memcpy(atah->a_buf, outdataptr, outdatalen);
+			}
+		}
+		break;
+	case 0xbb: // SET CD SPEED: (mmc commands) set speed
+		{
+			if ( (atah->a_flag & 4) )
+				return -1;
+			g_scsi_mode_data.m_speed_pg2a[21] = atapi->ap_packet.u_b[2];
+			g_scsi_mode_data.m_speed_pg2a[22] = atapi->ap_packet.u_b[3];
+		}
+		break;
+	default:
+		break;
 	}
-	if ( ret_v5 < 0 )
-		return ret_v5;
-	if ( (*((volatile acUint16 *)0xB6070000) & 1) != 0 )
-		return -((*((volatile acUint16 *)0xB6070000) << 8) + *((volatile acUint16 *)0xB6010000));
+	// Timeout checking removed
+	// Wait for IO finish removed
+	// MMIO checking removed here
 	if ( atah->a_state >= 0x1FFu )
 	{
 		return -116;
 	}
 	atah->a_state = 127;
-	return ret_v5;
+	return 0;
 }
 
 static void atapi_ops_done(struct ac_ata_h *atah, int result)
 {
-	acAtapiDone ap_done;
 	acAtapiT atapi;
 
 	atapi = (acAtapiT)atah;
-	ap_done = atapi->ap_done;
-	if ( ap_done )
-		ap_done(atapi, atah->a_arg, result);
+	if ( atapi->ap_done )
+		atapi->ap_done(atapi, atah->a_arg, result);
 }
 
-static int atapi_ops_error(struct ac_ata_h *atah, int ret)
-{
-	int flag;
-	int v3;
-	struct atapi_sense sense;
-	union
-	{
-		struct
-		{
-			acUint8 opcode;
-			acUint8 lun;
-			// cppcheck-suppress unusedStructMember
-			acUint8 padding[2];
-			acUint8 len;
-			// cppcheck-suppress unusedStructMember
-			acUint8 padding2[7];
-		};
-		acAtapiPacketData pkt;
-	} u;
-	acAtapiT atapi;
-
-	atapi = (acAtapiT)atah;
-	if ( (*((volatile acUint16 *)0xB6070000) & 1) == 0 )
-		return ret;
-	memset(&sense, 0, sizeof(sense));
-	memset(&u, 0, sizeof(u));
-	flag = atah->a_flag;
-	u.opcode = 0x03;
-	u.len = 0x12;
-	u.lun = atapi->ap_packet.u_b[1];
-	*((volatile acUint16 *)0xB6160000) = (flag & 2) ^ 2;
-	*((volatile acUint16 *)0xB6010000) = 0;
-	v3 = atapi_packet_send((acAtaReg)0xB6000000, &u.pkt, flag);
-	if ( v3 < 0 )
-	{
-		ret = v3;
-	}
-	else
-	{
-		int v4;
-		int v5;
-
-		v4 = atapi_pio_read((acAtaReg)0xB6000000, (acUint16 *)&sense, sizeof(sense), flag);
-		v5 = v4;
-		if ( v4 > 0 )
-		{
-			int v6;
-
-			v6 = 0;
-			if ( (flag & 2) != 0 )
-			{
-				while ( (*((volatile acUint16 *)0xB6160000) & 0x81) == 128 )
-				{
-					if ( SleepThread() )
-					{
-						v6 = -116;
-						break;
-					}
-				}
-			}
-			else
-			{
-				int tmout;
-
-				tmout = 99999;
-				while ( (*((volatile acUint16 *)0xB6070000) & 0x81) == 128 )
-				{
-					if ( tmout < 0 )
-					{
-						v6 = -116;
-						break;
-					}
-					--tmout;
-				}
-			}
-			if ( v6 < 0 )
-			{
-				printf("acata:C:io_done: TIMEDOUT\n");
-				v6 = -116;
-			}
-			v3 = v5;
-			if ( v6 < 0 )
-				v3 = -116;
-			ret = v3;
-		}
-		else
-		{
-			ret = v4;
-			if ( !v4 )
-			{
-				v3 = -5;
-				ret = v3;
-			}
-		}
-	}
-	if ( ret > 0 )
-		return -((sense.s_key << 16) | (sense.s_asc << 8) | sense.s_ascq);
-	if ( !ret )
-		return -5;
-	return ret;
-}
+// Error handling omitted
 
 acAtapiT acAtapiSetup(acAtapiData *atapi, acAtapiDone done, void *arg, unsigned int tmout)
 {
