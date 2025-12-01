@@ -35,6 +35,7 @@ SUBDIRS = \
 	rmtapman \
 	rpadman \
 	sbusintr \
+	scrtchpd \
 	sifcmd \
 	sifinit \
 	sifman \
