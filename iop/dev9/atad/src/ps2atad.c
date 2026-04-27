@@ -622,6 +622,7 @@ int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector,
     /* Finally!  We send off the ATA command with arguments.  */
     ata_hwport->r_control = (using_timeout == 0) << 1;
 
+#if 0
     if (type & 0x80) { // For the sake of achieving improved performance, write the registers twice only if required! This is also required for compatibility with the buggy firmware of certain PSX units.
         /* 48-bit LBA requires writing to the address registers twice,
            24 bits of the LBA address is written each time.
@@ -639,6 +640,33 @@ int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector,
     ata_hwport->r_sector  = sector & 0xff;
     ata_hwport->r_lcyl    = lcyl & 0xff;
     ata_hwport->r_hcyl    = hcyl & 0xff;
+#else
+    if (type & 0x80)
+    { // For the sake of achieving improved performance, write the registers twice only if required! This is also required for compatibility with the buggy firmware of certain PSX units.
+        /* 48-bit LBA requires writing to the address registers twice,
+           24 bits of the LBA address is written each time.
+           Writing to registers twice does not affect 28-bit LBA since
+           only the latest data stored in address registers is used.  */
+        ata_hwport->r_feature = (feature >> 8) & 0xff;
+        ata_hwport->r_feature = feature & 0xff;
+        ata_hwport->r_nsector = (nsector >> 8) & 0xff;
+        ata_hwport->r_nsector = nsector & 0xff;
+        ata_hwport->r_sector  = (sector >> 8) & 0xff;
+        ata_hwport->r_sector  = sector & 0xff;
+        ata_hwport->r_lcyl    = (lcyl >> 8) & 0xff;
+        ata_hwport->r_lcyl    = lcyl & 0xff;
+        ata_hwport->r_hcyl    = (hcyl >> 8) & 0xff;
+        ata_hwport->r_hcyl    = hcyl & 0xff;
+    }
+    else
+    {
+        ata_hwport->r_feature = feature & 0xff;
+        ata_hwport->r_nsector = nsector & 0xff;
+        ata_hwport->r_sector  = sector & 0xff;
+        ata_hwport->r_lcyl    = lcyl & 0xff;
+        ata_hwport->r_hcyl    = hcyl & 0xff;
+    }
+#endif
     ata_hwport->r_select  = (select | ATA_SEL_LBA) & 0xff; // In v1.04, LBA was enabled in the sceAtaDmaTransfer function.
     ata_hwport->r_command = command & 0xff;
 
