@@ -20,6 +20,15 @@ static unsigned char RpcBuffer[0x1000] ALIGNED(64);
 
 int SecrInit(void)
 {
+    {
+        static int _rb_count;
+        extern int _iop_reboot_count;
+        if (_rb_count != _iop_reboot_count) {
+            _rb_count = _iop_reboot_count;
+            SecrDeinit();
+        }
+    }
+
     sceSifInitRpc(0);
 
     nopdelay();

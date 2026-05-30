@@ -20,6 +20,14 @@ static SifRpcClientData_t sd_client ALIGNED(64);
 int sceSdInit(int flag)
 {
 	s32 buf[1] ALIGNED(64);
+	{
+		static int _rb_count;
+		extern int _iop_reboot_count;
+		if (_rb_count != _iop_reboot_count) {
+			_rb_count = _iop_reboot_count;
+			memset(&sd_client, 0, sizeof(sd_client));
+		}
+	}
 
 	{
 

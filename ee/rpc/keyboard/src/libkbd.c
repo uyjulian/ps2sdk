@@ -19,19 +19,20 @@
 #include <ps2sdkapi.h>
 #include "libkbd.h"
 
-extern int _iop_reboot_count;
-static int kbd_iop = -1;
 static int kbd_fd = -1;
 static int curr_blockmode = PS2KBD_NONBLOCKING;
 static int curr_readmode = PS2KBD_READMODE_NORMAL;
 
 int PS2KbdInit(void)
 {
-  if (kbd_iop != _iop_reboot_count)
-    {
-      kbd_iop = _iop_reboot_count;
+  {
+    static int _rb_count;
+    extern int _iop_reboot_count;
+    if (_rb_count != _iop_reboot_count) {
+      _rb_count = _iop_reboot_count;
       kbd_fd = -1;
     }
+  }
 
   if(kbd_fd >= 0) /* Already initialised */
     {

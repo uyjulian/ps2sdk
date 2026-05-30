@@ -87,8 +87,6 @@ typedef union
 } sCmdSendParams_t;
 
 #ifdef F__scmd_internals
-int bindSCmd = -1;
-
 SifRpcClientData_t clientSCmd __attribute__((aligned(64)));
 
 int sCmdSemaId = -1;
@@ -102,7 +100,6 @@ int CdConfigRdWrNumBlocks;
 #endif
 
 extern int initVersionCdvdman;
-extern int bindSCmd;
 extern SifRpcClientData_t clientSCmd;
 extern int sCmdSemaId;
 extern u8 sCmdRecvBuff[];
@@ -468,7 +465,15 @@ int _CdCheckSCmd(int cur_cmd)
     }
 
     sceSifInitRpc(0);
-    if (bindSCmd >= 0)
+    {
+        static int _rb_count;
+        extern int _iop_reboot_count;
+        if (_rb_count != _iop_reboot_count) {
+            _rb_count = _iop_reboot_count;
+            memset(&clientSCmd, 0, sizeof(clientSCmd));
+        }
+    }
+    if (clientSCmd.server)
         return 1;
     while (1) {
         if (sceSifBindRpc(&clientSCmd, CD_SERVER_SCMD, 0) < 0) {
@@ -480,8 +485,6 @@ int _CdCheckSCmd(int cur_cmd)
 
         nopdelay();
     }
-
-    bindSCmd = 0;
     return 1;
 }
 #endif

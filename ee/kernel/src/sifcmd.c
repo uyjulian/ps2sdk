@@ -50,7 +50,6 @@ struct cmd_data
     int *sregs;
 } __attribute__((aligned(64)));
 
-extern int _iop_reboot_count;
 extern struct cmd_data _sif_cmd_data;
 extern unsigned int _SifSendCmd(int cid, int mode, void *pkt, int pktsize, void *src,
                                 void *dest, int size);
@@ -182,7 +181,6 @@ static SifCmdSysHandlerData_t sys_cmd_handlers[SYS_CMD_HANDLER_MAX];
 static int sregs[32];
 
 struct cmd_data _sif_cmd_data;
-static int init    = 0;
 static int sif0_id = -1;
 
 struct ca_pkt
@@ -218,17 +216,16 @@ void sceSifInitCmd(void)
 {
     static struct ca_pkt packet __attribute((aligned(64)));
     int i;
-    static int _rb_count = 0;
-    if (_rb_count != _iop_reboot_count) {
-        _rb_count = _iop_reboot_count;
-        if (sif0_id >= 0) {
-            DisableDmac(DMAC_SIF0);
-            RemoveDmacHandler(DMAC_SIF0, sif0_id);
+    {
+        static int _rb_count;
+        extern int _iop_reboot_count;
+        if (_rb_count != _iop_reboot_count) {
+            _rb_count = _iop_reboot_count;
+            sceSifExitCmd();
         }
-        init = 0;
     }
 
-    if (init)
+    if (sif0_id >= 0)
         return;
 
     DI();
@@ -267,7 +264,6 @@ void sceSifInitCmd(void)
     sif0_id = AddDmacHandler(DMAC_SIF0, &_SifCmdIntHandler, 0);
     EnableDmac(DMAC_SIF0);
 
-    init = 1;
 
     _sif_cmd_data.iopbuf = (void *)sceSifGetReg(SIF_SYSREG_SUBADDR);
     if (_sif_cmd_data.iopbuf) {
@@ -293,9 +289,11 @@ void sceSifInitCmd(void)
 
 void sceSifExitCmd(void)
 {
-    DisableDmac(DMAC_SIF0);
-    RemoveDmacHandler(DMAC_SIF0, sif0_id);
-    init = 0;
+    if (sif0_id >= 0) {
+        DisableDmac(DMAC_SIF0);
+        RemoveDmacHandler(DMAC_SIF0, sif0_id);
+        sif0_id = -1;
+    }
 }
 #endif
 

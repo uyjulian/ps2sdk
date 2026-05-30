@@ -36,18 +36,24 @@ static union {
 	u32 data;
 	u32 time;
 } buffer __attribute__((aligned(64)));
-static int mouse_init = 0;
 
 int PS2MouseInit(void)
 
 {
-  if(mouse_init)
+  {
+    static int _rb_count;
+    extern int _iop_reboot_count;
+    if (_rb_count != _iop_reboot_count) {
+      _rb_count = _iop_reboot_count;
+      memset(&mouseif, 0, sizeof(mouseif));
+    }
+  }
+
+  if(mouseif.server)
     {
       printf("PS2Mouse Library already initialised\n");
       return 0;
     }
-
-  mouseif.server = NULL;
 
   do {
     if (sceSifBindRpc(&mouseif, PS2MOUSE_BIND_RPC_ID, 0) < 0) {
@@ -55,8 +61,6 @@ int PS2MouseInit(void)
     }
     nopdelay();
   } while(!mouseif.server);
-
-  mouse_init = 1;
 
   return 1;
 }

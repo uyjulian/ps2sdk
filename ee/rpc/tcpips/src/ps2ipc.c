@@ -21,7 +21,6 @@
 #include <ps2ips.h>
 #include <ps2ip_rpc.h>
 
-static int _init_check = 0;
 static int lock_sema = -1;
 static SifRpcClientData_t _ps2ip;
 static struct {
@@ -64,6 +63,17 @@ extern void _ps2sdk_ps2ipc_deinit(void);
 int ps2ip_init(void)
 {
 	ee_sema_t sema;
+	{
+		static int _rb_count;
+		extern int _iop_reboot_count;
+		if (_rb_count != _iop_reboot_count) {
+			_rb_count = _iop_reboot_count;
+			ps2ip_deinit();
+		}
+	}
+
+	if (_ps2ip.server)
+		return 0;
 
 	while(1)
 	{
@@ -84,8 +94,6 @@ int ps2ip_init(void)
 
 	_ps2sdk_ps2ipc_init();
 
-	_init_check = 1;
-
 	return 0;
 }
 
@@ -97,7 +105,7 @@ void ps2ip_deinit(void)
 		DeleteSema(lock_sema);
 	lock_sema = -1;
 
-	_init_check = 0;
+	memset(&_ps2ip, 0, sizeof(_ps2ip));
 }
 
 int ps2ipc_accept(int s, struct sockaddr *addr, int *addrlen)
@@ -105,7 +113,7 @@ int ps2ipc_accept(int s, struct sockaddr *addr, int *addrlen)
 	int result;
 	cmd_pkt *pkt = &_rpc_buffer.cmd_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -135,7 +143,7 @@ int ps2ipc_bind(int s, const struct sockaddr *name, int namelen)
 	cmd_pkt *pkt = &_rpc_buffer.cmd_pkt;
 	int result;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -160,7 +168,7 @@ int ps2ipc_disconnect(int s)
 {
 	int result;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -184,7 +192,7 @@ int ps2ipc_connect(int s, const struct sockaddr *name, int namelen)
 	int result;
 	cmd_pkt *pkt = &_rpc_buffer.cmd_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -210,7 +218,7 @@ int ps2ipc_listen(int s, int backlog)
 	int result;
 	listen_pkt *pkt = &_rpc_buffer.listen_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -251,7 +259,7 @@ int ps2ipc_recv(int s, void *mem, int len, unsigned int flags)
 	s_recv_pkt *send_pkt = &_rpc_buffer.s_recv_pkt;
 	r_recv_pkt *recv_pkt = &_rpc_buffer.r_recv_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -285,7 +293,7 @@ int ps2ipc_recvfrom(int s, void *mem, int len, unsigned int flags,
 	s_recv_pkt *send_pkt = &_rpc_buffer.s_recv_pkt;
 	r_recv_pkt *recv_pkt = &_rpc_buffer.r_recv_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -412,7 +420,7 @@ int ps2ipc_socket(int domain, int type, int protocol)
 	int result;
 	socket_pkt *pkt = &_rpc_buffer.socket_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -437,7 +445,7 @@ int ps2ipc_ps2ip_setconfig(const t_ip_info *ip_info)
 {
 	int result;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -459,7 +467,7 @@ int ps2ipc_ps2ip_setconfig(const t_ip_info *ip_info)
 
 int ps2ipc_ps2ip_getconfig(char *netif_name, t_ip_info *ip_info)
 {
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -518,7 +526,7 @@ int ps2ipc_select(int maxfdp1, struct fd_set *readset, struct fd_set *writeset, 
 	int result;
 	select_pkt *pkt = &_rpc_buffer.select_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -565,7 +573,7 @@ int ps2ipc_ioctl(int s, long cmd, void *argp)
 	int result;
 	ioctl_pkt *pkt = &_rpc_buffer.ioctl_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -596,7 +604,7 @@ int ps2ipc_getsockname(int s, struct sockaddr *name, int *namelen)
 	int result;
 	cmd_pkt *pkt = &_rpc_buffer.cmd_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -623,7 +631,7 @@ int ps2ipc_getpeername(int s, struct sockaddr *name, int *namelen)
 	int result;
 	cmd_pkt *pkt = &_rpc_buffer.cmd_pkt;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -651,7 +659,7 @@ int ps2ipc_getsockopt(int s, int level, int optname, void* optval, socklen_t* op
 	getsockopt_res_pkt *res_pkt = &_rpc_buffer.getsockopt_res_pkt;
 	int result;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -680,7 +688,7 @@ int ps2ipc_setsockopt(int s, int level, int optname, const void *optval, socklen
 	setsockopt_pkt *pkt = &_rpc_buffer.setsockopt_pkt;
 	int result;
 
-	if(!_init_check) return -1;
+	if(!_ps2ip.server) return -1;
 
 	WaitSema(lock_sema);
 
@@ -713,7 +721,7 @@ struct hostent *ps2ipc_gethostbyname(const char *name)
 	static ip_addr_t *addr_list[2];
 	static struct hostent hostent;
 
-	if(!_init_check) return NULL;
+	if(!_ps2ip.server) return NULL;
 
 	WaitSema(lock_sema);
 
@@ -745,7 +753,7 @@ void ps2ipc_dns_setserver(u8 numdns, const ip_addr_t *dnsserver)
 {
 	dns_setserver_pkt *pkt = &_rpc_buffer.dns_setserver_pkt;
 
-	if(!_init_check) return;
+	if(!_ps2ip.server) return;
 
 	WaitSema(lock_sema);
 
@@ -765,7 +773,7 @@ const ip_addr_t *ps2ipc_dns_getserver(u8 numdns)
 	dns_getserver_res_pkt *res_pkt = &_rpc_buffer.dns_getserver_res_pkt;
 	ip_addr_t *dns;
 
-	if ((!_init_check) || (numdns >= DNS_MAX_SERVERS))
+	if ((!_ps2ip.server) || (numdns >= DNS_MAX_SERVERS))
 		return IP4_ADDR_ANY;
 
 	WaitSema(lock_sema);

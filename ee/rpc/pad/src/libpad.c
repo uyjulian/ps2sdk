@@ -139,7 +139,6 @@ struct open_slot
     u8 padding[116];
 };
 
-extern int _iop_reboot_count;
 /*
  * Pad variables etc.
  */
@@ -250,6 +249,13 @@ static struct pad_state PadState[2][8];
  * Local functions
  */
 
+static void padCleanup(void)
+{
+    memset(&padsif[0], 0, sizeof(padsif[0]));
+    memset(&padsif[1], 0, sizeof(padsif[1]));
+    padInitialised = 0;
+}
+
 /** Common helper */
 static struct pad_data_new*
 padGetDmaStrNew(int port, int slot)
@@ -301,16 +307,18 @@ padInit(int mode)
 {
     // Version check isn't used by default
     // int ver;
-    static int _rb_count = 0;
     int rpc_init_next;
 
-    if (_rb_count != _iop_reboot_count)
     {
-        _rb_count = _iop_reboot_count;
-        padInitialised = 0;
+        static int _rb_count;
+        extern int _iop_reboot_count;
+        if (_rb_count != _iop_reboot_count) {
+            _rb_count = _iop_reboot_count;
+            padCleanup();
+        }
     }
 
-    if (padInitialised)
+    if (padsif[0].server && padsif[1].server)
         return 0;
 
     padInitialised = 0xFFFFFFFF;
@@ -453,7 +461,7 @@ padEnd(void)
 
     ret = buffer.padResult.result;
     if (ret == 1)
-        padInitialised = 0;
+        padCleanup();
 
     return ret;
 }

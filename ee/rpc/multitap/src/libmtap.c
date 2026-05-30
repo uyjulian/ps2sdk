@@ -29,11 +29,20 @@ static unsigned int mtapRpcBuffer[32] __attribute__((aligned (64)));
 static struct t_SifRpcClientData clientPortOpen __attribute__((aligned (64)));
 static struct t_SifRpcClientData clientPortClose __attribute__((aligned (64)));
 static struct t_SifRpcClientData clientGetConnection __attribute__((aligned (64)));
-static int mtapInited = 0;
 
 int mtapInit(void)
 {
-	if(mtapInited) return -1;
+	{
+		static int _rb_count;
+		extern int _iop_reboot_count;
+		if (_rb_count != _iop_reboot_count) {
+			_rb_count = _iop_reboot_count;
+			memset(&clientPortOpen, 0, sizeof(clientPortOpen));
+			memset(&clientPortClose, 0, sizeof(clientPortClose));
+			memset(&clientGetConnection, 0, sizeof(clientGetConnection));
+		}
+	}
+	if(clientPortOpen.server && clientPortClose.server && clientGetConnection.server) return -1;
 
 	while(1)
 	{
@@ -59,14 +68,12 @@ int mtapInit(void)
 	nopdelay();
 	}
 
-	mtapInited = 1;
-
 	return 1;
 }
 
 int mtapPortOpen(int port)
 {
-	if(!mtapInited) return -1;
+	if(!clientPortOpen.server) return -1;
 
 	mtapRpcBuffer[0] = port;
 	sceSifCallRpc(&clientPortOpen, 1, 0, mtapRpcBuffer, 4, mtapRpcBuffer, 8, NULL, NULL);
@@ -76,7 +83,7 @@ int mtapPortOpen(int port)
 
 int mtapPortClose(int port)
 {
-	if(!mtapInited) return -1;
+	if(!clientPortClose.server) return -1;
 
 	mtapRpcBuffer[0] = port;
 	sceSifCallRpc(&clientPortClose, 1, 0, mtapRpcBuffer, 4, mtapRpcBuffer, 8, NULL, NULL);
@@ -86,7 +93,7 @@ int mtapPortClose(int port)
 
 int mtapGetConnection(int port)
 {
-	if(!mtapInited) return -1;
+	if(!clientGetConnection.server) return -1;
 
 	mtapRpcBuffer[0] = port;
 	sceSifCallRpc(&clientGetConnection, 1, 0, mtapRpcBuffer, 4, mtapRpcBuffer, 8, NULL, NULL);
