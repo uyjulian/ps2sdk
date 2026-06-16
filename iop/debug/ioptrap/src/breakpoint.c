@@ -9,48 +9,40 @@
 */
 
 #include "ioptrap.h"
+#include <cop0regs.h>
 
 void set_dba(u32 v)
 {
-    __asm__ __volatile__("mtc0 %0, $5"
-                         :
-                         : "r"(v));
+    COP0REG_BDA = v;
 }
 
 void set_dbam(u32 v)
 {
-    __asm__ __volatile__("mtc0 %0, $9"
-                         :
-                         : "r"(v));
+    COP0REG_BDAM = v;
 }
 
 void set_dcic(u32 v)
 {
-    __asm__ __volatile__("mtc0 %0, $7"
-                         :
-                         : "r"(v));
+    COP0REG_DCIC = v;
 }
 
 u32 get_dba()
 {
     u32 v;
-    __asm__ __volatile__("mfc0 %0, $5"
-                         : "=&r"(v));
+    v = COP0REG_BDA;
     return v;
 }
 
 u32 get_dbam()
 {
     u32 v;
-    __asm__ __volatile__("mfc0 %0, $9"
-                         : "=&r"(v));
+    v = COP0REG_BDAM;
     return v;
 }
 
 u32 get_dcic()
 {
     u32 v;
-    __asm__ __volatile__("mfc0 %0, $7"
-                         : "=&r"(v));
+    v = COP0REG_DCIC;
     return v;
 }

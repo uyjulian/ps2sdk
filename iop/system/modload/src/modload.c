@@ -12,6 +12,7 @@
 #include <kerr.h>
 #include <modload.h>
 #include <xmodload.h>
+#include <cop0regs.h>
 
 #ifdef _IOP
 IRX_ID("Moldule_File_loader", 2, 9);
@@ -2017,7 +2018,7 @@ static void TerminateResidentEntriesDI(const char *command, unsigned int options
 
 	TerminateResidentLibraries(" ReBootStart:di: Terminate resident Libraries\n", options, 0);
 
-	asm volatile("mfc0 %0, $15" : "=r"(prid) :);
+	prid = COP0REG_PRId;
 
 	if ( !(options & 1) )
 	{

@@ -917,8 +917,7 @@ u32 cpu_ticks(void)
 {
     u32 out;
 
-    asm("mfc0\t%0, $9\n"
-        : "=r"(out));
+    out = COP0REG_Count;
     return out;
 }
 #endif

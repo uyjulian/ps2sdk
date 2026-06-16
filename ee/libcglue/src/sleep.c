@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <time.h>
 #include <timer_alarm.h>
+#include <cop0regs.h>
 
 #ifdef F_nanosleep
 static u64 nanosleep_wakeup_callback(s32 alarm_id, u64 scheduled_time, u64 actual_time, void *arg, void *pc_value)
@@ -40,7 +41,7 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
 	s32 timer_alarm_id;
 	ee_sema_t sema;
 
-	__asm__ __volatile__ ("mfc0\t%0, $12" : "=r" (eie));
+	eie = COP0REG_Status;
 	if ((eie & 0x10000) == 0)
 	{
 		return 0;

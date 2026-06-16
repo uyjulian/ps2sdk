@@ -15,6 +15,7 @@
 #include <string.h>
 #include <kernel.h>
 #include <ee_regs.h>
+#include <cop0regs.h>
 
 #include "libmpeg.h"
 #include "libmpeg_internal.h"
@@ -73,7 +74,7 @@ void _ipu_suspend ( void )
 	{
 		DI();
 		EE_SYNCP();
-		asm volatile ("mfc0\t%0, $12" : "=r" (eie));
+		eie = COP0REG_Status;
 		eie &= 0x10000;
 	}
 	while (eie != 0);
@@ -88,7 +89,7 @@ void _ipu_suspend ( void )
 	{
 		DI();
 		EE_SYNCP();
-		asm volatile ("mfc0\t%0, $12" : "=r" (eie));
+		eie = COP0REG_Status;
 		eie &= 0x10000;
 	}
 	while (eie != 0);
@@ -517,7 +518,7 @@ int _MPEG_WaitBDEC ( void )
 	{
 		DI();
 		EE_SYNCP();
-		asm volatile ("mfc0\t%0, $12" : "=r" (eie));
+		eie = COP0REG_Status;
 		eie &= 0x10000;
 	}
 	while (eie != 0);

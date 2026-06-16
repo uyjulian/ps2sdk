@@ -13,6 +13,7 @@
 
 #include "iop_mmio_hwport.h"
 #include "sif_mmio_hwport.h"
+#include <cop0regs.h>
 
 extern struct irx_export_table _exp_sifman;
 
@@ -67,17 +68,6 @@ static sifman_internals_t sifman_internals;
 static u32 sif_dma2_inited = 0;
 static u32 sif_inited = 0;
 
-#define PRID $15
-
-#define _mfc0(reg)                                                                                                     \
-	({                                                                                                                   \
-		u32 val;                                                                                                           \
-		__asm__ volatile("mfc0 %0, " #reg : "=r"(val));                                                                    \
-		val;                                                                                                               \
-	})
-
-#define mfc0(reg) _mfc0(reg)
-
 int _start(int ac, char **av)
 {
 	s32 prid;
@@ -87,7 +77,7 @@ int _start(int ac, char **av)
 	(void)ac;
 	(void)av;
 
-	prid = mfc0(PRID);
+	prid = COP0REG_PRId;
 	if ( prid >= 16 )
 	{
 		if ( (iop_mmio_hwport->iop_sbus_ctrl[0] & 8) == 0 )

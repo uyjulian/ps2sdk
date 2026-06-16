@@ -14,6 +14,7 @@
 
 #include "iop_low_memory_globals.h"
 #include "iop_mmio_hwport.h"
+#include <cop0regs.h>
 
 extern struct irx_export_table _exp_intrman;
 
@@ -21,17 +22,6 @@ extern struct irx_export_table _exp_intrman;
 IRX_ID("Interrupt_Manager", 1, 1);
 #endif
 // Based on the module from SCE SDK 1.3.4.
-
-#define PRID $15
-
-#define _mfc0(reg)                                                                                                     \
-	({                                                                                                                   \
-		u32 val;                                                                                                           \
-		__asm__ volatile("mfc0 %0, " #reg : "=r"(val));                                                                    \
-		val;                                                                                                               \
-	})
-
-#define mfc0(reg) _mfc0(reg)
 
 extern int CpuGetICTRL();
 extern void CpuEnableICTRL();
@@ -53,7 +43,7 @@ int _start(int ac, char **av)
 	(void)ac;
 	(void)av;
 
-	prid = mfc0(PRID);
+	prid = COP0REG_PRId;
 
 #ifdef BUILDING_INTRMANP
 	if ( prid >= 16 )

@@ -9,6 +9,7 @@
 
 #include <kernel.h>
 #include <ee_cop0_defs.h>
+#include <cop0regs.h>
 
 /* // Doesn't work, but here are the COP0 register definitions:
 #define Index    $0
@@ -69,18 +70,16 @@ int PutTLBEntry(unsigned int PageMask, unsigned int EntryHi, unsigned int EntryL
         case 0x30:
         case 0x20:
         case 0x00:
-            __asm volatile("mtc0 %1, $5\n"
-                           "mtc0 %2, $10\n"
-                           "mtc0 %3, $2\n"
-                           "mtc0 %4, $3\n"
-                           "sync.p\n"
-                           "tlbwr\n"
-                           "sync.p\n"
-                           "tlbp\n"
-                           "sync.p\n"
-                           "mfc0 %0, $0\n"
-                           : "=r"(result)
-                           : "r"(PageMask), "r"(EntryHi), "r"(EntryLo0), "r"(EntryLo1));
+            COP0REG_PageMask = PageMask;
+            COP0REG_EntryHi = EntryHi;
+            COP0REG_EntryLo0 = EntryLo0;
+            COP0REG_EntryLo1 = EntryLo1;
+            EE_SYNCP();
+            __asm__ __volatile__("tlbwr\n");
+            EE_SYNCP();
+            __asm__ __volatile__("tlbp\n");
+            EE_SYNCP();
+            result = COP0REG_Index;
             break;
         case 0x50:
         case 0x10:
@@ -97,16 +96,14 @@ int SetTLBEntry(unsigned int index, unsigned int PageMask, unsigned int EntryHi,
     int result;
 
     if (index < 0x30) {
-        __asm volatile("mtc0 %0, $0\n"
-                       "mtc0 %1, $5\n"
-                       "mtc0 %2, $10\n"
-                       "mtc0 %3, $2\n"
-                       "mtc0 %4, $3\n"
-                       "sync.p\n"
-                       "tlbwi\n"
-                       "sync.p\n" ::"r"(index),
-                       "r"(PageMask), "r"(EntryHi), "r"(EntryLo0), "r"(EntryLo1));
-
+        COP0REG_Index = index;
+        COP0REG_PageMask = PageMask;
+        COP0REG_EntryHi = EntryHi;
+        COP0REG_EntryLo0 = EntryLo0;
+        COP0REG_EntryLo1 = EntryLo1;
+        EE_SYNCP();
+        __asm__ __volatile__("tlbwi\n");
+        EE_SYNCP();
         result = index;
     } else
         result = -1;
@@ -120,19 +117,29 @@ int GetTLBEntry(unsigned int index, unsigned int *PageMask, unsigned int *EntryH
     int result;
 
     if (index < 0x30) {
-        __asm volatile("mtc0 %0, $0\n"
-                       "sync.p\n"
-                       "tlbr\n"
-                       "sync.p\n"
+        COP0REG_Index = index;
+        EE_SYNCP();
+        __asm__ __volatile__("tlbr\n");
+        EE_SYNCP();
+        // FIXME: GCC generates swc0 instructions which are not supported
+#if 0
+        *PageMask = COP0REG_PageMask;
+        *EntryHi = COP0REG_EntryHi;
+        *EntryLo0 = COP0REG_EntryLo0;
+        *EntryLo1 = COP0REG_EntryLo1;
+#else
+        __asm__ __volatile__(
                        "mfc0 $v0, $5\n"
-                       "sw $v0, (%1)\n"
+                       "sw $v0, (%0)\n"
                        "mfc0 $v0, $10\n"
-                       "sw $v0, (%2)\n"
+                       "sw $v0, (%1)\n"
                        "mfc0 $v0, $2\n"
-                       "sw $v0, (%3)\n"
+                       "sw $v0, (%2)\n"
                        "mfc0 $v0, $3\n"
-                       "sw $v0, (%4)\n" ::"r"(index),
-                       "r"(PageMask), "r"(EntryHi), "r"(EntryLo0), "r"(EntryLo1));
+                       "sw $v0, (%3)\n"
+                       :: "r"(PageMask), "r"(EntryHi), "r"(EntryLo0), "r"(EntryLo1)
+                       );
+#endif
 
         result = index;
     } else
@@ -146,24 +153,30 @@ int ProbeTLBEntry(unsigned int EntryHi, unsigned int *PageMask, unsigned int *En
 {
     int result, index;
 
-    __asm volatile("mtc0 %1, $10\n"
-                   "sync.p\n"
-                   "tlbp\n"
-                   "sync.p\n"
-                   "mfc0 %0, $0\n"
-                   : "=r"(index)
-                   : "r"(EntryHi));
+    COP0REG_EntryHi = EntryHi;
+    __asm__ __volatile__("tlbp\n");
+    EE_SYNCP();
+    index = COP0REG_Index;
 
     if (index >= 0) {
-        __asm volatile("tlbr\n"
-                       "sync.p\n"
+        __asm__ __volatile__("tlbr\n");
+        EE_SYNCP();
+        // FIXME: GCC generates swc0 instructions which are not supported
+#if 0
+        *PageMask = COP0REG_PageMask;
+        *EntryLo0 = COP0REG_EntryLo0;
+        *EntryLo1 = COP0REG_EntryLo1;
+#else
+        __asm__ __volatile__(
                        "mfc0 $v0, $5\n"
                        "sw $v0, (%0)\n"
                        "mfc0 $v1, $2\n"
                        "sw $v1, (%1)\n"
                        "mfc0 $v0, $3\n"
-                       "sw $v0, (%2)\n" ::"r"(PageMask),
-                       "r"(EntryLo0), "r"(EntryLo1));
+                       "sw $v0, (%2)\n"
+                       ::"r"(PageMask), "r"(EntryLo0), "r"(EntryLo1)
+                       );
+#endif
 
         result = index;
     } else
@@ -185,26 +198,26 @@ int ExpandScratchPad(unsigned int page)
 #if 0
                 // This condition is always false due to the preceding check on the "page" variable.
                 if (page == 0) {
+                    int tmp;
                     EntryHi = 0xE0010000 + ((index - 1) << 13);
 
-                    __asm volatile("mfc0 $v0, $6\n"
-                                   "addiu $v0, $v0, 0xFFFF\n"
-                                   "mtc0 $v0, $6\n"
-                                   "mtc0 %0, $0\n"
-                                   "mtc0 $zero, $5\n"
-                                   "mtc0 %1, $10\n"
-                                   "mtc0 $zero, $2\n"
-                                   "mtc0 $zero, $3\n"
-                                   "sync.p\n"
-                                   "tlbwi\n"
-                                   "sync.p\n" ::"r"(index),
-                                   "r"(EntryHi));
+                    tmp = COP0REG_Wired;
+                    tmp += 0xFFFF;
+                    COP0REG_Wired = tmp;
+                    COP0REG_Index = index;
+                    COP0REG_PageMask = 0;
+                    COP0REG_EntryHi = EntryHi;
+                    COP0REG_EntryLo0 = 0;
+                    COP0REG_EntryLo1 = 0;
+                    EE_SYNCP();
+                    __asm__ __volatile__("tlbwi\n");
+                    EE_SYNCP();
                 } else
 #endif
                 {
-                    __asm volatile("mfc0 %0, $6\n"
-                                   "addiu $v0, %0, 1\n"
-                                   "mtc0 $v0, $6\n" ::"r"(index));
+                    index = COP0REG_Wired;
+                    index += 1;
+                    COP0REG_Wired = index;
                 }
             }
 
@@ -219,16 +232,14 @@ int ExpandScratchPad(unsigned int page)
                 EntryLo0 = ((page + 0x1000) & 0xFFFFF000) >> 6 | 0x1F;
                 EntryLo1 = (page & 0xFFFFF000) >> 6 | 0x1F;
 
-                __asm volatile("mtc0 %0, $0\n"
-                               "daddu $v1, $zero, $zero\n"
-                               "mtc0 $v1, $5\n"
-                               "mtc0 %1, $10\n"
-                               "mtc0 %2, $2\n"
-                               "mtc0 %3, $3\n"
-                               "sync.p\n"
-                               "tlbwi\n"
-                               "sync.p\n" ::"r"(index),
-                               "r"(EntryHi), "r"(EntryLo0), "r"(EntryLo1));
+                COP0REG_Index = index;
+                COP0REG_PageMask = 0;
+                COP0REG_EntryHi = EntryHi;
+                COP0REG_EntryLo0 = EntryLo0;
+                COP0REG_EntryLo1 = EntryLo1;
+                EE_SYNCP();
+                __asm__ __volatile__("tlbwi\n");
+                EE_SYNCP();
 
                 result = index;
             } else

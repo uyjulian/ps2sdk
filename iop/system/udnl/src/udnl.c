@@ -6,6 +6,7 @@
 #include <sysmem.h>
 #include <sysclib.h>
 #include <thbase.h>
+#include <cop0regs.h>
 
 #include "ELF.h"
 #include "COFF.h"
@@ -376,9 +377,7 @@ static void TerminateResidentEntriesDI(unsigned int options)
 
     TerminateResidentLibraries(" kupdate:di: Terminate resident Libraries\n", options, 0);
 
-    asm volatile("mfc0 %0, $15"
-                 : "=r"(prid)
-                 :);
+    prid = COP0REG_PRId;
 
     if (!(options & 1)) {
         pReg = (prid < 0x10 || ((*(volatile unsigned int *)0xbf801450) & 8)) ? *(volatile unsigned int ***)0xbfc02008 : *(volatile unsigned int ***)0xbfc0200C;

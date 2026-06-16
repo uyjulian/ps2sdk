@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <sifdma.h>
+#include <cop0regs.h>
 
 #define DI DIntr
 #define EI EIntr
@@ -151,50 +152,52 @@ static inline int ee_get_opmode(void)
 {
     u32 status;
 
-    __asm__ volatile(
-        ".set\tpush\n\t"
-        ".set\tnoreorder\n\t"
-        "mfc0\t%0, $12\n\t"
-        ".set\tpop\n\t"
-        : "=r"(status));
+    status = COP0REG_Status;
 
     return ((status >> 3) & 3);
 }
 
 static inline int ee_set_opmode(u32 opmode)
 {
-    u32 status, mask;
+    u32 status;
 
-    __asm__ volatile(
+    // FIXME: GCC generates lwc0 instructions which are not supported
+#if 0
+    status = COP0REG_Status;
+#else
+    __asm__ __volatile__(
         ".set\tpush\n\t"
         ".set\tnoreorder\n\t"
         "mfc0\t%0, $12\n\t"
-        "li\t%1, 0xffffffe7\n\t"
-        "and\t%0, %1\n\t"
-        "or\t%0, %2\n\t"
-        "mtc0\t%0, $12\n\t"
-        "sync.p\n\t"
         ".set\tpop\n\t"
-        : "=r"(status), "=r"(mask)
-        : "r"(opmode));
+        : "=r"(status));
+#endif
+    status &= ~0x18;
+    status |= opmode;
+    // FIXME: GCC generates swc0 instructions which are not supported
+#if 0
+    COP0REG_Status = status;
+#else
+    __asm__ __volatile__(
+        ".set\tpush\n\t"
+        ".set\tnoreorder\n\t"
+        "mtc0\t%0, $12\n\t"
+        ".set\tpop\n\t"
+        : "=r"(status));
+#endif
+    EE_SYNCP();
 
     return ((status >> 3) & 3);
 }
 
 static inline int ee_kmode_enter()
 {
-    u32 status, mask;
+    u32 status;
 
-    __asm__ volatile(
-        ".set\tpush\n\t"
-        ".set\tnoreorder\n\t"
-        "mfc0\t%0, $12\n\t"
-        "li\t%1, 0xffffffe7\n\t"
-        "and\t%0, %1\n\t"
-        "mtc0\t%0, $12\n\t"
-        "sync.p\n\t"
-        ".set\tpop\n\t"
-        : "=r"(status), "=r"(mask));
+    status = COP0REG_Status;
+    status &= ~0x18;
+    COP0REG_Status = status;
+    EE_SYNCP();
 
     return status;
 }
@@ -203,15 +206,10 @@ static inline int ee_kmode_exit()
 {
     int status;
 
-    __asm__ volatile(
-        ".set\tpush\n\t"
-        ".set\tnoreorder\n\t"
-        "mfc0\t%0, $12\n\t"
-        "ori\t%0, 0x10\n\t"
-        "mtc0\t%0, $12\n\t"
-        "sync.p\n\t"
-        ".set\tpop\n\t"
-        : "=r"(status));
+    status = COP0REG_Status;
+    status |= 0x10;
+    COP0REG_Status = status;
+    EE_SYNCP();
 
     return status;
 }
