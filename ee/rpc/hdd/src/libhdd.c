@@ -318,7 +318,7 @@ int hddMakeFilesystem(int fsSizeMB, char *name, int type)
 			snprintf(fsName, sizeof(fsName), "+%s", name);
 			break;
 		default:
-			snprintf(fsName, sizeof(fsName), "%s", name);
+			strlcpy(fsName, name, sizeof(fsName));
 			break;
 	}
 
