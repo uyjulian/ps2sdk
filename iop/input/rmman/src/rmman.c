@@ -122,7 +122,7 @@ static int IsInitialized;
 static int RpcThreadID;
 static SifRpcDataQueue_t RpcDataQueue;
 static SifRpcServerData_t RpcServerData;
-static struct rmRpcPacket RpcDataBuffer __attribute__((__aligned__(4)));
+static struct rmRpcPacket RpcDataBuffer;
 
 static int CreateMainThread(void);
 static void MainThread(void *arg);

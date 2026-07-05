@@ -68,11 +68,11 @@ int initVersionCdvdfsv;
 int initVersionCdvdman;
 // rpc binded client data
 /** for sceCdInit() */
-SifRpcClientData_t clientInit __attribute__((aligned(64)));
+SifRpcClientData_t clientInit;
 /** for sceCdDiskReady() (s-cmd) */
-SifRpcClientData_t clientDiskReady __attribute__((aligned(64)));
+SifRpcClientData_t clientDiskReady;
 /** for sceCdSearchFile() (n-cmd) */
-SifRpcClientData_t clientSearchFile __attribute__((aligned(64)));
+SifRpcClientData_t clientSearchFile;
 
 /** set this to 1 or 2 to print sceCdvd debug messages */
 int CdDebug = 0;
@@ -95,15 +95,15 @@ ee_thread_t callbackThreadParam;
 
 // current command variables
 
-s32 diskReadyMode __attribute__((aligned(64)));
-s32 trayReqData __attribute__((aligned(64)));
-u32 initMode __attribute__((aligned(64)));
+s32 diskReadyMode ALIGNED_FOR_SIFDMA;
+s32 trayReqData ALIGNED_FOR_SIFDMA;
+u32 initMode ALIGNED_FOR_SIFDMA;
 
 // init stuff
-CdInitPkt cdInitRecvBuff __attribute__((aligned(64)));
+CdInitPkt cdInitRecvBuff ALIGNED_FOR_SIFDMA;
 // searchfile stuff
-SearchFilePkt searchFileSendBuff __attribute__((aligned(64)));
-u32 searchFileRecvBuff __attribute__((aligned(64)));
+SearchFilePkt searchFileSendBuff ALIGNED_FOR_SIFDMA;
+u32 searchFileRecvBuff ALIGNED_FOR_SIFDMA;
 #endif
 
 // Prototypes for multimodule

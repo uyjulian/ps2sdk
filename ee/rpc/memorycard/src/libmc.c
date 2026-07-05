@@ -112,14 +112,14 @@ union libmc_name_desc_param_unio
 {
 	struct libmc_name_param_stru m_name_param;
 	mcDescParam_t m_desc_param;
-};
+} ALIGNED_FOR_SIFDMA;
 
 union libmc_rdata_param_unio
 { 
 	int m_result;
 	mcRpcStat_t m_rpcStat;
 	u8 m_buffer[2048];
-};
+} ALIGNED_FOR_SIFDMA;
 
 struct libmc_page_read_align_data_stru
 {
@@ -138,7 +138,7 @@ union libmc_extra_send_recv_unio
 	char m_cur_dir[1024];
 	sceMcTblGetDir m_file_info_buff;
 	struct libmc_page_read_align_data_stru m_page_read_align_data;
-};
+} ALIGNED_FOR_SIFDMA;
 
 typedef struct mcExtraEndParam_
 {
@@ -152,13 +152,13 @@ typedef struct mcExtraEndParam_
 
 struct libmc_interface_data_stru
 {
-	SifRpcClientData_t m_client_data __attribute__((aligned(64))); // target->m_interface_data->m_client_data
+	SifRpcClientData_t m_client_data; // target->m_interface_data->m_client_data
 	unsigned int m_current_command; // target->m_interface_data->m_current_command
 	int m_mc_rpc_type; // target->m_interface_data->m_mc_rpc_type
 	mcExtraEndParam_t m_extra_end_param; // target->m_interface_data->m_extra_end_param
-	union libmc_name_desc_param_unio m_name_desc_param __attribute__((aligned(64))); // target->m_interface_data->m_name_desc_param
-	union libmc_rdata_param_unio m_rpc_rdata __attribute__((aligned(64))); // target->m_interface_data->m_rpc_rdata
-	union libmc_extra_send_recv_unio m_extra_send_recv_param __attribute__((aligned(64))); // target->m_interface_data->m_extra_send_recv_param
+	union libmc_name_desc_param_unio m_name_desc_param; // target->m_interface_data->m_name_desc_param
+	union libmc_rdata_param_unio m_rpc_rdata; // target->m_interface_data->m_rpc_rdata
+	union libmc_extra_send_recv_unio m_extra_send_recv_param; // target->m_interface_data->m_extra_send_recv_param
 };
 
 enum MC_INTERFACE

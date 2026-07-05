@@ -36,7 +36,7 @@ void LoadModules(void);
 int CreateSave(void);
 
 #define ARRAY_ENTRIES	64
-static sceMcTblGetDir mcDir[ARRAY_ENTRIES] __attribute__((aligned(64)));
+static sceMcTblGetDir mcDir[ARRAY_ENTRIES];
 static int mc_Type, mc_Free, mc_Format;
 
 int main() {

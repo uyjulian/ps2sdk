@@ -15,18 +15,16 @@ IRX_ID("Netcnf_Interface", 2, 30);
 #endif
 // Based on the module from SCE SDK 3.1.0.
 
-// TODO EE alignment 64
-typedef struct __attribute__((aligned(16))) sceNetcnfifList
+typedef struct sceNetcnfifList
 {
 	int type;
 	int stat;
 	char sys_name[256];
 	char usr_name[256];
 	int padding[14];
-} sceNetcnfifList_t;
+} ALIGNED_FOR_SIFDMA sceNetcnfifList_t;
 
-// TODO EE alignment 64
-typedef struct __attribute__((aligned(16))) sceNetcnfifData
+typedef struct sceNetcnfifData
 {
 	char attach_ifc[256];
 	char attach_dev[256];
@@ -68,7 +66,7 @@ typedef struct __attribute__((aligned(16))) sceNetcnfifData
 	u8 p2;
 	u8 p3;
 	int p4[5];
-} sceNetcnfifData_t;
+} ALIGNED_FOR_SIFDMA sceNetcnfifData_t;
 
 typedef struct sceNetcnfifArg
 {

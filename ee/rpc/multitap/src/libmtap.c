@@ -26,10 +26,10 @@
 #define MTAPSERV_PORT_CLOSE			0x80000902
 #define MTAPSERV_GET_CONNECTION		0x80000903
 
-static unsigned int mtapRpcBuffer[32] __attribute__((aligned (64)));
-static struct t_SifRpcClientData clientPortOpen __attribute__((aligned (64)));
-static struct t_SifRpcClientData clientPortClose __attribute__((aligned (64)));
-static struct t_SifRpcClientData clientGetConnection __attribute__((aligned (64)));
+static unsigned int mtapRpcBuffer[32] ALIGNED_FOR_SIFDMA;
+static SifRpcClientData_t clientPortOpen;
+static SifRpcClientData_t clientPortClose;
+static SifRpcClientData_t clientGetConnection;
 
 int mtapInit(void)
 {

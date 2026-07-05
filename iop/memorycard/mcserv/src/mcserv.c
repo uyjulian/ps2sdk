@@ -19,14 +19,14 @@ IRX_ID(MODNAME, 2, 8);
 static int mcserv_tidS_0400;
 static int mcserv_in_rpc_0400 = 0;
 
-static SifRpcDataQueue_t mcserv_qdS_0400 __attribute__((aligned(16)));
-static SifRpcServerData_t mcserv_sdS_0400 __attribute__((aligned(16)));
+static SifRpcDataQueue_t mcserv_qdS_0400;
+static SifRpcServerData_t mcserv_sdS_0400;
 
-static u8 mcserv_rpc_buf[2048] __attribute__((__aligned__(4)));
-static mcRpcStat_t rpc_stat __attribute__((aligned(16)));
+static u8 mcserv_rpc_buf[2048] ALIGNED_FOR_SIFDMA;
+static mcRpcStat_t rpc_stat ALIGNED_FOR_SIFDMA;
 
 #define MCSERV_BUFSIZE 8192
-static u8 mcserv_buf[MCSERV_BUFSIZE] __attribute__((aligned(16)));
+static u8 mcserv_buf[MCSERV_BUFSIZE] ALIGNED_FOR_SIFDMA;
 
 #ifdef BUILDING_XFROMSERV
 #define MCSERV_RPC_ID 0x80000480

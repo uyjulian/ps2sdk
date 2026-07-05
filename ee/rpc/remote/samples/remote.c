@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
     /* Buffers for receiving input from remote controllers. A 256-byte region
        is required for each possible remote. Buffers must be each aligned
        to a 64-byte boundary due to how the EE data cache works. */
-    static u8 rmData[256] __attribute__((aligned(64)));
+    static u8 rmData[256] ALIGNED_FOR_SIFDMA;
     struct remote_data data, olddata;
     int startY, wrap;
     ee_sema_t sema;

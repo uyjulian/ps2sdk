@@ -44,7 +44,7 @@ IRX_ID(MODNAME, 1, 1);
 
 static SifRpcDataQueue_t ps2ips_queue;
 static SifRpcServerData_t ps2ips_server;
-static u8 _rpc_buffer[512 * 4] __attribute__((__aligned__(4)));
+static u8 _rpc_buffer[512 * 4] ALIGNED_FOR_SIFDMA;
 
 static char lwip_buffer[BUFF_SIZE + 32];
 static rests_pkt rests;
@@ -125,7 +125,7 @@ static void do_recv( void * rpcBuffer, int size )
 	int intr_stat;
 	s_recv_pkt *recv_pkt = (s_recv_pkt *)rpcBuffer;
 	r_recv_pkt *ret_pkt = (r_recv_pkt *)rpcBuffer;
-	struct t_SifDmaTransfer sifdma;
+	SifDmaTransfer_t sifdma;
 
 	(void)size;
 
@@ -219,7 +219,7 @@ static void do_recvfrom( void * rpcBuffer, int size )
 	int intr_stat;
 	s_recv_pkt *recv_pkt = (s_recv_pkt *)rpcBuffer;
 	r_recv_pkt *ret_pkt = (r_recv_pkt *)rpcBuffer;
-	static struct t_SifDmaTransfer sifdma;
+	static SifDmaTransfer_t sifdma;
 	static struct sockaddr sockaddr;
 	int fromlen;
 

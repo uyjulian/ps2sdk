@@ -17,7 +17,7 @@
 
 /* Data used for registering the RPC server. */
 static SifRpcServerData_t rpc_sdata;
-static unsigned char rpc_buffer[80] __attribute__((__aligned__(4)));
+static unsigned char rpc_buffer[80] ALIGNED_FOR_SIFDMA;
 static SifRpcDataQueue_t rpc_qdata;
 
 static union{
