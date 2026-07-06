@@ -501,7 +501,7 @@ void __fioOpsInitializeImpl(void)
 }
 #endif
 
-extern _libcglue_fdman_path_ops_t * __attribute__((weak)) _ps2sdk_get_default_fdman_path_ops(void);
+extern _libcglue_fdman_path_ops_t * _ps2sdk_get_default_fdman_path_ops(void);
 #ifdef F__ps2sdk_get_default_fdman_path_ops
 _libcglue_fdman_path_ops_t * __attribute__((weak)) _ps2sdk_get_default_fdman_path_ops(void)
 {
