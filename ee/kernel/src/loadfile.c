@@ -75,8 +75,7 @@ int _SifLoadModule(const char *path, int arg_len, const char *args, int *modres,
 
     memset(&arg, 0, sizeof arg);
 
-    strncpy(arg.path, path, LF_PATH_MAX - 1);
-    arg.path[LF_PATH_MAX - 1] = 0;
+    strlcpy(arg.path, path, sizeof(arg.path));
 
     if (args && arg_len) {
         arg.p.arg_len = arg_len > LF_ARG_MAX ? LF_ARG_MAX : arg_len;
@@ -167,8 +166,7 @@ int SifSearchModuleByName(const char *name)
     if (SifLoadFileInit() < 0)
         return -SCE_EBINDMISS;
 
-    strncpy(arg.name, name, LF_PATH_MAX - 1);
-    arg.name[LF_PATH_MAX - 1] = 0;
+    strlcpy(arg.name, name, sizeof(arg.name));
 
     if (sceSifCallRpc(&_lf_cd, LF_F_SEARCH_MOD_BY_NAME, 0, &arg, sizeof arg, &arg, 4, NULL, NULL) < 0)
         return -SCE_ECALLMISS;
@@ -201,10 +199,8 @@ int _SifLoadElfPart(const char *path, const char *secname, t_ExecData *data, int
     if (SifLoadFileInit() < 0)
         return -SCE_EBINDMISS;
 
-    strncpy(arg.path, path, LF_PATH_MAX - 1);
-    strncpy(arg.secname, secname, LF_ARG_MAX - 1);
-    arg.path[LF_PATH_MAX - 1]   = 0;
-    arg.secname[LF_ARG_MAX - 1] = 0;
+    strlcpy(arg.path, path, sizeof(arg.path));
+    strlcpy(arg.secname, secname, sizeof(arg.secname));
 
     if (sceSifCallRpc(&_lf_cd, fno, 0, &arg, sizeof arg, &arg,
                    sizeof(t_ExecData), NULL, NULL) < 0)
