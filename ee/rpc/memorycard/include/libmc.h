@@ -34,6 +34,7 @@
 #define __LIBMC_H__
 
 #include <libmc-common.h>
+#include <sifrpc.h>
 
 #define MC_WAIT					0
 #define MC_NOWAIT				1
