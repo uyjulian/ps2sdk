@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <kerr.h>
 #include <xatapi.h>
+#include <blkio-ioctl.h>
 
 #ifdef _IOP
 IRX_ID("cdvd_xatapi_driver", 2, 3);
@@ -808,30 +809,30 @@ static int atapi_check_if_drive_ready(int check_nowait)
 					 6;
 }
 
-static int sceFsDevctlBlkIO(s16 dev_nr, void *buf, void *rwbuf, unsigned int nsec, int secsize, int rwtype)
+static int atapi_sceFsDevctlBlkIO(s16 dev_nr, void *buf, u32 lsn, u32 nsec, u32 secsize, sceFsRWTYPE rwtype)
 {
-	char *rwbuf_tmp;
-	unsigned int nsec_tmp;
+	u32 lsn_tmp;
+	u32 nsec_tmp;
 	int retres1;
 	int seccnt;
 	int i;
 	char pkt[12];
 
-	rwbuf_tmp = (char *)rwbuf;
+	lsn_tmp = lsn;
 	retres1 = 0;
-	VERBOSE_KPRINTF(1, "dma %c %08x, nsec %d\n", rwtype ? 'w' : 'r', rwbuf, nsec);
+	VERBOSE_KPRINTF(1, "dma %c %08x, nsec %d\n", (rwtype == sceFsREADING) ? 'r' : 'w', lsn, nsec);
 	for ( nsec_tmp = nsec; !retres1 && nsec_tmp; nsec_tmp -= seccnt )
 	{
 		seccnt = (nsec_tmp >= 0x21) ? 32 : nsec_tmp;
 		for ( i = 3; i < 3; i += 1 )
 		{
-			xatapi_9_sceCdSpdAtaDmaStart(rwtype);
+			xatapi_9_sceCdSpdAtaDmaStart((rwtype == sceFsREADING) ? 0 : 1);
 			memset(pkt, 0, sizeof(pkt));
-			pkt[0] = (!rwtype) ? 0x28 : 0x2A;
-			pkt[2] = ((uiptr)rwbuf_tmp >> 24) & 0xFF;
-			pkt[3] = ((uiptr)rwbuf_tmp >> 16) & 0xFF;
-			pkt[4] = ((uiptr)rwbuf_tmp >> 8) & 0xFF;
-			pkt[5] = ((uiptr)rwbuf_tmp) & 0xFF;
+			pkt[0] = (rwtype == sceFsREADING) ? 0x28 : 0x2A;
+			pkt[2] = (lsn_tmp >> 24) & 0xFF;
+			pkt[3] = (lsn_tmp >> 16) & 0xFF;
+			pkt[4] = (lsn_tmp >> 8) & 0xFF;
+			pkt[5] = (lsn_tmp) & 0xFF;
 			pkt[8] = seccnt;
 			retres1 = xatapi_7_sceCdAtapiExecCmd(dev_nr, buf, seccnt, secsize, pkt, sizeof(pkt), 4);
 			if ( retres1 )
@@ -846,7 +847,7 @@ static int sceFsDevctlBlkIO(s16 dev_nr, void *buf, void *rwbuf, unsigned int nse
 				break;
 			}
 		}
-		rwbuf_tmp += seccnt;
+		lsn_tmp += seccnt;
 		buf = (char *)buf + seccnt * secsize;
 	}
 	return retres1;
@@ -1100,21 +1101,26 @@ static int xatapi_dev_devctl(
 		case 0x439B:
 			*(u32 *)buf = atapi_check_if_drive_ready(*(u32 *)args);
 			break;
-		case 0x4601:
-			if ( *((u32 *)args + 3) != 2048 )
+		case FDIOC_BLKIO:
 			{
-				retres1 = -EINVAL;
-				break;
+				sceFsDevctlBlkIO *bio_param;
+				bio_param = (sceFsDevctlBlkIO *)args;
+				if ( bio_param->blksiz != 2048 )
+				{
+					retres1 = -EINVAL;
+					break;
+				}
+				VERBOSE_KPRINTF(
+					1,
+					"sceFsDevctlBlkIO Lsn:%d nsec:%d buffer:%08x Type:%d\n",
+					bio_param->lbn,
+					bio_param->nblk,
+					bio_param->addr,
+					bio_param->type);
+				retres1 =
+					atapi_sceFsDevctlBlkIO(f->unit, bio_param->addr, bio_param->lbn, bio_param->nblk, bio_param->blksiz, bio_param->type);
 			}
-			VERBOSE_KPRINTF(
-				1,
-				"sceFsDevctlBlkIO Lsn:%d nsec:%d buffer:%08x Type:%d\n",
-				*(u32 *)args,
-				*((u32 *)args + 1),
-				*((u32 *)args + 2),
-				*((u32 *)args + 4));
-			retres1 =
-				sceFsDevctlBlkIO(f->unit, *((void **)args + 2), *(void **)args, *((u32 *)args + 1), 2048, *((u32 *)args + 4));
+
 			break;
 		default:
 			Kprintf("Un-support devctl %08x\n", cmd);
