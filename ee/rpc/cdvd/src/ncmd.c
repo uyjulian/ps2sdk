@@ -78,28 +78,28 @@ typedef union
 
 #ifdef F__ncmd_internals
 /** for n-cmds */
-SifRpcClientData_t clientNCmd __attribute__((aligned(64)));
+SifRpcClientData_t clientNCmd;
 
 /** n-cmd semaphore id */
 int nCmdSemaId;
 
 int nCmdNum = 0;
 
-u32 readStreamData[5] __attribute__((aligned(64)));
-u32 readData[6] __attribute__((aligned(64)));
-sceCdRChain readChainData[66] __attribute__((aligned(64)));
+u32 readStreamData[5] ALIGNED_FOR_SIFDMA;
+u32 readData[6] ALIGNED_FOR_SIFDMA;
+sceCdRChain readChainData[66] ALIGNED_FOR_SIFDMA;
 /** get toc */
-u32 getTocSendBuff[3] __attribute__((aligned(64)));
-u32 _rd_intr_data[64] __attribute__((aligned(64)));
-u32 curReadPos __attribute__((aligned(64)));
+u32 getTocSendBuff[3] ALIGNED_FOR_SIFDMA;
+u32 _rd_intr_data[64] ALIGNED_FOR_SIFDMA;
+u32 curReadPos ALIGNED_FOR_SIFDMA;
 /** toc buffer (for sceCdGetToc()) */
-u8 tocBuff[2064] __attribute__((aligned(64)));
-u8 nCmdRecvBuff[48] __attribute__((aligned(64)));
-nCmdSendParams_t nCmdSendBuff __attribute__((aligned(64)));
+u8 tocBuff[2064] ALIGNED_FOR_SIFDMA;
+u8 nCmdRecvBuff[48] ALIGNED_FOR_SIFDMA;
+nCmdSendParams_t nCmdSendBuff ALIGNED_FOR_SIFDMA;
 int streamStatus = 0;
 sceCdRMode dummyMode;
-u32 seekSector __attribute__((aligned(64)));
-u32 cdda_st_buf[64 / sizeof(u32)] ALIGNED(64);
+u32 seekSector ALIGNED_FOR_SIFDMA;
+u32 cdda_st_buf[64 / sizeof(u32)] ALIGNED_FOR_SIFDMA;
 #endif
 
 extern int initVersionCdvdfsv;

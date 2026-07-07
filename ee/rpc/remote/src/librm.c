@@ -21,8 +21,8 @@
 #include <iopcontrol.h>
 #include "librm.h"
 
-static SifRpcClientData_t rmmanif __attribute__((aligned(64)));
-static struct rmRpcPacket buffer __attribute__((aligned(64)));
+static SifRpcClientData_t rmmanif;
+static struct rmRpcPacket buffer;
 static int rmman_type;
 
 struct port_state
@@ -71,7 +71,7 @@ int RMMan_Init(void)
     }
 
     {
-        SifRpcClientData_t rpciftmp[3] __attribute__((aligned(64)));
+        SifRpcClientData_t rpciftmp[3];
         int rpc_ids[3] = {
             RMMANX_RPC_ID,
             RMMAN2_RPC_ID,

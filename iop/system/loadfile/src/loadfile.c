@@ -264,7 +264,7 @@ static int *loadfile_get_version(void *in_packet, int length, int *outbuffer)
 	return outbuffer;
 }
 
-static int loadfile_rpc_outbuf[0x4] __attribute__((aligned(16)));
+static int loadfile_rpc_outbuf[0x4] ALIGNED_FOR_SIFDMA;
 
 static int *loadfile_rpc_service_handler(int fno, void *buffer, int length)
 {
@@ -300,9 +300,9 @@ static int *loadfile_rpc_service_handler(int fno, void *buffer, int length)
 	}
 }
 
-static SifRpcDataQueue_t loadfile_rpc_service_queue __attribute__((aligned(16)));
-static SifRpcServerData_t loadfile_rpc_service_data __attribute__((aligned(16)));
-static int loadfile_rpc_service_in_buf[0x112] __attribute__((aligned(16)));
+static SifRpcDataQueue_t loadfile_rpc_service_queue;
+static SifRpcServerData_t loadfile_rpc_service_data;
+static int loadfile_rpc_service_in_buf[0x112] ALIGNED_FOR_SIFDMA;
 
 static void loadfile_rpc_service_thread(void *param)
 {

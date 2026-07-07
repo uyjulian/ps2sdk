@@ -23,8 +23,8 @@
 
 
 
-static SifRpcClientData_t	cdata			__attribute__((aligned(64)));
-static char					data[1024]		__attribute__((aligned(64)));
+static SifRpcClientData_t	cdata;
+static char					data[1024]		ALIGNED_FOR_SIFDMA;
 static char					campacket[896]	__attribute__((aligned(64)));
 
 ee_sema_t compSema;

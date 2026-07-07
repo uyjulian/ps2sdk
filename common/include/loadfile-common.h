@@ -17,6 +17,7 @@
 #define __LOADFILE_COMMON_H__
 
 #include <tamtypes.h>
+#include <sifrpc.h>
 
 // loadfile common definitions
 
@@ -72,7 +73,7 @@ struct _lf_iop_val_arg
         u16 s;
         u32 l;
     } val;
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 struct _lf_module_load_arg
 {
@@ -84,7 +85,7 @@ struct _lf_module_load_arg
     int modres;
     char path[LF_PATH_MAX];
     char args[LF_ARG_MAX];
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 struct _lf_module_stop_arg
 {
@@ -100,13 +101,13 @@ struct _lf_module_stop_arg
     } q;
     char dummy[LF_PATH_MAX];
     char args[LF_ARG_MAX];
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 union _lf_module_unload_arg
 {
     int id;
     int result;
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 struct _lf_search_module_by_name_arg
 {
@@ -114,7 +115,7 @@ struct _lf_search_module_by_name_arg
     int dummy1;
     char name[LF_PATH_MAX];
     char dummy2[LF_ARG_MAX];
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 struct _lf_search_module_by_address_arg
 {
@@ -123,7 +124,7 @@ struct _lf_search_module_by_address_arg
         const void *ptr;
         int id;
     } p;
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 struct _lf_elf_load_arg
 {
@@ -131,7 +132,7 @@ struct _lf_elf_load_arg
     u32 gp;
     char path[LF_PATH_MAX];
     char secname[LF_ARG_MAX];
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 struct _lf_module_buffer_load_arg
 {
@@ -147,6 +148,6 @@ struct _lf_module_buffer_load_arg
     } q;
     char unused[LF_PATH_MAX];
     char args[LF_ARG_MAX];
-} __attribute__((aligned(16)));
+} ALIGNED_FOR_SIFDMA;
 
 #endif

@@ -27,10 +27,10 @@
 #define MIN(a,b) ((a) <= (b)) ? (a) : (b)
 
 /* rpc mambo jambo */
-static struct t_SifRpcClientData cd0;
-static unsigned int sbuff[4096] __attribute__((aligned (64)));
-static struct t_SifRpcDataQueue cb_queue;
-static struct t_SifRpcServerData cb_srv;
+static SifRpcClientData_t cd0;
+static unsigned int sbuff[4096] ALIGNED_FOR_SIFDMA;
+static SifRpcDataQueue_t cb_queue;
+static SifRpcServerData_t cb_srv;
 static unsigned char rpc_server_stack[0x1800] __attribute__((aligned (16)));
 
 extern void *_gp;
@@ -316,7 +316,7 @@ static void *audsrv_ee_rpc_handler(int fnum, void *buffer, int len)
 
 static void rpc_server_thread(void *arg)
 {
-	static unsigned char cb_rpc_buffer[64] __attribute__((__aligned__(64)));
+	static unsigned char cb_rpc_buffer[64] ALIGNED_FOR_SIFDMA;
 
 	(void)arg;
 

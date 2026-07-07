@@ -21,6 +21,7 @@
 
 #include <tamtypes.h>
 #include <iox_stat.h>
+#include <sifrpc.h>
 
 #ifdef _EE
 #ifndef NEWLIB_PORT_AWARE
@@ -101,7 +102,7 @@ struct fileXioDirEntry
     u32 fileSize;
     u8 fileProperties;
     char filename[128 + 1];
-} __attribute__((aligned(64)));
+} ALIGNED_FOR_SIFDMA;
 
 struct fileXioDevice
 {
@@ -110,7 +111,7 @@ struct fileXioDevice
     /** Not so sure about this one.  */
     unsigned int version;
     char desc[128];
-} __attribute__((aligned(64)));
+} ALIGNED_FOR_SIFDMA;
 
 struct fxio_devlist_packet
 {

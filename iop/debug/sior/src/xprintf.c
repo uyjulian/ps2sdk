@@ -1042,7 +1042,7 @@ static int npm_puts_init()
 
 int npmPuts(const char *buf)
 {
-	u8 puts_buf[512]; /* Implicitly aligned. */
+	u8 puts_buf[512] ALIGNED_FOR_SIFDMA;
 	void *p = puts_buf;
 
 	if (npm_puts_init() < 0)

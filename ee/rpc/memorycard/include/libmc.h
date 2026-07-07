@@ -144,7 +144,7 @@ typedef struct _sceMcTblGetDir {	// size = 64
 	u32 Reserve2;			// 24
 	u32 PdaAplNo;			// 28
 	unsigned char EntryName[32];	// 32
-} sceMcTblGetDir __attribute__((aligned(64)));
+} sceMcTblGetDir ALIGNED_FOR_SIFDMA;
 
 typedef struct
 {
@@ -190,7 +190,7 @@ typedef struct
     unsigned unknown4[2];
     /** Entry name */
     unsigned char name[32];
-} mcTable __attribute__((deprecated, aligned (64)));
+} mcTable __attribute__((deprecated)) ALIGNED_FOR_SIFDMA;
 
 // values to send to mcInit() to use either mcserv or xmcserv
 // These definitions are retained for backwards compatibility

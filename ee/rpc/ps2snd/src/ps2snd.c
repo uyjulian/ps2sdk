@@ -16,11 +16,11 @@
 #include <ps2snd.h>
 #include <iopcontrol.h>
 
-static SifRpcClientData_t sd_client ALIGNED(64);
+static SifRpcClientData_t sd_client;
 
 int sceSdInit(int flag)
 {
-	s32 buf[1] ALIGNED(64);
+	s32 buf[1] ALIGNED_FOR_SIFDMA;
 	if (HasIopRebootedSinceLastCall())
 		memset(&sd_client, 0, sizeof(sd_client));
 
@@ -50,7 +50,7 @@ int sceSdInit(int flag)
 
 void sceSdSetParam(u16 entry, u16 value)
 {
-	u32 buf[2] ALIGNED(64);
+	u32 buf[2] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	buf[1] = value;
 	sceSifCallRpc(&sd_client, PS2SND_SetParam, 0, buf, 8, NULL, 0, NULL, NULL);
@@ -58,7 +58,7 @@ void sceSdSetParam(u16 entry, u16 value)
 
 u16 sceSdGetParam(u16 entry)
 {
-	u32 buf[1] ALIGNED(64);
+	u32 buf[1] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	sceSifCallRpc(&sd_client, PS2SND_GetParam, 0, buf, 4, buf, 4, NULL, NULL);
 	return(buf[0]);
@@ -66,7 +66,7 @@ u16 sceSdGetParam(u16 entry)
 
 void sceSdSetSwitch(u16 entry, u32 value)
 {
-	u32 buf[2] ALIGNED(64);
+	u32 buf[2] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	buf[1] = value;
 	sceSifCallRpc(&sd_client, PS2SND_SetSwitch, 0, buf, 8, NULL, 0, NULL, NULL);
@@ -74,7 +74,7 @@ void sceSdSetSwitch(u16 entry, u32 value)
 
 u32 sceSdGetSwitch(u16 entry)
 {
-	u32 buf[1] ALIGNED(64);
+	u32 buf[1] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	sceSifCallRpc(&sd_client, PS2SND_GetSwitch, 0, buf, 4, buf, 4, NULL, NULL);
 	return(buf[0]);
@@ -82,7 +82,7 @@ u32 sceSdGetSwitch(u16 entry)
 
 void sceSdSetAddr(u16 entry, u32 value)
 {
-	u32 buf[2] ALIGNED(64);
+	u32 buf[2] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	buf[1] = value;
 	sceSifCallRpc(&sd_client, PS2SND_SetAddr, 0, buf, 8, NULL, 0, NULL, NULL);
@@ -90,7 +90,7 @@ void sceSdSetAddr(u16 entry, u32 value)
 
 u32 sceSdGetAddr(u16 entry)
 {
-	u32 buf[1] ALIGNED(64);
+	u32 buf[1] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	sceSifCallRpc(&sd_client, PS2SND_GetAddr, 0, buf, 4, buf, 4, NULL, NULL);
 	return(buf[0]);
@@ -98,7 +98,7 @@ u32 sceSdGetAddr(u16 entry)
 
 void sceSdSetCoreAttr(u16 entry, u16 value)
 {
-	u32 buf[2] ALIGNED(64);
+	u32 buf[2] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	buf[1] = value;
 	sceSifCallRpc(&sd_client, PS2SND_SetCoreAttr, 0, buf, 8, NULL, 0, NULL, NULL);
@@ -106,7 +106,7 @@ void sceSdSetCoreAttr(u16 entry, u16 value)
 
 u16 sceSdGetCoreAttr(u16 entry)
 {
-	u32 buf[1] ALIGNED(64);
+	u32 buf[1] ALIGNED_FOR_SIFDMA;
 	buf[0] = entry;
 	sceSifCallRpc(&sd_client, PS2SND_GetCoreAttr, 0, buf, 4, buf, 4, NULL, NULL);
 	return(buf[0]);
@@ -157,7 +157,7 @@ int sceSdProcBatchEx(const sceSdBatch* batch, u32 returns[], u32 num, u32 voice)
 
 int sceSdVoiceTrans(s16 channel, u16 mode, u8 *m_addr, u32 *s_addr, u32 size)
 {
-	u32 buf[5] ALIGNED(64);
+	u32 buf[5] ALIGNED_FOR_SIFDMA;
 	((s32 *)buf)[0] = channel;
 	buf[1] = mode;
 	buf[2] = (u32)m_addr;
@@ -180,7 +180,7 @@ int sceSdBlockTrans(s16 channel, u16 mode, u8 *m_addr, u32 size, ...)
 
 u32 sceSdVoiceTransStatus (s16 channel, s16 flag)
 {
-	s32 buf[2] ALIGNED(64);
+	s32 buf[2] ALIGNED_FOR_SIFDMA;
 	buf[0] = channel;
 	buf[1] = flag;
 
@@ -190,7 +190,7 @@ u32 sceSdVoiceTransStatus (s16 channel, s16 flag)
 
 u32 sceSdBlockTransStatus (s16 channel, s16 flag)
 {
-	s32 buf[2] ALIGNED(64);
+	s32 buf[2] ALIGNED_FOR_SIFDMA;
 	buf[0] = channel;
 	buf[1] = flag;
 
@@ -203,7 +203,7 @@ u32 sceSdBlockTransStatus (s16 channel, s16 flag)
 
 int sceSdSetEffectAttr (int core, const sceSdEffectAttr *attr)
 {
-	s32 buf[1+((sizeof(sceSdEffectAttr)+3)/4)] ALIGNED(64);
+	s32 buf[1+((sizeof(sceSdEffectAttr)+3)/4)] ALIGNED_FOR_SIFDMA;
 	buf[0] = core;
 	memcpy(&buf[1], attr, sizeof(sceSdEffectAttr));
 	sceSifCallRpc(&sd_client, PS2SND_SetEffectAttr, 0, buf, 4+sizeof(sceSdEffectAttr), buf, 4, NULL, NULL);
@@ -212,7 +212,7 @@ int sceSdSetEffectAttr (int core, const sceSdEffectAttr *attr)
 
 void sceSdGetEffectAttr (int core, sceSdEffectAttr *attr)
 {
-	s32 buf[((sizeof(sceSdEffectAttr)+3)/4)] ALIGNED(64);
+	s32 buf[((sizeof(sceSdEffectAttr)+3)/4)] ALIGNED_FOR_SIFDMA;
 	buf[0] = core;
 	sceSifCallRpc(&sd_client, PS2SND_GetEffectAttr, 0, buf, 4, buf, sizeof(sceSdEffectAttr), NULL, NULL);
 	memcpy(attr, buf, sizeof(sceSdEffectAttr));
@@ -220,7 +220,7 @@ void sceSdGetEffectAttr (int core, sceSdEffectAttr *attr)
 
 int sceSdClearEffectWorkArea (int core, int channel, int effect_mode)
 {
-	s32 buf[3] ALIGNED(64);
+	s32 buf[3] ALIGNED_FOR_SIFDMA;
 	buf[0] = core;
 	buf[1] = channel;
 	buf[2] = effect_mode;
@@ -231,14 +231,14 @@ int sceSdClearEffectWorkArea (int core, int channel, int effect_mode)
 
 u32 sndQueryMaxFreeMemSize(void)
 {
-	u32 buf[1] ALIGNED(64);
+	u32 buf[1] ALIGNED_FOR_SIFDMA;
 	sceSifCallRpc(&sd_client, PS2SND_QueryMaxFreeMemSize, 0, NULL, 0, buf, 4, NULL, NULL);
 	return(buf[0]);
 }
 
 int sndStreamOpen(char *file, u32 voices, u32 flags, u32 bufaddr, u32 bufsize)
 {
-	u32 buf[32] ALIGNED(64);
+	u32 buf[32] ALIGNED_FOR_SIFDMA;
 	buf[0] = voices;
 	buf[1] = flags;
 	buf[2] = bufaddr;
@@ -253,14 +253,14 @@ int sndStreamOpen(char *file, u32 voices, u32 flags, u32 bufaddr, u32 bufsize)
 
 int sndStreamClose(void)
 {
-	s32 buf[1] ALIGNED(64);
+	s32 buf[1] ALIGNED_FOR_SIFDMA;
 	sceSifCallRpc(&sd_client, PS2SND_StreamClose, 0, NULL, 0, buf, 4, NULL, NULL);
 	return(buf[0]);
 }
 
 int sndStreamPlay(void)
 {
-	s32 buf[1] ALIGNED(64);
+	s32 buf[1] ALIGNED_FOR_SIFDMA;
 	sceSifCallRpc(&sd_client, PS2SND_StreamPlay, 0, NULL, 0, buf, 4, NULL, NULL);
 	return(buf[0]);
 }
@@ -268,14 +268,14 @@ int sndStreamPlay(void)
 
 int sndStreamPause(void)
 {
-	s32 buf[1] ALIGNED(64);
+	s32 buf[1] ALIGNED_FOR_SIFDMA;
 	sceSifCallRpc(&sd_client, PS2SND_StreamPause, 0, NULL, 0, buf, 4, NULL, NULL);
 	return(buf[0]);
 }
 
 int sndStreamSetPosition(int block)
 {
-	s32 buf[1] ALIGNED(64);
+	s32 buf[1] ALIGNED_FOR_SIFDMA;
 	buf[0] = block;
 	sceSifCallRpc(&sd_client, PS2SND_StreamSetPosition, 0, buf, 4, buf, 4, NULL, NULL);
 	return(buf[0]);
@@ -283,7 +283,7 @@ int sndStreamSetPosition(int block)
 
 int sndStreamSetVolume(int left, int right)
 {
-	s32 buf[2] ALIGNED(64);
+	s32 buf[2] ALIGNED_FOR_SIFDMA;
 	buf[0] = left;
 	buf[1] = right;
 	sceSifCallRpc(&sd_client, PS2SND_StreamSetVolume, 0, buf, 8, buf, 4, NULL, NULL);
@@ -292,7 +292,7 @@ int sndStreamSetVolume(int left, int right)
 
 int sndStreamGetPosition(void)
 {
-	s32 buf[1] ALIGNED(64);
+	s32 buf[1] ALIGNED_FOR_SIFDMA;
 	sceSifCallRpc(&sd_client, PS2SND_StreamGetPosition, 0, NULL, 0, buf, 4, NULL, NULL);
 	return(buf[0]);
 }

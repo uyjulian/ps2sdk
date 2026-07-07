@@ -24,7 +24,7 @@ IRX_ID("sioremote_driver", 1, 1);
 
 extern struct irx_export_table _exp_sior;
 
-static struct t_SifRpcClientData cd0;
+static SifRpcClientData_t cd0;
 static union siorCommsData buffer;
 static char tbuf[2048];
 

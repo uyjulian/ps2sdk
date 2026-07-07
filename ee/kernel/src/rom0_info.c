@@ -39,7 +39,7 @@ void SetupRomInfo(void)
 {
     void *iop_addr;
     SifRpcReceiveData_t rdata;
-    u8 buf[64] __attribute__((__aligned__(64)));
+    u8 buf[64] ALIGNED_FOR_SIFDMA;
 
     /* ROMVER needs to be read from the IOP due to PPCIOP region patching. */
     /* only read in the romname the first time */

@@ -39,15 +39,15 @@ extern SifRpcClientData_t __cd0;
 #endif
 
 #ifdef F___sbuff
-unsigned int __sbuff[0x1300] __attribute__((aligned (64)));
+unsigned int __sbuff[0x1300] ALIGNED_FOR_SIFDMA;
 #else
-extern unsigned int __sbuff[0x1300] __attribute__((aligned (64)));
+extern unsigned int __sbuff[0x1300] ALIGNED_FOR_SIFDMA;
 #endif
 
 #ifdef F___intr_data
-int __intr_data[0xC00] __attribute__((aligned(64)));
+unsigned int __intr_data[0xC00] ALIGNED_FOR_SIFDMA;
 #else
-extern int __intr_data[0xC00] __attribute__((aligned(64)));
+extern unsigned int __intr_data[0xC00] ALIGNED_FOR_SIFDMA;
 #endif
 
 #ifdef F___fileXioBlockMode

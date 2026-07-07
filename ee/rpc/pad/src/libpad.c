@@ -163,7 +163,7 @@ static const char *padReqStateString[] = {
 static int padInitialised = 0;
 
 // pad rpc call
-static SifRpcClientData_t padsif[2] __attribute__((aligned(64)));
+static SifRpcClientData_t padsif[2];
 static union {
 	s32 command;
     struct {
@@ -239,10 +239,10 @@ static union {
 	} padActDirAlignArgs;
 	char buffer[128];
 }
-buffer __attribute__((aligned(64)));
+buffer ALIGNED_FOR_SIFDMA;
 
 /** Port state data */
-static struct open_slot openSlot[2] __attribute__((aligned(64)));
+static struct open_slot openSlot[2] ALIGNED_FOR_SIFDMA;
 static struct pad_state PadState[2][8];
 
 
@@ -324,7 +324,7 @@ padInit(int mode)
 
     {
         unsigned int i;
-        SifRpcClientData_t rpciftmp[2] __attribute__((aligned(64)));
+        SifRpcClientData_t rpciftmp[2];
         static const int rpc_ids[] = {
             PAD_BIND_RPC_ID1_NEW,
             PAD_BIND_RPC_ID1_OLD,

@@ -14,6 +14,7 @@
 
 #include "irx.h"
 #include "types.h"
+#include <sifrpc.h>
 
 #define MODNAME "freepad"
 #define M_PRINTF(format, args...)	printf(MODNAME ": " format, ## args)
@@ -157,8 +158,8 @@ typedef struct
 
 typedef struct
 {
-	ee_paddata_t ee_pdata __attribute__((aligned(4)));
-	ee_old_paddata_t ee_old_pdata __attribute__((aligned(4)));
+	ee_paddata_t ee_pdata ALIGNED_FOR_SIFDMA;
+	ee_old_paddata_t ee_old_pdata ALIGNED_FOR_SIFDMA;
 	u8 modeConfig;
 	u8 modeCurId;
 	u8 model;
