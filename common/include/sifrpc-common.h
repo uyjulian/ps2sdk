@@ -119,7 +119,7 @@ typedef struct t_SifRpcServerData
     struct t_SifRpcServerData *link; /* 18	14 */
     struct t_SifRpcServerData *next; /* 19	15 */
     struct t_SifRpcDataQueue *base;  /* 20	16 */
-} ALIGNED_FOR_SIFDMA_UNCACHED SifRpcServerData_t;
+} ALIGNED_FOR_SIFDMA SifRpcServerData_t;
 
 
 typedef struct t_SifRpcHeader
@@ -128,7 +128,7 @@ typedef struct t_SifRpcHeader
     u32 rpc_id;     /* 05	01 */
     int sema_id;    /* 06	02 */
     u32 mode;       /* 07	03 */
-} ALIGNED_FOR_SIFDMA_UNCACHED SifRpcHeader_t;
+} ALIGNED_FOR_SIFDMA SifRpcHeader_t;
 
 
 typedef struct t_SifRpcClientData
@@ -158,7 +158,7 @@ typedef struct t_SifRpcDataQueue
         *start,                      /* 03 */
         *end;                        /* 04 */
     struct t_SifRpcDataQueue *next;  /* 05 */
-} ALIGNED_FOR_SIFDMA_UNCACHED SifRpcDataQueue_t;
+} ALIGNED_FOR_SIFDMA SifRpcDataQueue_t;
 
 #ifdef __cplusplus
 extern "C" {

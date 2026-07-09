@@ -41,7 +41,7 @@ typedef struct t_SifCmdHeader
     int cid;
     /** Can be freely used. */
     u32 opt;
-} ALIGNED_FOR_SIFDMA_UNCACHED SifCmdHeader_t;
+} ALIGNED_FOR_SIFDMA SifCmdHeader_t;
 
 /** System functions */
 #define SIF_CMD_ID_SYSTEM 0x80000000
