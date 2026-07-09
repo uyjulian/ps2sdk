@@ -85,15 +85,15 @@ typedef union
     u8 id[8];
     char mname[16];
     u8 data[0x420];
-} ALIGNED_FOR_SIFDMA sCmdSendParams_t;
+} sCmdSendParams_t;
 
 #ifdef F__scmd_internals
-SifRpcClientData_t clientSCmd;
+SifRpcClientData_t clientSCmd __attribute__((aligned(64)));
 
 int sCmdSemaId;
 
-u8 sCmdRecvBuff[0x440] ALIGNED_FOR_SIFDMA;
-sCmdSendParams_t sCmdSendBuff;
+u8 sCmdRecvBuff[0x440] __attribute__((aligned(64)));
+sCmdSendParams_t sCmdSendBuff __attribute__((aligned(64)));
 
 int sCmdNum = 0;
 

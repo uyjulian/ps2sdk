@@ -25,8 +25,8 @@
 #include <iopcontrol.h>
 #include "ahx_rpc.h"
 
-static unsigned sbuff[64] ALIGNED_FOR_SIFDMA;
-static SifRpcClientData_t cd0;
+static unsigned sbuff[64] __attribute__((aligned (64)));
+static struct t_SifRpcClientData cd0;
 /** EE mapped IOP mem */
 #define IOP_MEM	0xbc000000
 char* songbuffer_addr;

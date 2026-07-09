@@ -1,6 +1,3 @@
-
-#include <sifrpc.h>
-
 #define SMEM_BUF_SIZE	0x300	//Must be large enough to accommodate all operations.
 
 struct smem_buf {
@@ -10,7 +7,7 @@ struct smem_buf {
 		smod_mod_info_t mod_info;
 		slib_exp_lib_t exp_lib;
 	};
-} ALIGNED_FOR_SIFDMA;
+};
 
 extern int smem_write_word(void *address, u32 value);
 extern int __memcmp(const void *s1, const void *s2, unsigned int length);

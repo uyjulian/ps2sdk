@@ -19,7 +19,7 @@ static union {
 	char netifName[NETMAN_NETIF_NAME_MAX_LEN];
 	struct NetManRegNetworkStack NetStack;
 	u8 buffer[128];
-}TransmitBuffer ALIGNED_FOR_SIFDMA;
+}TransmitBuffer ALIGNED(64);
 
 static union {
 	s32 result;
@@ -27,7 +27,7 @@ static union {
 	struct NetManIoctlResult IoctlResult;
 	struct NetManQueryMainNetIFResult QueryMainNetIFResult;
 	u8 buffer[128];
-}ReceiveBuffer ALIGNED_FOR_SIFDMA;
+}ReceiveBuffer ALIGNED(64);
 
 static int NetManIOSemaID, NETMAN_Tx_threadID;
 static unsigned char NETMAN_Tx_ThreadStack[0x1000] ALIGNED(16);
@@ -191,7 +191,7 @@ int NetManRpcIoctl(unsigned int command, void *args, unsigned int args_len, void
 
 static void NETMAN_TxThread(void *arg)
 {
-	static SifCmdHeader_t cmd;
+	static SifCmdHeader_t cmd ALIGNED(64);
 	SifDmaTransfer_t dmat[2];
 	struct NetManPktCmd *npcmd;
 	int dmat_id, unaligned, unalignedCache;

@@ -48,8 +48,8 @@ static struct {
 		u8 numdns;
 		u8 buffer[512];
 	};
-} _rpc_buffer ALIGNED_FOR_SIFDMA;
-static int _intr_data[32] ALIGNED_FOR_SIFDMA;
+} _rpc_buffer __attribute__((aligned(64)));
+static int _intr_data[32] __attribute__((aligned(64)));
 
 static ip_addr_t dns_servers[DNS_MAX_SERVERS];
 

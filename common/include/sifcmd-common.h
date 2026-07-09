@@ -18,16 +18,6 @@
 
 #include <tamtypes.h>
 
-#ifdef _IOP
-/* 16 byte alignment (4 byte if accessing through uncached segment), 16 byte size multiple */
-#define ALIGNED_FOR_SIFDMA __attribute__((__aligned__((16))))
-#define ALIGNED_FOR_SIFDMA_UNCACHED __attribute__((__aligned__((4))))
-#else
-/* 64 byte alignment (16 byte if accessing through uncached segment), 16 byte size multiple */
-#define ALIGNED_FOR_SIFDMA __attribute__((__aligned__((64))))
-#define ALIGNED_FOR_SIFDMA_UNCACHED __attribute__((__aligned__((16))))
-#endif
-
 /** SIF command.  */
 typedef struct t_SifCmdHeader
 {
@@ -41,7 +31,7 @@ typedef struct t_SifCmdHeader
     int cid;
     /** Can be freely used. */
     u32 opt;
-} ALIGNED_FOR_SIFDMA_UNCACHED SifCmdHeader_t;
+} SifCmdHeader_t;
 
 /** System functions */
 #define SIF_CMD_ID_SYSTEM 0x80000000
@@ -91,7 +81,7 @@ typedef struct t_SifCmdSysHandlerData
 
 typedef struct _iop_reset_pkt
 {
-    SifCmdHeader_t header;
+    struct t_SifCmdHeader header;
     int arglen;
     int mode;
     char arg[RESET_ARG_MAX + 1];

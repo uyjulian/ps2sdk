@@ -152,12 +152,12 @@ static void *NETMAN_EE_RPC_Handler(int fnum, void *buffer, int NumBytes)
 	return result;
 }
 
-static SifRpcDataQueue_t cb_queue;
-static SifRpcServerData_t cb_srv;
+static struct t_SifRpcDataQueue cb_queue;
+static struct t_SifRpcServerData cb_srv;
 
 static void NETMAN_RPC_Thread(void *arg)
 {
-	static unsigned char cb_rpc_buffer[64] ALIGNED_FOR_SIFDMA;
+	static unsigned char cb_rpc_buffer[64] __attribute__((__aligned__(64)));
 
 	(void)arg;
 

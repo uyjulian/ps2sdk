@@ -20,7 +20,6 @@
 #include <intrman.h>
 #include <libsd.h>
 #include <sysclib.h>
-#include <sifrpc.h>
 
 #include <audsrv.h>
 #include "audsrv_internal.h"
@@ -44,7 +43,7 @@ typedef struct adpcm_list_t
 static adpcm_list_t *adpcm_list_head = 0;
 static adpcm_list_t *adpcm_list_tail = 0;
 
-static u32 sbuffer[16] ALIGNED_FOR_SIFDMA;
+static u32 sbuffer[16] __attribute__((aligned(16)));
 
 /** Allocates memory for a new sample. */
 static adpcm_list_t *alloc_new_sample(void)

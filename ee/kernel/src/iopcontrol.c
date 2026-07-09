@@ -33,8 +33,8 @@ extern int _iop_reboot_count;
 
 int SifIopReset(const char *arg, int mode)
 {
-    static SifCmdResetData_t reset_pkt;
-    SifDmaTransfer_t dmat;
+    static SifCmdResetData_t reset_pkt __attribute__((aligned(64)));
+    struct t_SifDmaTransfer dmat;
     int arglen;
 
     _iop_reboot_count++; // increment reboot counter to allow RPC clients to detect unbinding!

@@ -37,7 +37,7 @@ extern int imgdrv_offset_ioprpsiz;
 extern void init_imgdrv_offsets(void);
 
 #ifdef F__iopcontrol_special_internals
-u8 iopbtconf_img[IOPBTCONF_IOP_MAX_SIZE] ALIGNED_FOR_SIFDMA;
+u8 iopbtconf_img[IOPBTCONF_IOP_MAX_SIZE] __attribute__((aligned(64)));
 int imgdrv_offset_ioprpimg = 0;
 int imgdrv_offset_ioprpsiz = 0;
 

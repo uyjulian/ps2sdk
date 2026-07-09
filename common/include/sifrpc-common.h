@@ -37,7 +37,7 @@ typedef void (*SifRpcEndFunc_t)(void *end_param);
 
 typedef struct t_SifRpcPktHeader
 {
-    SifCmdHeader_t sifcmd;
+    struct t_SifCmdHeader sifcmd;
     int rec_id;
     void *pkt_addr;
     int rpc_id;
@@ -45,7 +45,7 @@ typedef struct t_SifRpcPktHeader
 
 typedef struct t_SifRpcRendPkt
 {
-    SifCmdHeader_t sifcmd;
+    struct t_SifCmdHeader sifcmd;
     int rec_id;     /* 04 */
     void *pkt_addr; /* 05 */
     int rpc_id;     /* 06 */
@@ -59,7 +59,7 @@ typedef struct t_SifRpcRendPkt
 
 typedef struct t_SifRpcOtherDataPkt
 {
-    SifCmdHeader_t sifcmd;
+    struct t_SifCmdHeader sifcmd;
     int rec_id;     /* 04 */
     void *pkt_addr; /* 05 */
     int rpc_id;     /* 06 */
@@ -72,7 +72,7 @@ typedef struct t_SifRpcOtherDataPkt
 
 typedef struct t_SifRpcBindPkt
 {
-    SifCmdHeader_t sifcmd;
+    struct t_SifCmdHeader sifcmd;
     int rec_id;                        /* 04 */
     void *pkt_addr;                    /* 05 */
     int rpc_id;                        /* 06 */
@@ -82,7 +82,7 @@ typedef struct t_SifRpcBindPkt
 
 typedef struct t_SifRpcCallPkt
 {
-    SifCmdHeader_t sifcmd;
+    struct t_SifCmdHeader sifcmd;
     int rec_id;                        /* 04 */
     void *pkt_addr;                    /* 05 */
     int rpc_id;                        /* 06 */
@@ -119,7 +119,7 @@ typedef struct t_SifRpcServerData
     struct t_SifRpcServerData *link; /* 18	14 */
     struct t_SifRpcServerData *next; /* 19	15 */
     struct t_SifRpcDataQueue *base;  /* 20	16 */
-} ALIGNED_FOR_SIFDMA_UNCACHED SifRpcServerData_t;
+} SifRpcServerData_t;
 
 
 typedef struct t_SifRpcHeader
@@ -128,12 +128,12 @@ typedef struct t_SifRpcHeader
     u32 rpc_id;     /* 05	01 */
     int sema_id;    /* 06	02 */
     u32 mode;       /* 07	03 */
-} ALIGNED_FOR_SIFDMA_UNCACHED SifRpcHeader_t;
+} SifRpcHeader_t;
 
 
 typedef struct t_SifRpcClientData
 {
-    SifRpcHeader_t hdr;
+    struct t_SifRpcHeader hdr;
     u32 command;                       /* 04 	08 */
     void *buf,                         /* 05 	09 */
         *cbuf;                         /* 06 	10 */
@@ -144,7 +144,7 @@ typedef struct t_SifRpcClientData
 
 typedef struct t_SifRpcReceiveData
 {
-    SifRpcHeader_t hdr;
+    struct t_SifRpcHeader hdr;
     void *src, /* 04 */
         *dest; /* 05 */
     int size;  /* 06 */
@@ -158,7 +158,7 @@ typedef struct t_SifRpcDataQueue
         *start,                      /* 03 */
         *end;                        /* 04 */
     struct t_SifRpcDataQueue *next;  /* 05 */
-} ALIGNED_FOR_SIFDMA_UNCACHED SifRpcDataQueue_t;
+} SifRpcDataQueue_t;
 
 #ifdef __cplusplus
 extern "C" {

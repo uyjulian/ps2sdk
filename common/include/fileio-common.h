@@ -18,7 +18,6 @@
 
 #include <tamtypes.h>
 #include <io_common.h>
-#include <sifrpc.h>
 
 // fileio common definitions
 
@@ -52,7 +51,7 @@ struct _fio_read_data
     void *dest2;
     u8 buf1[16];
     u8 buf2[16];
-} ALIGNED_FOR_SIFDMA;
+};
 
 #define FIO_PATH_MAX 256
 
@@ -60,7 +59,7 @@ struct _fio_open_arg
 {
     int mode;
     char name[FIO_PATH_MAX];
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(16)));
 
 struct _fio_read_arg
 {
@@ -68,7 +67,7 @@ struct _fio_read_arg
     void *ptr;
     int size;
     struct _fio_read_data *read_data;
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(16)));
 
 struct _fio_write_arg
 {
@@ -77,7 +76,7 @@ struct _fio_write_arg
     u32 size;
     u32 mis;
     u8 aligned[16];
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(16)));
 
 struct _fio_lseek_arg
 {
@@ -88,7 +87,7 @@ struct _fio_lseek_arg
     } p;
     int offset;
     int whence;
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(16)));
 
 struct _fio_ioctl_arg
 {
@@ -99,7 +98,7 @@ struct _fio_ioctl_arg
     } p;
     int request;
     u8 data[1024]; // Will this be ok ?
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(16)));
 
 struct _fio_dread_arg
 {
@@ -109,7 +108,7 @@ struct _fio_dread_arg
         int result;
     } p;
     io_dirent_t *buf;
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(16)));
 
 struct _fio_getstat_arg
 {
@@ -119,7 +118,7 @@ struct _fio_getstat_arg
         int result;
     } p;
     char name[FIO_PATH_MAX];
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(16)));
 
 struct _fio_chstat_arg
 {

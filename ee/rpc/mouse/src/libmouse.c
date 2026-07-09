@@ -21,7 +21,7 @@
 #include <iopcontrol.h>
 #include "libmouse.h"
 
-static SifRpcClientData_t mouseif;
+static SifRpcClientData_t mouseif __attribute__((aligned(64)));
 static union {
 	char buffer[128];
 	u32 mode;
@@ -36,7 +36,7 @@ static union {
 	} pos;
 	u32 data;
 	u32 time;
-} buffer ALIGNED_FOR_SIFDMA;
+} buffer __attribute__((aligned(64)));
 
 int PS2MouseInit(void)
 

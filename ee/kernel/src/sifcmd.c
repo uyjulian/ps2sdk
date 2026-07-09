@@ -49,7 +49,7 @@ struct cmd_data
     SifCmdHandlerData_t *usr_cmd_handlers;
     u32 nr_usr_handlers;
     int *sregs;
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(64)));
 
 extern struct cmd_data _sif_cmd_data;
 extern unsigned int _SifSendCmd(int cid, int mode, void *pkt, int pktsize, void *src,
@@ -173,10 +173,10 @@ out:
 #endif
 
 #ifdef F_sif_cmd_main
-static u8 pktbuf[CMD_PACKET_MAX] ALIGNED_FOR_SIFDMA;
+static u8 pktbuf[CMD_PACKET_MAX] __attribute__((aligned(64)));
 /* Define this so that in the unlikely case another SIF implementation decides
    to use it, it won't crash.  Otherwise unused.  */
-static u8 sif_unused[64] ALIGNED_FOR_SIFDMA;
+static u8 sif_unused[64] __attribute__((aligned(64)));
 
 static SifCmdSysHandlerData_t sys_cmd_handlers[SYS_CMD_HANDLER_MAX];
 static int sregs[32];
@@ -215,7 +215,7 @@ static void set_sreg(void *packet, void *harg)
 
 void sceSifInitCmd(void)
 {
-    static struct ca_pkt packet;
+    static struct ca_pkt packet __attribute((aligned(64)));
     int i;
     if (HasIopRebootedSinceLastCall())
         sceSifExitCmd();

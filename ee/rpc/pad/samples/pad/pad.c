@@ -25,7 +25,7 @@
  */
 // pad_dma_buf is provided by the user, one buf for each pad
 // contains the pad's current state
-static char padBuf[256] ALIGNED_FOR_SIFDMA;
+static char padBuf[256] __attribute__((aligned(64)));
 
 static char actAlign[6];
 static int actuators;

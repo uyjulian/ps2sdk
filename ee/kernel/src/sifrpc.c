@@ -49,7 +49,7 @@ struct rpc_data
     int client_table_len;
     int rdata_table_idx;
     void *active_queue;
-} ALIGNED_FOR_SIFDMA;
+} __attribute__((aligned(64)));
 
 extern struct rpc_data _sif_rpc_data;
 
@@ -277,10 +277,10 @@ int sceSifGetOtherData(SifRpcReceiveData_t *rd, void *src, void *dest, int size,
 #ifdef F_SifRpcMain
 
 /* The packets sent on EE RPC requests are allocated from this table.  */
-static u8 pkt_table[32][RPC_PACKET_SIZE] ALIGNED_FOR_SIFDMA;
+static u8 pkt_table[32][RPC_PACKET_SIZE] __attribute__((aligned(64)));
 /* A ring buffer used to allocate packets sent on IOP requests.  */
-static u8 rdata_table[32][RPC_PACKET_SIZE] ALIGNED_FOR_SIFDMA;
-static u8 client_table[32][RPC_PACKET_SIZE] ALIGNED_FOR_SIFDMA;
+static u8 rdata_table[32][RPC_PACKET_SIZE] __attribute__((aligned(64)));
+static u8 client_table[32][RPC_PACKET_SIZE] __attribute__((aligned(64)));
 
 struct rpc_data _sif_rpc_data;
 

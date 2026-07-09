@@ -53,7 +53,7 @@ int sbv_patch_fileio(void)
 
 	smod_mod_info_t mod_info;
 	SifDmaTransfer_t dmat;
-	static u32 new_fileio[sizeof(g_new_fileio)/sizeof(g_new_fileio[0])] ALIGNED_FOR_SIFDMA;
+	static u32 new_fileio[sizeof(g_new_fileio)/sizeof(g_new_fileio[0])] ALIGNED(16);
 	u32 *p_new_fileio;
 	u32 new_jump_op;
 	void *patch_addr;
