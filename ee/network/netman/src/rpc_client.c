@@ -317,7 +317,7 @@ int NetManQueryMainIF(char *name)
 	{
 		if((result=ReceiveBuffer.QueryMainNetIFResult.result) == 0)
 		{
-			sprintf(name, "%*s", (int)sizeof(ReceiveBuffer.QueryMainNetIFResult.name), ReceiveBuffer.QueryMainNetIFResult.name);
+			sprintf(name, "%.*s", (int)sizeof(ReceiveBuffer.QueryMainNetIFResult.name), ReceiveBuffer.QueryMainNetIFResult.name);
 			name[NETMAN_NETIF_NAME_MAX_LEN-1] = '\0';
 		}
 	}

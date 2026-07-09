@@ -25,7 +25,7 @@ static void DisplayROMImgDetails(const ROMIMG *ROMImg)
            GREEN"Name"DEFCOL"      \tSize\n"
            "-----------------------------\n");
     for (i = 0, file = ROMImg->files, TotalSize = 0; i < ROMImg->NumFiles; TotalSize += file->RomDir.size, i++, file++) {
-        snprintf(filename, sizeof(filename), "%*s", (int)sizeof(file->RomDir.name), file->RomDir.name);
+        snprintf(filename, sizeof(filename), "%.*s", (int)sizeof(file->RomDir.name), file->RomDir.name);
         printf(GREEN"%-10s"DEFCOL"\t%u\n", filename, file->RomDir.size);
     }
 
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
            			   GREEN"Name"DEFCOL"      \tSize\n"
                        "-----------------------------\n");
                 for (i = 0, file = ROMImg.files; i < ROMImg.NumFiles; i++, file++) {
-                    snprintf(filename, sizeof(filename), "%*s", (int)sizeof(file->RomDir.name), file->RomDir.name);
+                    snprintf(filename, sizeof(filename), "%.*s", (int)sizeof(file->RomDir.name), file->RomDir.name);
                     printf(GREEN"%-10s"DEFCOL"\t%u\n", filename, file->RomDir.size);
 
                     if (file->RomDir.size > 0) {

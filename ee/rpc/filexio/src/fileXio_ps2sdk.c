@@ -387,7 +387,7 @@ int __fileXioDreadHelper(void *userdata, struct dirent *dir)
     }
 
     dir->d_fileno = rv; // TODO: This number should be in theory a unique number per file
-    snprintf(dir->d_name, sizeof(dir->d_name), "%*s", (int)(sizeof(ioxdir.name) - 1), ioxdir.name);
+    snprintf(dir->d_name, sizeof(dir->d_name), "%.*s", (int)(sizeof(ioxdir.name) - 1), ioxdir.name);
     dir->d_reclen = 0;
     switch (ioxdir.stat.mode & FIO_S_IFMT) {
         case FIO_S_IFLNK: dir->d_type = DT_LNK;     break;

@@ -523,7 +523,7 @@ int chdir(const char *path) {
 		return -1;
 	}
 
-	__cwd_len = snprintf(__cwd, sizeof(__cwd), "%*s", sizeof(dest) - 1, dest);
+	__cwd_len = snprintf(__cwd, sizeof(__cwd), "%.*s", sizeof(dest) - 1, dest);
 	__cwd_len = (__cwd_len > (sizeof(__cwd) - 1)) ? (sizeof(__cwd) - 1) : __cwd_len;
 	return 0;
 }

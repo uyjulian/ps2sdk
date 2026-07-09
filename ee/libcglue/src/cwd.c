@@ -123,7 +123,7 @@ char *getcwd(char *buf, size_t size)
 		return NULL;
 	}
 
-	snprintf(buf, size, "%*s", __cwd_len, __cwd);
+	snprintf(buf, size, "%.*s", __cwd_len, __cwd);
 	return buf;
 }
 #endif
@@ -215,16 +215,16 @@ int __path_absolute(const char *in, char *out, int len)
 
 	if((separatorType != SeparatorTypeNotFound) && (separatorType == SeparatorTypeNone || in[dr] == separator)) {
 		/* It starts with "drive:" and has no separator or "drive:/", so it's already absolute */
-		out_len = snprintf(out, len, "%*s", in_len, in);
+		out_len = snprintf(out, len, "%.*s", in_len, in);
 	} else if((separatorType != SeparatorTypeNotFound) && in[dr - 1] == ':') {
 		/* It starts with "drive:", so it's already absoulte, however it misses the "/" after unit */
-		out_len = snprintf(out, len, "%*s%c%*s", dr, in, separator, in_len - dr, in + dr);
+		out_len = snprintf(out, len, "%.*s%c%.*s", dr, in, separator, in_len - dr, in + dr);
 	} else if(in[0] == '\\' || in[0] == '/') {
 		/* It's absolute, but missing the drive, so use cwd's drive */
-		out_len = snprintf(out, len, "%*s%*s", __get_drive(__cwd, &separatorType, __cwd_len), __cwd, in_len, in);
+		out_len = snprintf(out, len, "%.*s%.*s", __get_drive(__cwd, &separatorType, __cwd_len), __cwd, in_len, in);
 	} else {
 		/* It's not absolute, so append it to the current cwd */
-		out_len = snprintf(out, len, "%*s%c%*s", __cwd_len, __cwd, separator, in_len, in);
+		out_len = snprintf(out, len, "%.*s%c%.*s", __cwd_len, __cwd, separator, in_len, in);
 	}
 	if (out_len >= len) return -1;
 
