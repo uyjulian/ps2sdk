@@ -54,9 +54,9 @@ static unsigned int RWBufferSize=DEFAULT_RWSIZE;
 
 // 0x4800 bytes for DirEntry structures
 // 0x400 bytes for the filename string
-static unsigned char fileXio_rpc_buffer[0x4C00] ALIGNED_FOR_SIFDMA; // RPC send/receive buffer
-SifRpcDataQueue_t qd;
-SifRpcServerData_t sd0;
+static unsigned char fileXio_rpc_buffer[0x4C00] __attribute__((__aligned__(4))); // RPC send/receive buffer
+struct t_SifRpcDataQueue qd;
+struct t_SifRpcServerData sd0;
 
 static rests_pkt rests;
 
@@ -155,7 +155,7 @@ static int fileXio_GetDeviceList_RPC(struct fileXioDevice* ee_devices, int eecou
     }
     if (device_count)
     {
-        SifDmaTransfer_t dmaStruct;
+        struct t_SifDmaTransfer dmaStruct;
         int intStatus;	// interrupt status - for dis/en-abling interrupts
 
         dmaStruct.src = local_devices;
@@ -214,7 +214,7 @@ static int fileXio_Read_RPC(int infd, char *read_buf, int read_size, void *intr_
      int total;
      int readlen;
      int status;
-     SifDmaTransfer_t dmaStruct;
+     struct t_SifDmaTransfer dmaStruct;
      void *buffer;
      void *aebuffer;
      int intStatus;	// interrupt status - for dis/en-abling interrupts
@@ -353,7 +353,7 @@ static int fileXio_GetDir_RPC(const char* pathname, struct fileXioDirEntry dirEn
   	iox_dirent_t dirbuf;
 	struct fileXioDirEntry localDirEntry;
 	int intStatus;	// interrupt status - for dis/en-abling interrupts
-	SifDmaTransfer_t dmaStruct;
+	struct t_SifDmaTransfer dmaStruct;
 
 	M_DEBUG("GetDir Request '%s'\n",pathname);
 
@@ -434,7 +434,7 @@ static int fileXio_getstat_RPC(char *filename, void* eeptr)
 {
 	iox_stat_t localStat;
 	int res = 0;
-	SifDmaTransfer_t dmaStruct;
+	struct t_SifDmaTransfer dmaStruct;
 	int intStatus;	// interrupt status - for dis/en-abling interrupts
 
 	res = iomanX_getstat(filename, &localStat);
@@ -460,7 +460,7 @@ static int fileXio_dread_RPC(int fd, void* eeptr)
 {
       int res=0;
 	iox_dirent_t localDir;
-      SifDmaTransfer_t dmaStruct;
+      struct t_SifDmaTransfer dmaStruct;
       int intStatus;	// interrupt status - for dis/en-abling interrupts
 
 	res = iomanX_dread(fd, &localDir);

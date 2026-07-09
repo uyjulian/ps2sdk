@@ -70,8 +70,8 @@ struct CallbackEntry
 static char cmdData[16];
 static pwoffcb poweroff_button_cb = 0;
 static void *poweroff_button_data = 0;
-static SifRpcDataQueue_t qd;
-static SifRpcServerData_t sd0;
+static struct t_SifRpcDataQueue qd;
+static struct t_SifRpcServerData sd0;
 static int PowerOffThreadID = -1;
 static SifRpcClientData_t client;
 

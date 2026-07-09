@@ -17,7 +17,6 @@
 #define __LIBRM_COMMON_H__
 
 #include <tamtypes.h>
-#include <sifrpc.h>
 
 struct rmRpcPacket
 {
@@ -43,7 +42,7 @@ struct rmRpcPacket
         } cmd;
         u8 buffer[128];
     };
-} ALIGNED_FOR_SIFDMA;
+};
 
 struct rmEEData
 {

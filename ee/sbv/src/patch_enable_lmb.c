@@ -70,7 +70,7 @@ int sbv_patch_enable_lmb(void)
 	/* This is the routine called by the loadfile RPC dispatcher for LoadModuleBuffer
 	   over RPC (call #6).  The bracketed operands are the ones patched by the real
 	   locations in IOP memory before being installed onto the IOP.  */
-	static u32 lmb_patch[sizeof(g_lmb_patch)] ALIGNED_FOR_SIFDMA;
+	static u32 lmb_patch[sizeof(g_lmb_patch)] ALIGNED(16);
 	u8 buf[256];
 	SifRpcReceiveData_t RData;
 	slib_exp_lib_t *modload_lib = (slib_exp_lib_t *)buf;

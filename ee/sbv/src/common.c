@@ -21,7 +21,7 @@
 
 #include "common.h"
 
-struct smem_buf smem_buf;
+struct smem_buf smem_buf ALIGNED(64);
 
 /* Do not link to memcmp() from libc, so we only depend on libkernel. */
 int __memcmp(const void *s1, const void *s2, unsigned int length)

@@ -26,10 +26,10 @@ IRX_ID(MODNAME, 1, 1);
 #endif
 
 
-static struct _fio_read_data read_data_out;
+static struct _fio_read_data read_data_out __attribute__((aligned(16)));
 static void *xfer_buffer;
 static int xfer_size;
-static int fileio_rpc_tmpbuf[0x4c] ALIGNED_FOR_SIFDMA;
+static int fileio_rpc_tmpbuf[0x4c] __attribute__((aligned(16)));
 
 static void fileio_rpc_start_thread(void *param);
 static void heap_rpc_start_thread(void *param);
@@ -436,7 +436,7 @@ static void fileio_rpc_chstat(struct _fio_chstat_arg *buffer, int length, int *o
     *outbuffer = io_chstat(buffer->name, &buffer->stat, buffer->p.cbit);
 }
 
-static int fileio_rpc_outbuf[0x4] ALIGNED_FOR_SIFDMA;
+static int fileio_rpc_outbuf[0x4] __attribute__((aligned(16)));
 
 static int *fileio_rpc_service_handler(int fno, void *buffer, int length)
 {
@@ -500,9 +500,9 @@ static int *fileio_rpc_service_handler(int fno, void *buffer, int length)
     return fileio_rpc_outbuf;
 }
 
-static SifRpcDataQueue_t fileio_rpc_service_queue;
-static SifRpcServerData_t fileio_rpc_service_data;
-static int fileio_rpc_service_in_buf[0x112] ALIGNED_FOR_SIFDMA;
+static SifRpcDataQueue_t fileio_rpc_service_queue __attribute__((aligned(16)));
+static SifRpcServerData_t fileio_rpc_service_data __attribute__((aligned(16)));
+static int fileio_rpc_service_in_buf[0x112] __attribute__((aligned(16)));
 
 static void fileio_rpc_start_thread(void *param)
 {
@@ -554,7 +554,7 @@ static void heap_rpc_free_iop_heap(void **buffer, int length, int *outbuffer)
     *outbuffer = FreeSysMemory(*buffer);
 }
 
-static int heap_rpc_outbuf[0x4] ALIGNED_FOR_SIFDMA;
+static int heap_rpc_outbuf[0x4] __attribute__((aligned(16)));
 
 static int *heap_rpc_service_handler(int fno, void *buffer, int length)
 {
@@ -575,9 +575,9 @@ static int *heap_rpc_service_handler(int fno, void *buffer, int length)
     return heap_rpc_outbuf;
 }
 
-static SifRpcDataQueue_t heap_rpc_service_queue;
-static SifRpcServerData_t heap_rpc_service_data;
-static int heap_rpc_service_in_buf[0x40] ALIGNED_FOR_SIFDMA;
+static SifRpcDataQueue_t heap_rpc_service_queue __attribute__((aligned(16)));
+static SifRpcServerData_t heap_rpc_service_data __attribute__((aligned(16)));
+static int heap_rpc_service_in_buf[0x40] __attribute__((aligned(16)));
 
 static void heap_rpc_start_thread(void *param)
 {
@@ -609,7 +609,7 @@ static void iopinfo_rpc_querybootmode(void *buffer, int length, int *outbuffer)
     *outbuffer = (BootMode != 0) ? (*(u16 *)BootMode & 0xFFFC) : 0x800;
 }
 
-static int iopinfo_rpc_outbuf[0x4] ALIGNED_FOR_SIFDMA;
+static int iopinfo_rpc_outbuf[0x4] __attribute__((aligned(16)));
 
 static int *iopinfo_rpc_service_handler(int fno, void *buffer, int length)
 {
@@ -624,9 +624,9 @@ static int *iopinfo_rpc_service_handler(int fno, void *buffer, int length)
     return iopinfo_rpc_outbuf;
 }
 
-static SifRpcDataQueue_t iopinfo_rpc_service_queue;
-static SifRpcServerData_t iopinfo_rpc_service_data;
-static int iopinfo_rpc_service_in_buf[0x10] ALIGNED_FOR_SIFDMA;
+static SifRpcDataQueue_t iopinfo_rpc_service_queue __attribute__((aligned(16)));
+static SifRpcServerData_t iopinfo_rpc_service_data __attribute__((aligned(16)));
+static int iopinfo_rpc_service_in_buf[0x10] __attribute__((aligned(16)));
 
 static void iopinfo_rpc_service_start_thread(void *param)
 {

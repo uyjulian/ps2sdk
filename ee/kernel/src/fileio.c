@@ -38,8 +38,8 @@ void _fio_intr();
 
 #ifdef F___fio_internals
 SifRpcClientData_t _fio_cd;
-int _fio_recv_data[512] ALIGNED_FOR_SIFDMA;
-int _fio_intr_data[32] ALIGNED_FOR_SIFDMA;
+int _fio_recv_data[512] __attribute__((aligned(64)));
+int _fio_intr_data[32] __attribute__((aligned(64)));
 int _fio_block_mode;
 int _fio_io_sema;
 int _fio_completion_sema;

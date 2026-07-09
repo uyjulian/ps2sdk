@@ -27,8 +27,8 @@ static void *poweroff_data           = NULL;
 static u8 poffThreadStack[512 * 16] __attribute__((aligned(16)));
 
 static SifRpcClientData_t cd0;
-static SifRpcDataQueue_t cb_queue;
-static SifRpcServerData_t cb_srv;
+static struct t_SifRpcDataQueue cb_queue;
+static struct t_SifRpcServerData cb_srv;
 static int powerOffThreadId;
 
 static void *PowerOff_ee_rpc_handler(int fnum, void *buffer, int len)
@@ -52,7 +52,7 @@ static void *PowerOff_ee_rpc_handler(int fnum, void *buffer, int len)
 
 static void PowerOffThread(void *dat)
 {
-    static unsigned char cb_rpc_buffer[64] ALIGNED_FOR_SIFDMA;
+    static unsigned char cb_rpc_buffer[64] __attribute__((__aligned__(64)));
 
     (void)dat;
 

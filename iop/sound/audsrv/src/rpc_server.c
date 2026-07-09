@@ -28,7 +28,7 @@
 
 /* rpc server variables */
 /** buffer for RPC DMA */
-static int rpc_buffer[18000/4] ALIGNED_FOR_SIFDMA;
+static int rpc_buffer[18000/4] __attribute__((__aligned__(4)));
 /** RPC thread variables */
 static SifRpcDataQueue_t qd;
 /** RPC thread variables */

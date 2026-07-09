@@ -26,13 +26,13 @@ typedef struct sif_rpc_data_
 	SifRpcDataQueue_t *active_queue;
 	int sif_rpc_sema_ef;
 	int used_sema_bitfield;
-} ALIGNED_FOR_SIFDMA sif_rpc_data_t;
+} __attribute__((aligned(16))) sif_rpc_data_t;
 
 static sif_rpc_data_t sif_rpc_data;
 static u32 init = 0;
-static u8 pkt_table[0x800] ALIGNED_FOR_SIFDMA;
-static u8 rdata_table[0x800] ALIGNED_FOR_SIFDMA;
-static u8 client_data[0x800] ALIGNED_FOR_SIFDMA;
+static u8 pkt_table[0x800] __attribute__((aligned(16)));
+static u8 rdata_table[0x800] __attribute__((aligned(16)));
+static u8 client_data[0x800] __attribute__((aligned(16)));
 
 static void sif_cmd_handler_end(SifRpcRendPkt_t *data, sif_rpc_data_t *harg);
 static void sif_cmd_handler_bind(SifRpcBindPkt_t *data, sif_rpc_data_t *harg);

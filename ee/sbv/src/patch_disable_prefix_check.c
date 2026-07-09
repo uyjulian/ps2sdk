@@ -16,7 +16,6 @@
 #include <tamtypes.h>
 #include <kernel.h>
 #include <string.h>
-#include <sifrpc.h>
 
 #include "slib.h"
 
@@ -33,7 +32,7 @@ int sbv_patch_disable_prefix_check(void)
 		u8 buf[256];
 		slib_exp_lib_t exp_lib;
 	} buf;
-	static u32 patch[sizeof(g_patch)/sizeof(g_patch[0])] ALIGNED_FOR_SIFDMA;
+	static u32 patch[sizeof(g_patch)/sizeof(g_patch[0])] ALIGNED(16);
 	SifDmaTransfer_t dmat;
 	slib_exp_lib_t *modload_lib = &buf.exp_lib;
 

@@ -33,7 +33,7 @@ typedef struct sif_cmd_data_
 	void *sif_1_callback_userdata;
 	SifCmdSysHandlerData_t sys_cmd_handler_handler[32];
 	unsigned int sregs[32];
-} ALIGNED_FOR_SIFDMA sif_cmd_data_t;
+} __attribute__((aligned(16))) sif_cmd_data_t;
 
 typedef struct t_SifCmdChgAddrData
 {
@@ -42,8 +42,8 @@ typedef struct t_SifCmdChgAddrData
 } SifCmdChgAddrData_t;
 
 static sif_cmd_data_t sif_cmd_data;
-static u8 sif_iop_recvbuf[0x80] ALIGNED_FOR_SIFDMA;
-static u8 sif_unused[0x40] ALIGNED_FOR_SIFDMA;
+static u8 sif_iop_recvbuf[0x80] __attribute__((aligned(16)));
+static u8 sif_unused[0x40] __attribute__((aligned(16)));
 
 static int sif_cmd_int_handler(void *userdata);
 
