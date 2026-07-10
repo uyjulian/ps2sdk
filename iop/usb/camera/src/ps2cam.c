@@ -10,7 +10,7 @@
  */
 
 //(1) Please keep this file neat.
-//(2) This irx must always be backwords compatible.
+//(2) This irx must always be backwards compatible.
 #include <stdio.h>
 #include <sysclib.h>
 #include <tamtypes.h>
@@ -896,6 +896,7 @@ int PS2CamReadData(CAMERA_DEVICE* dev, void *addr, int size)
 	if(ret != USB_RC_OK)
 	{
 		printf("Usb: Error sending sceUsbdIsochronousTransfer\n");
+		SignalSema(ps2cam_sema);
 		return -1;
 	}
 	else
