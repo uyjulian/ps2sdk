@@ -11,8 +11,8 @@ IOP_BIN_ALTNAMES =
 IOP_SRC_DIR = $(PS2SDKSRC)/iop/memorycard/mcman/src/
 IOP_INC_DIR = $(PS2SDKSRC)/iop/memorycard/mcman/include/
 
-IOP_BIN ?= mcman-1400.irx
+IOP_BIN ?= mcman-2000.irx
 
-MCMAN_BUILDING_XMCMAN_V2 ?= 0
+MCMAN_BUILDING_XMCMAN_V2 ?= 1
 
 include $(PS2SDKSRC)/iop/memorycard/mcman/Makefile

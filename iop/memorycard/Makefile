@@ -10,7 +10,7 @@ SUBDIRS = \
 	dongleman \
 	mcman \
 	mcman-1300 \
-	mcman-1400 \
+	mcman-2000 \
 	mcserv \
 	mcserv-1300 \
 	vmcman \

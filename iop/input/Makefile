@@ -9,7 +9,7 @@
 SUBDIRS = \
     padman \
     padman-1300 \
-    padman-1400 \
+    padman-2000 \
     rmman \
     rmman2 \
     rmmanx
