@@ -6,13 +6,13 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 
-IOP_BIN_ALTNAMES ?= mcman-2000.irx
+IOP_BIN_ALTNAMES ?= mcman-1400.irx
 
 # Build the newer version of the memory card module?
 MCMAN_BUILDING_XMCMAN ?= 1
 
 # Build the newer version of the memory card module that links against the remote-compatible SIO2MAN?
-MCMAN_BUILDING_XMCMAN_V2 ?= 1
+MCMAN_BUILDING_XMCMAN_V2 ?= 0
 
 # Read from the dev9 external flash ROM instead of the memory card?
 MCMAN_BUILDING_XFROMMAN ?= 0
