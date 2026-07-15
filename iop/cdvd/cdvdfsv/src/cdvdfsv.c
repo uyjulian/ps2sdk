@@ -314,13 +314,11 @@ static void cdvdfsv_parseargs(int ac, char **av)
 
 int sceCdChangeThreadPriority(int priority)
 {
-	iop_thread_info_t thinfo;
-
 	if ( (unsigned int)(priority - 9) >= 0x73 )
 		return -403;
 	if ( priority == 9 )
 		priority = 10;
-	ReferThreadStatus(0, &thinfo);
+	// Unofficial: remove unused ReferThreadStatus
 	ChangeThreadPriority(0, 8);
 	ChangeThreadPriority(g_cdvdfsv_thids[0], priority - 1);
 	ChangeThreadPriority(g_cdvdfsv_thids[2], priority);

@@ -103,7 +103,6 @@ u32 cdda_st_buf[64 / sizeof(u32)] ALIGNED(64);
 #endif
 
 extern int initVersionCdvdfsv;
-extern int bindNcmd;
 extern SifRpcClientData_t clientNCmd;
 extern int nCmdSemaId;
 extern int nCmdNum;
@@ -807,7 +806,6 @@ int _CdCheckNCmd(int cmd)
     }
 
     nCmdNum = cmd;
-    ReferThreadStatus(CdThreadId, &CdThreadParam);
     if (sceCdSync(1)) {
         SignalSema(nCmdSemaId);
         return 0;

@@ -141,10 +141,8 @@ void WaitClearEvent(int eventflag, u32 bits, int mode, u32 *resbits_out)
 	WaitEventFlag(eventflag, bits | EF_EXIT_THREAD, WEF_OR, &resbits);
 
 	if( resbits & EF_EXIT_THREAD )
-	{	//Yes, it's unused. Probably leftover code.
-		iop_thread_info_t tinfo;
-
-		ReferThreadStatus(TH_SELF, &tinfo);
+	{
+		// Unofficial: remove unused ReferThreadStatus
 		SetEventFlag(eventflag, EF_EXIT_THREAD);
 		ExitThread();
 	}
