@@ -36,7 +36,6 @@ I_ExitDeleteThread
 I_TerminateThread
 I_ChangeThreadPriority
 I_GetThreadId
-I_ReferThreadStatus
 I_DelayThread
 I_SetAlarm
 I_CancelAlarm

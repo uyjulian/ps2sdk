@@ -88,22 +88,18 @@ volatile int CdCallbackNum;
 volatile sceCdCBFunc sceCdCallbackFunc;
 
 // threads
-int CdThreadId = 0;
-ee_thread_status_t CdThreadParam;
 int callbackThreadId = 0;
 ee_thread_t callbackThreadParam;
 
 // current command variables
 
 s32 diskReadyMode __attribute__((aligned(64)));
-s32 trayReqData __attribute__((aligned(64)));
 u32 initMode __attribute__((aligned(64)));
 
 // init stuff
 CdInitPkt cdInitRecvBuff __attribute__((aligned(64)));
 // searchfile stuff
 SearchFilePkt searchFileSendBuff __attribute__((aligned(64)));
-u32 searchFileRecvBuff __attribute__((aligned(64)));
 #endif
 
 // Prototypes for multimodule
@@ -117,16 +113,12 @@ extern int callbackSemaId;
 extern volatile int cbSema;
 extern volatile int CdCallbackNum;
 extern volatile sceCdCBFunc sceCdCallbackFunc;
-extern int CdThreadId;
-extern ee_thread_status_t CdThreadParam;
 extern int callbackThreadId;
 extern ee_thread_t callbackThreadParam;
 extern s32 diskReadyMode;
-extern s32 trayReqData;
 extern u32 initMode;
 extern CdInitPkt cdInitRecvBuff;
 extern SearchFilePkt searchFileSendBuff;
-extern u32 searchFileRecvBuff;
 
 /* Other Functions */
 
@@ -136,7 +128,6 @@ s32 sceCdInit(s32 mode)
     if (_CdSyncS(1))
         return 0;
     sceSifInitRpc(0);
-    CdThreadId     = GetThreadId();
     memset(&clientInit, 0, sizeof(clientInit));
 
     while (1) {
@@ -193,7 +184,6 @@ s32 sceCdSearchFile(sceCdlFILE *file, const char *name)
     if (PollSema(nCmdSemaId) != nCmdSemaId)
         return 0;
     nCmdNum = CD_SERVER_SEARCHFILE;
-    ReferThreadStatus(CdThreadId, &CdThreadParam);
     if (sceCdSync(1)) {
         SignalSema(nCmdSemaId);
         return 0;
@@ -337,8 +327,6 @@ s32 sceCdInitEeCB(s32 priority, void *stackAddr, s32 stackSize)
         return 0;
     }
     // initialise callback thread
-    CdThreadId = GetThreadId();
-    ReferThreadStatus(CdThreadId, &CdThreadParam);
     callbackThreadParam.stack_size       = stackSize;
     callbackThreadParam.gp_reg           = &_gp;
     callbackThreadParam.func             = &_CdCallbackLoop;

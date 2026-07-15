@@ -459,7 +459,6 @@ int _CdCheckSCmd(int cur_cmd)
         return 0;
     }
     sCmdNum = cur_cmd;
-    ReferThreadStatus(CdThreadId, &CdThreadParam);
     if (_CdSyncS(1)) {
         SignalSema(sCmdSemaId);
         return 0;
