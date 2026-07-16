@@ -385,8 +385,8 @@ void iomanX_StdioInit(int mode)
 	BootMode = QueryBootMode(3);
 	if ( BootMode && (BootMode[1] & 4) )
 		return;
-	ReferThreadStatus(0, &thinfo);
-	ChangeThreadPriority(0, 4);
+	ReferThreadStatus(TH_SELF, &thinfo);
+	ChangeThreadPriority(TH_SELF, 4);
 #endif
 #ifdef _IOP
 	switch ( mode )
@@ -417,7 +417,7 @@ void iomanX_StdioInit(int mode)
 	open_tty_handles("tty:");
 #endif
 #ifdef _IOP
-	ChangeThreadPriority(0, thinfo.currentPriority);
+	ChangeThreadPriority(TH_SELF, thinfo.currentPriority);
 #endif
 }
 

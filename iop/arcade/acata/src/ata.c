@@ -83,7 +83,7 @@ static void ata_thread(void *arg)
 			}
 			argt->atah = 0;
 			a_ops->ao_done(atah, v10);
-			CancelWakeupThread(0);
+			CancelWakeupThread(TH_SELF);
 		}
 		else
 		{
@@ -303,7 +303,7 @@ int acAtaModuleStart(int argc, char **argv)
 	Atac.requestq.q_prev = 0;
 	Atac.requestq.q_next = 0;
 	DelayThread(delay);
-	ChangeThreadPriority(0, 123);
+	ChangeThreadPriority(TH_SELF, 123);
 	index_v12 = ata_probe((acAtaReg)0xB6000000);
 	Atac.active = index_v12;
 	if ( index_v12 == 0 )

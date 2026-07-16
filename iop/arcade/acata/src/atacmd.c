@@ -139,7 +139,7 @@ static int ata_ops_command(struct ac_ata_h *atah, int cmdpri, int pri)
 				break;
 		}
 	}
-	ChangeThreadPriority(0, cmdpri);
+	ChangeThreadPriority(TH_SELF, cmdpri);
 	cmd = ata->ac_command;
 	count = 5;
 	flag_v8 = atah->a_flag;
@@ -158,7 +158,7 @@ static int ata_ops_command(struct ac_ata_h *atah, int cmdpri, int pri)
 			break;
 		}
 	}
-	ChangeThreadPriority(0, pri);
+	ChangeThreadPriority(TH_SELF, pri);
 	// cppcheck-suppress knownConditionTrueFalse
 	if ( atah->a_state >= 0x1FFu )
 	{

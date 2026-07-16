@@ -85,7 +85,7 @@ static void sceSifCmdLoop2(SifRpcClientData_t *cd, SdrEECBInfo *cbi)
 		if ( cbi->m_eeCBData.mode == eeCBDataSend.mode )
 		{
 			cbi->m_eeCBData.mode = 0;
-			iCancelWakeupThread(0);
+			iCancelWakeupThread(TH_SELF);
 			CpuResumeIntr(state);
 			break;
 		}

@@ -130,7 +130,7 @@ static int ram_dma_request(struct ram_softc *ramc, acRamT ram)
 		acRamAddr addr;
 
 		dma = acDmaSetup(&ramc->dma, (acDmaOpsData *)&ops_22, 7, 64, output);
-		CancelWakeupThread(0);
+		CancelWakeupThread(TH_SELF);
 		ret = acDmaRequest(dma);
 		if ( ret < 0 )
 			break;
@@ -360,7 +360,7 @@ int acRamModuleStart(int argc, char **argv)
 		--retry;
 	}
 	*((volatile acUint16 *)0xB4640000) = 0;
-	ChangeThreadPriority(0, 123);
+	ChangeThreadPriority(TH_SELF, 123);
 	USec2SysClock(0x411Bu, &v16);
 	Ramc.refresh = v16.lo;
 	ret = SetAlarm(&v16, ram_refresh, &Ramc);

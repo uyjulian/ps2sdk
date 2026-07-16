@@ -569,7 +569,7 @@ void SelfUnloadModule(void)
 		Kprintf("SelfUnloadModule(): panic !!! Unload fail semerror=%d !!!\n", sema_res);
 	}
 	StartThread(modLoadCB, &mltargs);
-	ChangeThreadPriority(0, 123);
+	ChangeThreadPriority(TH_SELF, 123);
 	WaitEventFlag(ModuleLoaderSync, 1u, 17, &efbits);
 	SignalSema(ModuleLoaderMutex);
 	Kprintf("SelfUnloadModule(): panic !!! Unload fail error=%d !!!\n", ret_tmp);
@@ -754,7 +754,7 @@ static void ExecModuleLoad(void *userdata)
 	{
 		case 0:
 			mi = do_load(mltargs, &res_tmp);
-			ChangeThreadPriority(0, 8);
+			ChangeThreadPriority(TH_SELF, 8);
 			break;
 		case 1:
 			mi = SearchModuleCBByID(mltargs->modid);
@@ -770,7 +770,7 @@ static void ExecModuleLoad(void *userdata)
 			break;
 		case 3:
 			mi = do_load(mltargs, &res_tmp);
-			ChangeThreadPriority(0, 8);
+			ChangeThreadPriority(TH_SELF, 8);
 			if ( !mi )
 			{
 				break;
@@ -803,7 +803,7 @@ static void ExecModuleLoad(void *userdata)
 				break;
 			}
 			modid_2 = mltargs->modid_2;
-			ChangeThreadPriority(0, 1);
+			ChangeThreadPriority(TH_SELF, 1);
 			TerminateThread(modid_2);
 			DeleteThread(modid_2);
 			SignalSema(ModuleLoaderMutex);
@@ -825,7 +825,7 @@ static void ExecModuleLoad(void *userdata)
 	}
 	if ( mltargs->thread_ef )
 	{
-		ChangeThreadPriority(0, 1);
+		ChangeThreadPriority(TH_SELF, 1);
 		SetEventFlag(mltargs->thread_ef, 1u);
 	}
 	return;
@@ -1076,7 +1076,7 @@ static int start_module(ModuleInfo_t *module_info, const char *data, int arglen,
 	module_info->newflags |= 2;
 	module_result =
 		((int (*)(int argc, char **argv, elf_header_t **eh, ModuleInfo_t *mi))module_info->entry)(in_argc, in_argv_ptrs, 0, module_info);
-	ChangeThreadPriority(0, 8);
+	ChangeThreadPriority(TH_SELF, 8);
 	if ( result_out )
 	{
 		*result_out = module_result;
@@ -1185,7 +1185,7 @@ stop_module(ModuleInfo_t *module_info, int command, int modid_2, int arglen, con
 	// TODO: save/restore gp register
 	module_result =
 		((int (*)(int argc, char **argv, elf_header_t **eh, ModuleInfo_t *mi))module_info->entry)(-in_argc, in_argv_ptrs, 0, module_info);
-	ChangeThreadPriority(0, 8);
+	ChangeThreadPriority(TH_SELF, 8);
 	if ( result_out )
 		*result_out = module_result;
 	module_info->newflags &= 0xFFF0;
@@ -2103,7 +2103,7 @@ __asm__ (
 
 int ReBootStart(const char *command, unsigned int flags)
 {
-	ChangeThreadPriority(0, 7);
+	ChangeThreadPriority(TH_SELF, 7);
 	TerminateResidentLibraries(" ReBootStart:ei: Terminate resident Libraries\n", flags, 2);
 	return CpuExecuteKmode(TerminateResidentEntriesDI, command, flags);
 }
