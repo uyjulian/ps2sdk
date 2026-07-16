@@ -217,7 +217,7 @@ int PS2CamSetDeviceBandwidth(int handle, char bandwidth)
 int PS2CamReadPacket(int handle)
 {
 	int *ret;
-	int *iop_addr;
+	SifRpcReceiveData_t rdata;
 
 	WaitSema(sem);
 
@@ -230,16 +230,9 @@ int PS2CamReadPacket(int handle)
 
 	if(ret[0] < 0) return ret[0];
 
-
-	DI();
-	ee_kmode_enter();
-
-	iop_addr = (int *)(0xbc000000+ret[1]);
-
-	memcpy(&campacket[0],iop_addr, ret[0]);
-
-	ee_kmode_exit();
-	EI();
+	SyncDCache(campacket, (u8 *)(&campacket[0]) + sizeof(campacket));
+	if (sceSifGetOtherData(&rdata, (void *)ret[1], &campacket[0], sizeof(campacket), 0) < 0)
+    return -1;
 
 	//if i add a printf here, the ps2 will exit to sony's explorer
 	SignalSema(sem);
@@ -306,7 +299,7 @@ int PS2CamExtractFrame(int handle, char *buffer, int bufsize)
 		//if read has a error return it
 		if(ret < 0) return ret;
 
-		head = (EYETOY_FRAME_HEAD *)&campacket[0];
+		head = (EYETOY_FRAME_HEAD *)UNCACHED_SEG(&campacket[0]);
 
 		if(head->magic2==0xff && head->magic3==0xff && ret!=0)
 		{
@@ -319,7 +312,7 @@ int PS2CamExtractFrame(int handle, char *buffer, int bufsize)
 					return 0;
 				}
 
-				memcpy(&buffer[pos], &campacket[16], ret-16 );
+				memcpy(&buffer[pos], UNCACHED_SEG(&campacket[16]), ret-16 );
 				pos += (ret-16);
 				capturing = 1;
 
@@ -351,7 +344,7 @@ int PS2CamExtractFrame(int handle, char *buffer, int bufsize)
 				//if it doesnt fit in those pos then it must be data
 				if(capturing==1)
 				{
-					memcpy(&buffer[pos], &campacket[0], ret );
+					memcpy(&buffer[pos], UNCACHED_SEG(&campacket[0]), ret );
 					pos += (ret);
 				}
 			}
@@ -361,7 +354,7 @@ int PS2CamExtractFrame(int handle, char *buffer, int bufsize)
 			// it must be data
 			if(capturing==1 && ret !=0)
 			{
-				memcpy(&buffer[pos], &campacket[0], ret );
+				memcpy(&buffer[pos], UNCACHED_SEG(&campacket[0]), ret );
 				pos += (ret);
 			}
 		}
