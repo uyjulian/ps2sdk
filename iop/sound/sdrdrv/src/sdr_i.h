@@ -13,6 +13,7 @@
 
 #include <irx_imports.h>
 #include <sdrdrv.h>
+#include <libsdr-common.h>
 
 #ifndef SDRDRV_OBSOLETE_FUNCS
 #define SDRDRV_OBSOLETE_FUNCS 0
@@ -26,20 +27,6 @@
 #ifndef SDRDRV_IMPLEMENT_LIBOSDS
 #define SDRDRV_IMPLEMENT_LIBOSDS 0
 #endif
-
-typedef struct SdrEECBData_
-{
-	// cppcheck-suppress unusedStructMember
-	int mode;
-	// cppcheck-suppress unusedStructMember
-	int voice_bit;
-	// cppcheck-suppress unusedStructMember
-	int status;
-	// cppcheck-suppress unusedStructMember
-	int opt;
-	// cppcheck-suppress unusedStructMember
-	int pad[12];
-} SdrEECBData;
 
 typedef struct SdrEECBInfo_
 {

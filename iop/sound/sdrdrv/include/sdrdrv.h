@@ -11,6 +11,8 @@
 #ifndef _SDRDRV_H
 #define _SDRDRV_H
 
+#include <libsdr-common.h>
+
 typedef int (*sceSdrUserCommandFunction)(unsigned int command, void *data, int size);
 
 extern int sceSdrChangeThreadPriority(int priority_main, int priority_cb);
