@@ -6,23 +6,25 @@
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
 
-SUBDIRS  = ahx
-SUBDIRS += audsrv
-SUBDIRS += camera
-SUBDIRS += cdvd
-SUBDIRS += filexio
-SUBDIRS += hdd
-SUBDIRS += keyboard
-SUBDIRS += memorycard
-SUBDIRS += mouse
-SUBDIRS += multitap
-SUBDIRS += pad
-SUBDIRS += poweroff
-SUBDIRS += ps2snd
-SUBDIRS += remote
-SUBDIRS += secr
-SUBDIRS += sior
-SUBDIRS += tcpips
+SUBDIRS  = \
+	ahx \
+	audsrv \
+	camera \
+	cdvd \
+	filexio \
+	hdd \
+	keyboard \
+	memorycard \
+	mouse \
+	multitap \
+	pad \
+	poweroff \
+	ps2snd \
+	remote \
+	sdr \
+	secr \
+	sior \
+	tcpips
 
 include $(PS2SDKSRC)/Defs.make
 include $(PS2SDKSRC)/Rules.make
