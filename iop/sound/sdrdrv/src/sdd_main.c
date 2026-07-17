@@ -142,8 +142,8 @@ int sceSdrChangeThreadPriority(int priority_main, int priority_cb)
 		Kprintf("   callback th. priority is higher than main th. priority.\n");
 	}
 	cur_priority = (priority_cb < priority_main) ? priority_main : priority_cb;
-	ReferThreadStatus(0, &thstatus);
-	ChangeThreadPriority(0, 8);
+	ReferThreadStatus(TH_SELF, &thstatus);
+	ChangeThreadPriority(TH_SELF, 8);
 	ret = 0;
 	if ( g_sdrInfo.m_thid_main > 0 )
 		ret = ChangeThreadPriority(g_sdrInfo.m_thid_main, priority_main);
@@ -154,6 +154,6 @@ int sceSdrChangeThreadPriority(int priority_main, int priority_cb)
 	if ( ret < 0 )
 		return ret;
 	g_eeCBInfo.m_initial_priority_cb = cur_priority;
-	ChangeThreadPriority(0, thstatus.currentPriority);
+	ChangeThreadPriority(TH_SELF, thstatus.currentPriority);
 	return 0;
 }

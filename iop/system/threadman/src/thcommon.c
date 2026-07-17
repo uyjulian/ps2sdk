@@ -227,7 +227,7 @@ int post_boot_callback_1(iop_init_entry_t *next, int delayed)
 int post_boot_callback_2(iop_init_entry_t *next, int delayed)
 {
     CpuEnableIntr();
-    ChangeThreadPriority(0, 126);
+    ChangeThreadPriority(TH_SELF, 126);
     if (!next->callback) {
         while (1) {
             DelayThread(1000000);

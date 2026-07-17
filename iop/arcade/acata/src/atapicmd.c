@@ -256,7 +256,7 @@ static int atapi_ops_command(struct ac_ata_h *atah, int cmdpri, int pri)
 	}
 	if ( ret_v5 < 0 )
 		return ret_v5;
-	ChangeThreadPriority(0, cmdpri);
+	ChangeThreadPriority(TH_SELF, cmdpri);
 	ret_v5 = atapi_packet_send((acAtaReg)0xB6000000, &atapi->ap_packet, flag);
 	if ( ret_v5 >= 0 )
 	{
@@ -369,7 +369,7 @@ static int atapi_ops_command(struct ac_ata_h *atah, int cmdpri, int pri)
 			}
 		}
 	}
-	ChangeThreadPriority(0, pri);
+	ChangeThreadPriority(TH_SELF, pri);
 	if ( ret_v5 < 0 )
 		return ret_v5;
 	if ( atah->a_state < 0x1FFu )

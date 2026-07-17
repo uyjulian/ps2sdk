@@ -319,7 +319,7 @@ int sceCdChangeThreadPriority(int priority)
 	if ( priority == 9 )
 		priority = 10;
 	// Unofficial: remove unused ReferThreadStatus
-	ChangeThreadPriority(0, 8);
+	ChangeThreadPriority(TH_SELF, 8);
 	ChangeThreadPriority(g_cdvdfsv_thids[0], priority - 1);
 	ChangeThreadPriority(g_cdvdfsv_thids[2], priority);
 	ChangeThreadPriority(g_cdvdfsv_thids[1], priority);

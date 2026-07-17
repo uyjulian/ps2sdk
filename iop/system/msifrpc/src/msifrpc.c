@@ -648,8 +648,8 @@ void sceSifMEntryLoop(sceSifMServeEntry *se, int request, sceSifMRpcFunc func, s
 	int state;
 	struct msif_msgbox_msg *arg;
 
-	ReferThreadStatus(0, &thinfo);
-	ChangeThreadPriority(0, 16);
+	ReferThreadStatus(TH_SELF, &thinfo);
+	ChangeThreadPriority(TH_SELF, 16);
 	se->command = request;
 	se->func = func;
 	se->cfunc = cfunc;
@@ -690,7 +690,7 @@ void sceSifMEntryLoop(sceSifMServeEntry *se, int request, sceSifMRpcFunc func, s
 			else
 			{
 				printf("msifrpc: quit\n");
-				ChangeThreadPriority(0, thinfo.currentPriority);
+				ChangeThreadPriority(TH_SELF, thinfo.currentPriority);
 				break;
 			}
 		}
