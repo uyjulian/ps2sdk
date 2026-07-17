@@ -36,34 +36,34 @@ static void sceSifCmdLoop2(SifRpcClientData_t *cd, SdrEECBInfo *cbi)
 			while ( 1 )
 			{
 				// Only the obsolete DMA0/DMA1/IRQ funcs (not implemented in libsdr 4.0.1) clashes
-				if ( mode_cur & (1 << 0) )
+				if ( mode_cur & SDR_CB_DMA0 )
 				{
-					mode_cur &= ~(1 << 0);
+					mode_cur &= ~SDR_CB_DMA0;
 					eeCBDataSend.mode = 1;
 				}
-				else if ( mode_cur & (1 << 1) )
+				else if ( mode_cur & SDR_CB_DMA1 )
 				{
-					mode_cur &= ~(1 << 1);
+					mode_cur &= ~SDR_CB_DMA1;
 					eeCBDataSend.mode = 2;
 				}
-				else if ( mode_cur & (1 << 2) )
+				else if ( mode_cur & SDR_CB_IRQ )
 				{
-					mode_cur &= ~(1 << 2);
+					mode_cur &= ~SDR_CB_IRQ;
 					eeCBDataSend.mode = 3;
 				}
-				else if ( mode_cur & (1 << 8) )
+				else if ( mode_cur & SDR_CB_DMA0INT )
 				{
-					mode_cur &= ~(1 << 8);
+					mode_cur &= ~SDR_CB_DMA0INT;
 					eeCBDataSend.mode = 11;
 				}
-				else if ( mode_cur & (1 << 9) )
+				else if ( mode_cur & SDR_CB_DMA1INT )
 				{
-					mode_cur &= ~(1 << 9);
+					mode_cur &= ~SDR_CB_DMA1INT;
 					eeCBDataSend.mode = 12;
 				}
-				else if ( mode_cur & (1 << 10) )
+				else if ( mode_cur & SDR_CB_IRQINT )
 				{
-					mode_cur &= ~(1 << 10);
+					mode_cur &= ~SDR_CB_IRQINT;
 					eeCBDataSend.mode = 13;
 				}
 				else
@@ -99,7 +99,7 @@ int _sce_sdrDMA0CallBackProc(void *data)
 {
 	(void)data;
 
-	g_eeCBInfo.m_eeCBData.mode |= (1 << 0);
+	g_eeCBInfo.m_eeCBData.mode |= SDR_CB_DMA0;
 	iWakeupThread(g_eeCBInfo.m_thid_cb);
 	return 1;
 }
@@ -108,7 +108,7 @@ int _sce_sdrDMA1CallBackProc(void *data)
 {
 	(void)data;
 
-	g_eeCBInfo.m_eeCBData.mode |= (1 << 1);
+	g_eeCBInfo.m_eeCBData.mode |= SDR_CB_DMA1;
 	iWakeupThread(g_eeCBInfo.m_thid_cb);
 	return 1;
 }
@@ -117,7 +117,7 @@ int _sce_sdrIRQCallBackProc(void *data)
 {
 	(void)data;
 
-	g_eeCBInfo.m_eeCBData.mode |= (1 << 2);
+	g_eeCBInfo.m_eeCBData.mode |= SDR_CB_IRQ;
 	iWakeupThread(g_eeCBInfo.m_thid_cb);
 	return 1;
 }
@@ -130,7 +130,7 @@ int _sce_sdrDMA0IntrHandler(int core, void *common)
 	(void)core;
 
 	cbi = (SdrEECBInfo *)common;
-	cbi->m_eeCBData.mode |= (1 << 8);
+	cbi->m_eeCBData.mode |= SDR_CB_DMA0INT;
 	iWakeupThread(cbi->m_thid_cb);
 	return 0;
 }
@@ -142,7 +142,7 @@ int _sce_sdrDMA1IntrHandler(int core, void *common)
 	(void)core;
 
 	cbi = (SdrEECBInfo *)common;
-	cbi->m_eeCBData.mode |= (1 << 9);
+	cbi->m_eeCBData.mode |= SDR_CB_DMA1INT;
 	iWakeupThread(cbi->m_thid_cb);
 	return 0;
 }
@@ -154,7 +154,7 @@ int _sce_sdrSpu2IntrHandler(int core_bit, void *common)
 	(void)core_bit;
 
 	cbi = (SdrEECBInfo *)common;
-	cbi->m_eeCBData.mode |= (1 << 10);
+	cbi->m_eeCBData.mode |= SDR_CB_IRQINT;
 	cbi->m_eeCBData.voice_bit = core_bit;
 	iWakeupThread(cbi->m_thid_cb);
 	return 0;
@@ -168,7 +168,7 @@ void sce_sdrcb_loop(void *arg)
 
 	cbi = (SdrEECBInfo *)arg;
 	cbi->m_eeCBData.mode = 0;
-	while ( sceSifBindRpc(&cd, 0x80000704, 0) >= 0 )
+	while ( sceSifBindRpc(&cd, sce_SDRST_CB, 0) >= 0 )
 	{
 		int i;
 

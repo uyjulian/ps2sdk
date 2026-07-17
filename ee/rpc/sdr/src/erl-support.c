@@ -1,30 +1,21 @@
+/*
 # _____     ___ ____     ___ ____
 #  ____|   |    ____|   |        | |____|
 # |     ___|   |____ ___|    ____| |    \    PS2DEV Open Source Project.
 #-----------------------------------------------------------------------
-# Copyright 2001-2004, ps2dev - http://www.ps2dev.org
+# Copyright ps2dev - http://www.ps2dev.org
 # Licenced under Academic Free License version 2.0
 # Review ps2sdk README & LICENSE files for further details.
+#
+# The erl-tags support
+*/
 
-SUBDIRS  = \
-	ahx \
-	audsrv \
-	camera \
-	cdvd \
-	filexio \
-	hdd \
-	keyboard \
-	memorycard \
-	mouse \
-	multitap \
-	pad \
-	poweroff \
-	ps2snd \
-	remote \
-	sdr \
-	secr \
-	sior \
-	tcpips
+#include <erl.h>
 
-include $(PS2SDKSRC)/Defs.make
-include $(PS2SDKSRC)/Rules.make
+char * erl_id = "libsdr";
+
+char * erl_dependancies[] = {
+    "libkernel",
+    "libc",
+    0
+};

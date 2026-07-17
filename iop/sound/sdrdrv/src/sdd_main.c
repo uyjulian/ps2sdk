@@ -75,7 +75,7 @@ static int module_start(int ac, char **av)
 				g_eeCBInfo.m_initial_priority_cb);
 		}
 	}
-	thprarm.attr = 0x2000000;
+	thprarm.attr = TH_C;
 	thprarm.thread = sce_sdr_loop;
 	// Unofficial: original stack size was 2048
 	thprarm.stacksize = 4096;

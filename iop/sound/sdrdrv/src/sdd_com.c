@@ -47,10 +47,10 @@ void sce_sdr_loop(void *arg)
 	si->m_rpc_sd = &rpc_sd;
 	sceSifInitRpc(0);
 	sceSifSetRpcQueue(&rpc_qd, GetThreadId());
-	sceSifRegisterRpc(&rpc_sd, 0x80000701, sdrFunc, rpc_arg, 0, 0, &rpc_qd);
+	sceSifRegisterRpc(&rpc_sd, sce_SDR_DEV, sdrFunc, rpc_arg, 0, 0, &rpc_qd);
 	// Unofficial: was inlined
 	for ( i = 0; i < 16; i += 1 )
-		sceSdrSetUserCommandFunction(0x9000 + (i * 0x10), NULL);
+		sceSdrSetUserCommandFunction(rSdUserCommandMin + (i * 0x10), NULL);
 	sceSifRpcLoop(&rpc_qd);
 }
 
@@ -156,51 +156,51 @@ static void *sdrFunc(int fno, void *buffer, int length)
 			ret = StSetSeVol(*((u16 *)buffer + 2), *((u16 *)buffer + 4));
 			break;
 #endif
-		case 0x8000:
+		case rSdInit:
 			ret = sceSdInit(*((u32 *)buffer + 1));
 			break;
-		case 0x8010:
+		case rSdSetParam:
 			sceSdSetParam(*((u16 *)buffer + 2), *((u16 *)buffer + 4));
 			break;
-		case 0x8020:
+		case rSdGetParam:
 			ret = sceSdGetParam(*((u16 *)buffer + 2));
 			break;
-		case 0x8030:
+		case rSdSetSwitch:
 			sceSdSetSwitch(*((u16 *)buffer + 2), *((u32 *)buffer + 2));
 			break;
-		case 0x8040:
+		case rSdGetSwitch:
 			ret = sceSdGetSwitch(*((u16 *)buffer + 2));
 			break;
-		case 0x8050:
+		case rSdSetAddr:
 			sceSdSetAddr(*((u16 *)buffer + 2), *((u32 *)buffer + 2));
 			break;
-		case 0x8060:
+		case rSdGetAddr:
 			ret = sceSdGetAddr(*((u16 *)buffer + 2));
 			break;
-		case 0x8070:
+		case rSdSetCoreAttr:
 			sceSdSetCoreAttr(*((u16 *)buffer + 2), *((u16 *)buffer + 4));
 			break;
-		case 0x8080:
+		case rSdGetCoreAttr:
 			ret = sceSdGetCoreAttr(*((u16 *)buffer + 2));
 			break;
-		case 0x8090:
+		case rSdNote2Pitch:
 			ret = sceSdNote2Pitch(*((u16 *)buffer + 2), *((u16 *)buffer + 4), *((u16 *)buffer + 6), *((u16 *)buffer + 8));
 			break;
-		case 0x80A0:
+		case rSdPitch2Note:
 			ret = sceSdPitch2Note(*((u16 *)buffer + 2), *((u16 *)buffer + 4), *((u16 *)buffer + 6));
 			break;
-		case 0x80B0:
+		case rSdProcBatch:
 			ret = sceSdProcBatch(*((sceSdBatch **)buffer + 1), *((u32 **)buffer + 2), *((u32 *)buffer + 3));
 			break;
-		case 0x80C0:
+		case rSdProcBatchEx:
 			ret = sceSdProcBatchEx(
 				*((sceSdBatch **)buffer + 1), *((u32 **)buffer + 2), *((u32 *)buffer + 3), *((u32 *)buffer + 4));
 			break;
-		case 0x80D0:
+		case rSdVoiceTrans:
 			ret = sceSdVoiceTrans(
 				*((u16 *)buffer + 2), *((u16 *)buffer + 4), *((u8 **)buffer + 3), *((u32 **)buffer + 4), *((u32 *)buffer + 5));
 			break;
-		case 0x80E0:
+		case rSdBlockTrans:
 #if SDRDRV_IMPLEMENT_AUTODMA
 		{
 			int i;
@@ -281,86 +281,89 @@ static void *sdrFunc(int fno, void *buffer, int length)
 				*((u16 *)buffer + 2), *((u16 *)buffer + 4), *((u8 **)buffer + 3), *((u32 *)buffer + 4), *((u32 *)buffer + 5));
 #endif
 		break;
-		case 0x80F0:
+		case rSdVoiceTransStatus:
 			ret = sceSdVoiceTransStatus(*((u16 *)buffer + 2), *((u16 *)buffer + 4));
 			break;
-		case 0x8100:
+		case rSdBlockTransStatus:
 			ret = sceSdBlockTransStatus(*((u16 *)buffer + 2), *((u16 *)buffer + 4));
 			break;
 #if SDRDRV_OBSOLETE_FUNCS
-		case 0x8110:
+		case rSdSetTransCallback:
 			ret = (int)sceSdSetTransCallback(
 				*((u32 *)buffer + 1) ? 1 : 0,
 				*((u32 *)buffer + 2) ? (*((u32 *)buffer + 1) ? _sce_sdrDMA1CallBackProc : _sce_sdrDMA0CallBackProc) : 0);
 			break;
-		case 0x8120:
+		case rSdSetIRQCallback:
 			ret = (int)sceSdSetIRQCallback(*((u32 *)buffer + 1) ? _sce_sdrIRQCallBackProc : 0);
 			break;
 #endif
-		case 0x8130:
+		case rSdSetEffectAttr:
 			ret = sceSdSetEffectAttr(fno & 0xF, (sceSdEffectAttr *)buffer);
 			break;
-		case 0x8140:
+		case rSdGetEffectAttr:
 			sceSdGetEffectAttr(fno & 0xF, &g_sdrInfo.m_e_attr);
 			return &g_sdrInfo.m_e_attr;
-		case 0x8150:
+		case rSdClearEffectWorkArea:
 			ret = sceSdClearEffectWorkArea(*((u32 *)buffer + 1), *((u32 *)buffer + 2), *((u32 *)buffer + 3));
 			break;
-		case 0x8160:
+		case rSdSetTransIntrHandler:
 			ret = (int)sceSdSetTransIntrHandler(
 				*((u32 *)buffer + 1) ? 1 : 0,
 				*((u32 *)buffer + 2) ? (*((u32 *)buffer + 1) ? _sce_sdrDMA1IntrHandler : 0) : _sce_sdrDMA0IntrHandler,
 				&g_eeCBInfo);
 			break;
-		case 0x8170:
+		case rSdSetSpu2IntrHandler:
 			ret = (int)sceSdSetSpu2IntrHandler(*((u32 *)buffer + 1) ? _sce_sdrSpu2IntrHandler : 0, &g_eeCBInfo);
 			break;
-		case 0x8180:
+		case rSdStopTrans:
 			ret = sceSdStopTrans(*((u32 *)buffer + 1));
 			break;
-		case 0x8190:
+		case rSdCleanEffectWorkArea:
 			ret = sceSdCleanEffectWorkArea(*((u32 *)buffer + 1), *((u32 *)buffer + 2), *((u32 *)buffer + 3));
 			break;
-		case 0x81A0:
+		case rSdSetEffectMode:
 			ret = sceSdSetEffectMode(fno & 0xF, (sceSdEffectAttr *)buffer);
 			break;
-		case 0x81C0:
+		case rSdSetEffectModeParams:
+			ret = sceSdSetEffectModeParams(fno & 0xF, (sceSdEffectAttr *)buffer);
+			break;
+		case rSdProcBatch2:
 			ret = sceSdProcBatch((sceSdBatch *)buffer + 1, (u32 *)&g_sdrInfo.m_procbat_returns[1], *((u16 *)buffer + 1));
 			break;
-		case 0x81D0:
+		case rSdProcBatchEx2:
 			ret = sceSdProcBatchEx(
 				(sceSdBatch *)buffer + 1, (u32 *)&g_sdrInfo.m_procbat_returns[1], *((u16 *)buffer + 1), *((u32 *)buffer + 1));
 			break;
-		case 0x8F10:
+		case rSdChangeThreadPriority:
 			ret = sceSdrChangeThreadPriority(*((u32 *)buffer + 1), *((u32 *)buffer + 2));
 			break;
-		case 0x9000:
-		case 0x9010:
-		case 0x9020:
-		case 0x9030:
-		case 0x9040:
-		case 0x9050:
-		case 0x9060:
-		case 0x9070:
-		case 0x9080:
-		case 0x9090:
-		case 0x90A0:
-		case 0x90B0:
-		case 0x90C0:
-		case 0x90D0:
-		case 0x90E0:
-		case 0x90F0:
+		case rSdUserCommand0:
+		case rSdUserCommand1:
+		case rSdUserCommand2:
+		case rSdUserCommand3:
+		case rSdUserCommand4:
+		case rSdUserCommand5:
+		case rSdUserCommand6:
+		case rSdUserCommand7:
+		case rSdUserCommand8:
+		case rSdUserCommand9:
+		case rSdUserCommandA:
+		case rSdUserCommandB:
+		case rSdUserCommandC:
+		case rSdUserCommandD:
+		case rSdUserCommandE:
+		case rSdUserCommandF:
 		{
 			ret = g_sdrInfo.m_sceSdr_vUserCommandFunction[(fno & 0xF0) >> 4] ?
 							g_sdrInfo.m_sceSdr_vUserCommandFunction[(fno & 0xF0) >> 4](fno, buffer, length) :
 							0;
 			break;
 		}
-		case 0xE620:
+		case SDR_CMD_CB_INIT:
 		{
 			iop_thread_t thparam;
 
-			thparam.attr = 0x2000000;
+			thparam.attr = TH_C;
 			thparam.thread = sce_sdrcb_loop;
 			thparam.stacksize = 2048;
 			thparam.option = 0;
@@ -370,7 +373,7 @@ static void *sdrFunc(int fno, void *buffer, int length)
 			Kprintf("SDR callback thread created\n");
 			break;
 		}
-		case 0xE630:
+		case SDR_CMD_CB_DEINIT:
 		{
 			if ( g_eeCBInfo.m_thid_cb > 0 )
 			{
@@ -394,7 +397,7 @@ sceSdrUserCommandFunction sceSdrSetUserCommandFunction(int command, sceSdrUserCo
 {
 	sceSdrUserCommandFunction oldf;
 
-	if ( (command < 0x9000) || (command > 0x90F0) )
+	if ( (command < rSdUserCommandMin) || (command > rSdUserCommandMax) )
 		return (sceSdrUserCommandFunction)-1;
 	oldf = g_sdrInfo.m_sceSdr_vUserCommandFunction[(command & 0xF0) >> 4];
 	g_sdrInfo.m_sceSdr_vUserCommandFunction[(command & 0xF0) >> 4] = func;
