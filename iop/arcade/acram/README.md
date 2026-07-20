@@ -1,11 +1,14 @@
 # Arcade Extended RAM Interface
 
-This module allows access to the extended volatile memory \
-on the arcade interface \
-for Bandai Namco System 246/256 systems.  
-On System 246A and 246B, the extended memory is provided \
-by a RAM32 or RAM64 PCB, but on newer hardware, \
-RAM64 comes onboard as standard.  
+This module allows access to the extended volatile memory on the arcade interface for Bandai Namco System 246/256 systems.
+
+Originally, the ACRAM came as external boards, both RAM32 PCB and RAM64 PCB
+
+- on System246A (at least on DRIVING version) the system has two slots for ACRAM boards. (only both wangan midnight games need two RAM64PCBs)
+- on System246B and 246C 64MB of ACRAM are mounted directly on the motherboard
+- on System256 the ACRAM is no longer part of the system
+
+just like the ATA interface, it depends on the altera FPGA programmed by acfpgald.irx
 
 ## Configurations
 
