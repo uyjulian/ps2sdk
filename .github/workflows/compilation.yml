@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/ps2dev/ps2toolchain:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -46,14 +46,14 @@ jobs:
 
       - name: Upload samples artifacts
         if: ${{ success() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ps2sdk-samples-${{ matrix.debug }}-${{ steps.slug.outputs.sha8 }}
           path: ~/samples
     
       - name: Upload IRX artifacts
         if: ${{ success() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ps2sdk-irxs-${{ matrix.debug }}-${{ steps.slug.outputs.sha8 }}
           path: iop/**/*.irx
